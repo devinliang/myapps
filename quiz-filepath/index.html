@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relative Paths Exercise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen p-8">
+
+		<!-- 學號輸入對話框 -->
+		<div id="student-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+			<div class="bg-white p-8 rounded-lg shadow-lg w-96">
+				<h2 class="text-2xl font-bold text-blue-600 mb-4">學號輸入</h2>
+				<p class="text-gray-700 mb-4">請輸入您的學號</p>
+				<input type="text" id="student-id-input" class="w-full border border-gray-300 rounded px-3 py-2 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如: 1114211099">
+				<div class="flex gap-3 justify-end">
+					<button id="start-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded transition">開始測驗</button>
+				</div>
+			</div>
+		</div>
+
+		<p class="item text-3xl font-bold text-center text-blue-600 mb-6">實例練習 - 相對路徑設定</p>
+        <p>根據以下的檔案列表結構，將相對路徑填入空白處：</p>
+		<pre class="bg-white p-6 rounded-lg shadow-md mb-8 text-sm font-mono overflow-x-auto">
+.
+├── index.html
+├── /images
+│   ├── paris.jpg
+│   └── newyork.jpg
+├── /css
+│   ├── styles.css
+│   └── main.css
+└── /src
+	├── about.html
+	├── contact.html
+	└── /services
+		├── booking.html
+		└── storing.html
+			</pre>
+
+        <div id="completion-message" class="sticky top-0 z-40 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<strong>學號：</strong> <span id="displayed-student-id">-</span> | <strong>進度</strong> <span id="completed-count">0</span> / <span id="total-count">24</span>
+				</div>
+				<div id="completion-text" class="hidden">
+					<strong id="completion-timestamp"></strong> <strong>恭喜！</strong> 學生 <span id="completion-student-id">-</span> 所有題目都正確完成了！
+				</div>
+			</div>
+			<div class="w-full bg-blue-300 rounded-full h-2 mt-2">
+				<div id="progress-bar" class="bg-green-500 h-2 rounded-full" style="width: 0%;"></div>
+			</div>
+		</div>
+
+		<div class="exercise bg-white p-8 rounded-lg shadow-md max-w-4xl mx-auto">
+			<ol class="space-y-6">
+				<li class="text-lg font-semibold">在 index.html 裡,要引用以下檔案,必須使用什麼路徑名稱?</li>
+					<ol type="I" class="ml-6 space-y-2">
+						<li class="flex items-center space-x-2">paris.jpg - &lt;img src="<input type="text" id="qa1" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">" alt=""&gt;<span id="ma1" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">newyork.jpg - &lt;img src="<input type="text" id="qa2" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">" alt=""&gt;<span id="ma2" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">styles.css - &lt;link  rel="stylesheet" href="<input type="text" id="qa3" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;<span id="ma3" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">main.css - &lt;link  rel="stylesheet" href="<input type="text" id="qa4" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;<span id="ma4" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">about.html - &lt;a href="<input type="text" id="qa5" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;about&lt;/a&gt;<span id="ma5" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">contact.html - &lt;a href="<input type="text" id="qa6" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;contact&lt;/a&gt;<span id="ma6" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">booking.html - &lt;a href="<input type="text" id="qa7" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;booking&lt;/a&gt;<span id="ma7" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">storing.html - &lt;a href="<input type="text" id="qa8" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;storing&lt;/a&gt;<span id="ma8" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+					</ol>
+				<li class="text-lg font-semibold">在 about.html 裡,要引用以下檔案,必須使用什麼路徑名稱?</li>
+					<ol type="I" class="ml-6 space-y-2">
+						<li class="flex items-center space-x-2">paris.jpg - &lt;img src="<input type="text" id="qb1" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">" alt=""&gt;<span id="mb1" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">newyork.jpg - &lt;img src="<input type="text" id="qb2" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">" alt=""&gt;<span id="mb2" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">styles.css - &lt;link  rel="stylesheet" href="<input type="text" id="qb3" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;<span id="mb3" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">main.css - &lt;link  rel="stylesheet" href="<input type="text" id="qb4" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;<span id="mb4" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">index.html - &lt;a href="<input type="text" id="qb5" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;index&lt;/a&gt;<span id="mb5" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">contact.html - &lt;a href="<input type="text" id="qb6" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;contact&lt;/a&gt;<span id="mb6" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">booking.html - &lt;a href="<input type="text" id="qb7" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;booking&lt;/a&gt;<span id="mb7" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">storing.html - &lt;a href="<input type="text" id="qb8" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;storing&lt;/a&gt;<span id="mb8" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+					</ol>
+				<li class="text-lg font-semibold">在 booking.html 裡,要引用以下檔案,必須使用什麼路徑名稱?</li>
+					<ol type="I" class="ml-6 space-y-2">
+						<li class="flex items-center space-x-2">paris.jpg - &lt;img src="<input type="text" id="qc1" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">" alt=""&gt;<span id="mc1" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">newyork.jpg - &lt;img src="<input type="text" id="qc2" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">" alt=""&gt;<span id="mc2" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">styles.css - &lt;link  rel="stylesheet" href="<input type="text" id="qc3" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;<span id="mc3" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">main.css - &lt;link  rel="stylesheet" href="<input type="text" id="qc4" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;<span id="mc4" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">index.html - &lt;a href="<input type="text" id="qc5" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;index&lt;/a&gt;<span id="mc5" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">about.html - &lt;a href="<input type="text" id="qc6" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;about&lt;/a&gt;<span id="mc6" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">contact.html - &lt;a href="<input type="text" id="qc7" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;contact&lt;/a&gt;<span id="mc7" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+						<li class="flex items-center space-x-2">storing.html - &lt;a href="<input type="text" id="qc8" class="border border-gray-300 rounded px-2 py-1 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">"&gt;storing&lt;/a&gt;<span id="mc8" class="text-green-500 text-lg" style="display:none;">✔️</span></li>
+					</ol>
+			</ol>
+		</div>
+
+
+		<!-- --------------------------------------------------------  -->
+		</div>  <!-- #main End Here -->
+	</div>	<!-- Content End here -->
+
+	<script>
+// 題目和解答資料陣列
+const questions = [
+	// Group A: index.html context
+	{ inputId: 'qa1', markId: 'ma1', answers: ['./images/paris.jpg', 'images/paris.jpg'] },
+	{ inputId: 'qa2', markId: 'ma2', answers: ['./images/newyork.jpg', 'images/newyork.jpg'] },
+	{ inputId: 'qa3', markId: 'ma3', answers: ['./css/styles.css', 'css/styles.css'] },
+	{ inputId: 'qa4', markId: 'ma4', answers: ['./css/main.css', 'css/main.css'] },
+	{ inputId: 'qa5', markId: 'ma5', answers: ['./src/about.html', 'src/about.html'] },
+	{ inputId: 'qa6', markId: 'ma6', answers: ['./src/contact.html', 'src/contact.html'] },
+	{ inputId: 'qa7', markId: 'ma7', answers: ['./src/services/booking.html', 'src/services/booking.html'] },
+	{ inputId: 'qa8', markId: 'ma8', answers: ['./src/services/storing.html', 'src/services/storing.html'] },
+	
+	// Group B: about.html context
+	{ inputId: 'qb1', markId: 'mb1', answers: ['../images/paris.jpg'] },
+	{ inputId: 'qb2', markId: 'mb2', answers: ['../images/newyork.jpg'] },
+	{ inputId: 'qb3', markId: 'mb3', answers: ['../css/styles.css'] },
+	{ inputId: 'qb4', markId: 'mb4', answers: ['../css/main.css'] },
+	{ inputId: 'qb5', markId: 'mb5', answers: ['../index.html'] },
+	{ inputId: 'qb6', markId: 'mb6', answers: ['./contact.html', 'contact.html'] },
+	{ inputId: 'qb7', markId: 'mb7', answers: ['./services/booking.html', 'services/booking.html'] },
+	{ inputId: 'qb8', markId: 'mb8', answers: ['./services/storing.html', 'services/storing.html'] },
+	
+	// Group C: booking.html context
+	{ inputId: 'qc1', markId: 'mc1', answers: ['../../images/paris.jpg'] },
+	{ inputId: 'qc2', markId: 'mc2', answers: ['../../images/newyork.jpg'] },
+	{ inputId: 'qc3', markId: 'mc3', answers: ['../../css/styles.css'] },
+	{ inputId: 'qc4', markId: 'mc4', answers: ['../../css/main.css'] },
+	{ inputId: 'qc5', markId: 'mc5', answers: ['../../index.html'] },
+	{ inputId: 'qc6', markId: 'mc6', answers: ['../about.html'] },
+	{ inputId: 'qc7', markId: 'mc7', answers: ['../contact.html'] },
+	{ inputId: 'qc8', markId: 'mc8', answers: ['./storing.html', 'storing.html'] }
+];
+
+// 全局變數存儲學號
+let currentStudentId = '';
+
+// 設置學號並關閉對話框
+function startExam() {
+	const studentIdInput = document.getElementById('student-id-input');
+	const studentId = studentIdInput.value.trim();
+	
+	if (studentId === '') {
+		alert('請輸入學號');
+		return;
+	}
+	
+	currentStudentId = studentId;
+	document.getElementById('student-modal').classList.add('hidden');
+	document.getElementById('displayed-student-id').textContent = studentId;
+	document.getElementById('completion-student-id').textContent = studentId;
+}
+
+// 監聽 Enter 鍵
+document.addEventListener('DOMContentLoaded', function() {
+	document.getElementById('student-id-input').addEventListener('keypress', function(event) {
+		if (event.key === 'Enter') {
+			startExam();
+		}
+	});
+	
+	document.getElementById('start-btn').addEventListener('click', startExam);
+});
+
+// 獲取格式化的日期時間戳
+function getFormattedTimestamp() {
+	const now = new Date();
+	const year = now.getFullYear();
+	const month = String(now.getMonth() + 1).padStart(2, '0');
+	const date = String(now.getDate()).padStart(2, '0');
+	const hours = String(now.getHours()).padStart(2, '0');
+	const minutes = String(now.getMinutes()).padStart(2, '0');
+	const seconds = String(now.getSeconds()).padStart(2, '0');
+	return `[${year}-${month}-${date} ${hours}:${minutes}:${seconds}]`;
+}
+
+// 檢查所有題目完成度
+function checkAllCompleted() {
+	const spans = document.querySelectorAll('span[id^="m"]');
+	let completedCount = 0;
+	
+	spans.forEach(span => {
+		if (span.style.display !== 'none') {
+			completedCount++;
+		}
+	});
+	
+	const totalCount = spans.length;
+	const percentage = (completedCount / totalCount) * 100;
+	
+	// 更新進度顯示
+	document.getElementById('completed-count').textContent = completedCount;
+	document.getElementById('total-count').textContent = totalCount;
+	document.getElementById('progress-bar').style.width = percentage + '%';
+	
+	// 當全部完成時顯示特殊訊息
+	const completionText = document.getElementById('completion-text');
+	if (completedCount === totalCount) {
+		// 添加時間戳
+		document.getElementById('completion-timestamp').textContent = getFormattedTimestamp();
+		completionText.classList.remove('hidden');
+		document.querySelector('#completion-message > div:first-child > div:first-child').classList.add('hidden');
+	} else {
+		completionText.classList.add('hidden');
+		document.querySelector('#completion-message > div:first-child > div:first-child').classList.remove('hidden');
+	}
+}
+
+// 初始化事件監聽器
+window.addEventListener('load', function() {
+	questions.forEach(question => {
+		const inputElement = document.getElementById(question.inputId);
+		const markElement = document.getElementById(question.markId);
+		
+		if (inputElement && markElement) {
+			inputElement.addEventListener('input', function() {
+				// 檢查用戶輸入是否在答案陣列中
+				if (question.answers.includes(this.value)) {
+					markElement.style.display = 'inline'; // 顯示打勾符號
+				} else {
+					markElement.style.display = 'none'; // 隱藏打勾符號
+				}
+				checkAllCompleted();
+			});
+		}
+	});
+});
+	</script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>早安圖產生器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f3f4f6;
+        }
+        
+        /* Canvas 響應式處理 */
+        .canvas-container {
+            width: 100%;
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                              linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                              linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            border-radius: 0.5rem;
+            min-height: 300px;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            /* 預設游標 */
+            cursor: default; 
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        /* 開關樣式 */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #68D391;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-8 px-4">
+
+    <!-- 標題區 -->
+    <header class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-black text-gray-800 mb-2">
+            <i class="fas fa-sun text-yellow-500 mr-2"></i>早安圖產生器
+        </h1>
+        <p class="text-gray-600">簡單幾步，為你的圖片加上滿滿的正能量！</p>
+    </header>
+
+    <main class="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+        
+        <!-- 左側：控制面板 -->
+        <div class="w-full md:w-1/3 p-6 bg-gray-50 border-r border-gray-100 flex flex-col gap-5">
+            
+            <!-- 上傳按鈕 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">1. 上傳圖片</label>
+                <div class="upload-area rounded-lg p-6 text-center cursor-pointer relative">
+                    <input type="file" id="imageInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <div class="text-gray-400">
+                        <i class="fas fa-image text-3xl mb-2"></i>
+                        <p class="text-sm">點擊或拖曳圖片至此</p>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <!-- 文字設定 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">2. 文字設定</label>
+                <input type="text" id="textInput" value="兄弟,早安!" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none mb-3" placeholder="輸入文字...">
+                
+                <!-- 直排開關 -->
+                <div class="flex items-center mb-4">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="verticalMode" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span class="ml-3 text-sm font-medium text-gray-700">直排文字</span>
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">顏色</label>
+                        <input type="color" id="textColor" value="#ffffff" class="w-full h-10 rounded cursor-pointer border border-gray-300 p-1 bg-white">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">邊框顏色</label>
+                        <input type="color" id="strokeColor" value="#000000" class="w-full h-10 rounded cursor-pointer border border-gray-300 p-1 bg-white">
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>字體大小</span>
+                            <span id="fontSizeVal">60</span>
+                        </div>
+                        <input type="range" id="fontSize" min="20" max="200" value="60" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>水平位置 (X) - 可直接拖曳圖片文字</span>
+                            <span id="posXVal">50%</span>
+                        </div>
+                        <input type="range" id="posX" min="0" max="100" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>垂直位置 (Y)</span>
+                            <span id="posYVal">80%</span>
+                        </div>
+                        <input type="range" id="posY" min="0" max="100" value="80" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 下載按鈕 -->
+            <div class="mt-auto pt-4">
+                <button id="downloadBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    <i class="fas fa-download"></i> 下載圖片
+                </button>
+            </div>
+        </div>
+
+        <!-- 右側：預覽區 -->
+        <div class="w-full md:w-2/3 p-6 flex flex-col items-center justify-center bg-gray-200">
+            <div class="canvas-container relative" id="canvasContainer">
+                <canvas id="canvas"></canvas>
+                <!-- 初始提示 -->
+                <div id="placeholderText" class="absolute text-gray-500 font-medium pointer-events-none">
+                    <i class="fas fa-arrow-left md:hidden"></i>
+                    <i class="fas fa-arrow-up hidden md:inline"></i> 
+                    請先上傳一張圖片
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // DOM 元素
+        const imageInput = document.getElementById('imageInput');
+        const textInput = document.getElementById('textInput');
+        const verticalMode = document.getElementById('verticalMode');
+        const textColor = document.getElementById('textColor');
+        const strokeColor = document.getElementById('strokeColor');
+        const fontSize = document.getElementById('fontSize');
+        const fontSizeVal = document.getElementById('fontSizeVal');
+        const posX = document.getElementById('posX');
+        const posXVal = document.getElementById('posXVal');
+        const posY = document.getElementById('posY');
+        const posYVal = document.getElementById('posYVal');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const placeholderText = document.getElementById('placeholderText');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        // 狀態變數
+        let currentImage = null;
+
+        // 初始化 Canvas 尺寸
+        canvas.width = 800;
+        canvas.height = 600;
+
+        // 監聽圖片上傳
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    currentImage = img;
+                    // 根據圖片比例調整 Canvas
+                    resizeCanvasToImage();
+                    draw();
+                    
+                    // 啟用介面
+                    downloadBtn.disabled = false;
+                    placeholderText.style.display = 'none';
+                    canvasContainer.style.backgroundImage = 'none'; 
+                    canvasContainer.style.backgroundColor = '#333';
+                    
+                    // 啟用拖曳游標
+                    canvas.style.cursor = 'move';
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 監聽控制項變化
+        const controls = [textInput, verticalMode, textColor, strokeColor, fontSize, posX, posY];
+        controls.forEach(control => {
+            control.addEventListener('input', () => {
+                if (control === fontSize) fontSizeVal.textContent = control.value;
+                if (control === posX) posXVal.textContent = control.value + '%';
+                if (control === posY) posYVal.textContent = control.value + '%';
+                if (currentImage) draw();
+            });
+        });
+
+        // 下載功能
+        downloadBtn.addEventListener('click', () => {
+            if (!currentImage) return;
+            const link = document.createElement('a');
+            link.download = 'morning_greeting.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // 根據圖片調整 Canvas 尺寸
+        function resizeCanvasToImage() {
+            if (!currentImage) return;
+            canvas.width = currentImage.width;
+            canvas.height = currentImage.height;
+        }
+
+        // 繪圖主函式
+        function draw() {
+            if (!currentImage) return;
+
+            // 1. 清除畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 2. 繪製圖片
+            ctx.drawImage(currentImage, 0, 0);
+
+            // 3. 設定文字樣式
+            const size = parseInt(fontSize.value);
+            const scaleFactor = canvas.width / 800; 
+            const finalFontSize = size * scaleFactor;
+            const isVertical = verticalMode.checked;
+
+            ctx.font = `900 ${finalFontSize}px "Noto Sans TC", "Microsoft JhengHei", sans-serif`;
+            ctx.fillStyle = textColor.value;
+            ctx.strokeStyle = strokeColor.value;
+            ctx.lineWidth = finalFontSize / 15;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle'; // 垂直對齊中線
+
+            // 4. 計算基準位置 (X, Y 都是百分比轉換)
+            const centerX = canvas.width * (parseInt(posX.value) / 100);
+            const centerY = canvas.height * (parseInt(posY.value) / 100);
+
+            // 設定陰影
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowBlur = 10 * scaleFactor;
+            ctx.shadowOffsetX = 3 * scaleFactor;
+            ctx.shadowOffsetY = 3 * scaleFactor;
+
+            const text = textInput.value;
+
+            // 5. 繪製文字 (區分直排/橫排)
+            if (isVertical) {
+                // 直排邏輯
+                const chars = text.split('');
+                const lineHeight = finalFontSize * 1.1; // 行高
+                const totalHeight = (chars.length - 1) * lineHeight; // 文字總高度 (不含最後一個字的下半部，以中心點計算)
+                
+                // 起始 Y 位置：中心點 - (總高度的一半)
+                let currentY = centerY - (totalHeight / 2);
+
+                chars.forEach((char, index) => {
+                    // 繪製每一個字
+                    ctx.strokeText(char, centerX, currentY);
+                    
+                    const tempShadowColor = ctx.shadowColor;
+                    ctx.shadowColor = "transparent";
+                    ctx.fillText(char, centerX, currentY);
+                    ctx.shadowColor = tempShadowColor;
+
+                    currentY += lineHeight;
+                });
+
+            } else {
+                // 橫排邏輯 (維持原樣)
+                ctx.strokeText(text, centerX, centerY);
+                
+                ctx.shadowColor = "transparent"; 
+                ctx.fillText(text, centerX, centerY);
+            }
+        }
+
+        // --- 滑鼠拖曳功能實作 ---
+        let isDragging = false;
+
+        function handleStart(e) {
+            if (!currentImage) return;
+            isDragging = true;
+            updatePositionFromEvent(e);
+        }
+
+        function handleMove(e) {
+            if (!isDragging || !currentImage) return;
+            e.preventDefault(); // 防止手機滾動頁面
+            updatePositionFromEvent(e);
+        }
+
+        function handleEnd() {
+            isDragging = false;
+        }
+
+        function updatePositionFromEvent(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+
+            // 支援觸控事件
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            }
+
+            // 計算滑鼠在 Canvas 內的相對位置
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            // 轉換為百分比 (0-100)
+            let percentX = (x / rect.width) * 100;
+            let percentY = (y / rect.height) * 100;
+
+            // 限制範圍在 0-100
+            percentX = Math.max(0, Math.min(100, percentX));
+            percentY = Math.max(0, Math.min(100, percentY));
+
+            // 更新輸入框值
+            posX.value = Math.round(percentX);
+            posY.value = Math.round(percentY);
+
+            // 更新顯示數值
+            posXVal.textContent = Math.round(percentX) + '%';
+            posYVal.textContent = Math.round(percentY) + '%';
+
+            // 重繪
+            draw();
+        }
+
+        // 加入事件監聽
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+
+        // 手機觸控支援 (passive: false 允許 preventDefault 阻止滾動)
+        canvas.addEventListener('touchstart', handleStart, { passive: false });
+        canvas.addEventListener('touchmove', handleMove, { passive: false });
+        window.addEventListener('touchend', handleEnd);
+
+        // 初始繪製一個空的灰色背景
+        ctx.fillStyle = "#e5e7eb";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    </script>
+</body>
+</html>

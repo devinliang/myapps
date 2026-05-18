@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
@@ -28,6 +28,7 @@
             font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             background: radial-gradient(circle at top, #164071 0%, #04111e 52%);
             color: var(--text);
+            line-height: 1.6;
         }
 
         body::before {
@@ -42,7 +43,7 @@
 
         main {
             position: relative;
-            max-width: 980px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 3rem 1.5rem 2.5rem;
         }
@@ -67,7 +68,6 @@
             margin: 0;
             color: var(--muted);
             font-size: 1rem;
-            line-height: 1.8;
         }
 
         .grid {
@@ -104,7 +104,6 @@
         .card p {
             margin: 0 0 1.25rem;
             color: var(--muted);
-            line-height: 1.7;
         }
 
         .card a {
@@ -132,34 +131,106 @@
             text-align: center;
             font-size: 0.95rem;
         }
+
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+            background: rgba(255,255,255,0.05);
+            padding: 0.15rem 0.3rem;
+            border-radius: 0.35rem;
+            color: #cbd5e1;
+        }
     </style>
 </head>
 <body>
     <main>
         <header>
             <h1>MyApps 應用總覽</h1>
-            <p class="lead">以下列出目前所有子資料夾中的應用程式，點擊卡片即可開啟對應應用。</p>
+            <p class="lead">以下列出根目錄所有子資料夾中的應用，點擊卡片即可直接開啟對應應用入口。</p>
         </header>
 
         <section class="grid">
             <article class="card">
                 <div>
+                    <h2>BMI 計算機</h2>
+                    <p>從 <code>bmi/index.html</code> 開啟 BMI 應用。</p>
+                </div>
+                <a href="bmi/index.html">開啟 BMI</a>
+            </article>
+
+            <article class="card">
+                <div>
+                    <h2>Convert ICO</h2>
+                    <p>從 <code>convert-ico/index.html</code> 開啟 ICO 轉換工具。</p>
+                </div>
+                <a href="convert-ico/index.html">開啟 Convert ICO</a>
+            </article>
+
+            <article class="card">
+                <div>
+                    <h2>Convert WebP</h2>
+                    <p>從 <code>convert-webp/index.html</code> 開啟 WebP 轉換工具。</p>
+                </div>
+                <a href="convert-webp/index.html">開啟 Convert WebP</a>
+            </article>
+
+            <article class="card">
+                <div>
+                    <h2>Convert Zh</h2>
+                    <p>從 <code>convert-zh/index.html</code> 開啟中文轉換工具。</p>
+                </div>
+                <a href="convert-zh/index.html">開啟 Convert Zh</a>
+            </article>
+
+            <article class="card">
+                <div>
                     <h2>Desk Clock</h2>
-                    <p>復古風時鐘應用，從 `deskclock/index.html` 開啟。</p>
+                    <p>從 <code>deskclock/index.html</code> 開啟復古時鐘應用。</p>
                 </div>
                 <a href="deskclock/index.html">開啟 Desk Clock</a>
             </article>
 
             <article class="card">
                 <div>
+                    <h2>Photo Text</h2>
+                    <p>從 <code>phototext/index.html</code> 開啟文字轉圖像應用。</p>
+                </div>
+                <a href="phototext/index.html">開啟 Photo Text</a>
+            </article>
+
+            <article class="card">
+                <div>
+                    <h2>Quiz HTML結構與標籤</h2>
+                    <p>測驗對於 HTML 基本結構的掌握程度。</p>
+                </div>
+                <a href="quiz-html/index.html">開啟測驗</a>
+            </article>
+
+            <article class="card">
+                <div>
+                    <h2>Quiz 常用標籤及圖像</h2>
+                    <p>測驗對於文字與圖像標籤的掌握程度。</p>
+                </div>
+                <a href="quiz-textimg/index.html">開啟測驗</a>
+            </article>
+
+            <article class="card">
+                <div>
+                    <h2>Quiz 相對路徑設定</h2>
+                    <p>測驗對於相對路徑設定的掌握程度。</p>
+                </div>
+                <a href="quiz-filepath/index.html">開啟測驗</a>
+            </article>
+
+            <article class="card">
+                <div>
                     <h2>Timer</h2>
-                    <p>現代倒數計時器應用，從 `timer/timer.html` 開啟。</p>
+                    <p>從 <code>timer/timer.html</code> 開啟倒數計時器。</p>
                 </div>
                 <a href="timer/timer.html">開啟 Timer</a>
             </article>
         </section>
 
-        <div class="footer">如有新增子資料夾應用，可於此頁加入新連結。</div>
+        <div class="footer">已列出目前所有子資料夾中的應用入口。新增應用時請同步更新此頁。</div>
     </main>
 </body>
 </html>
