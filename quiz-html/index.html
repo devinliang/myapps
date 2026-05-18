@@ -1,0 +1,476 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 結構與標籤 - 課後複習測驗</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --background-color: #f5f7fa;
+            --text-color: #333;
+            --correct-color: #2ecc71;
+            --incorrect-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgb(0 0 0 / 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        .question-card {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #fafafa;
+            border-left: 5px solid var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .question-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .options label {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .options label:hover {
+            background: #f0f8ff;
+        }
+
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+            font-size: 0.95em;
+        }
+
+        .feedback.correct {
+            display: block;
+            background-color: #e8f8f5;
+            color: #27ae60;
+            border: 1px solid #2ecc71;
+        }
+
+        .feedback.incorrect {
+            display: block;
+            background-color: #fdedec;
+            color: #c0392b;
+            border: 1px solid #e74c3c;
+        }
+
+        #submit-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 20px;
+        }
+
+        #submit-btn:hover {
+            background-color: #357abd;
+        }
+
+        #submit-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        #score-display {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            border: 2px dashed #ccc;
+            display: none;
+        }
+
+        .student-id-highlight {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        /* 滿分排版專用 CSS */
+        .perfect-score-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            text-align: left;
+        }
+
+        .certificate-img {
+            width: 150px;
+            height: auto;
+            flex-shrink: 0;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* 獎章彈出動畫 */
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 再試一次按鈕樣式 */
+        .retry-btn {
+            padding: 10px 25px;
+            font-size: 1.1em;
+            background-color: var(--incorrect-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        .retry-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .retry-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 手機版響應式設計：螢幕小於 600px 時改為上下排列 */
+        @media (max-width: 600px) {
+            .perfect-score-container {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>HTML 結構與標籤</h1>
+    <div id="quiz-container"></div>
+    <button id="submit-btn" onclick="submitQuiz()">送出並查看結果</button>
+    <div id="score-display"></div>
+</div>
+
+<script>
+    let studentId = "";
+
+    const quizData = [
+    {
+        question: "根據教學內容，HTML 本質上並不是一種程式語言 (Programming Language)，而是一種什麼？",
+        options: [
+            "腳本語言 (Scripting Language)",
+            "標註語言 (Markup Language)",
+            "編譯語言 (Compiled Language)",
+            "資料庫語言 (Database Language)"
+        ],
+        correctIndex: 1,
+        rationale: "HTML 全名為超文字標記語言，是由許多標籤 (tag) 組成，用來表達與結構化網頁內容的標註語言。"
+    },
+    {
+        question: "一個完整的 HTML 檔案，其最外層用來代表「整個文件的開始和結束」的是哪一組標籤？",
+        options: [
+            "<!doctype html> 與 </html>",
+            "<html> 與 </html>",
+            "<head> 與 </head>",
+            "<body> 與 </body>"
+        ],
+        correctIndex: 1,
+        rationale: "&lt;html&gt; 代表整個文件的開始，&lt;/html&gt; 則代表整個文件的結束，所有內容（除了宣告外）都包在其中。"
+    },
+    {
+        question: "在 HTML 架構中，<head>...</head> 標籤之間主要存放的是什麼樣的內容？",
+        options: [
+            "網頁的主要內容，如文字、圖片和列表。",
+            "文件的資訊部份，例如頁面標題與後設資料。",
+            "網頁最底部的版權宣告與聯絡資訊。",
+            "專門用來顯示在網頁畫面上的加粗文字。"
+        ],
+        correctIndex: 1,
+        rationale: "&lt;head&gt; 區塊代表文件的資訊部份（Metadata），包含標題、編碼等不直接顯示在網頁主畫面上的資訊。"
+    },
+    {
+        question: "在 HTML 架構中，<body>...</body> 標籤之間存放的內容主要具備什麼特性？",
+        options: [
+            "代表文件的資訊部份，使用者在畫面上看不到。",
+            "僅用來宣告文件型態，確保瀏覽器正確解析。",
+            "代表文件的內容部份，包含所有會顯示在網頁上的資訊。",
+            "只能放置 <b> 或 <ul> 等格式標籤，不能放置純文字。"
+        ],
+        correctIndex: 2,
+        rationale: "&lt;body&gt; 標籤定義了網頁的主體，所有預計讓使用者在瀏覽器視窗中看到的文字、圖片、影片等內容都必須放在這裡。"
+    },
+    {
+        question: "在標準的 HTML 檔案架構中，哪一個標籤專門用來定義「顯示在瀏覽器分頁上的頁面標題文字」？",
+        options: [
+            "<html>",
+            "<body>",
+            "<head>",
+            "<title>"
+        ],
+        correctIndex: 3,
+        rationale: "&lt;title&gt; 標籤位於 &lt;head&gt; 資訊區塊內，其內容會顯示在瀏覽器的頁籤上，而非網頁主體畫面中。"
+    },
+    {
+        question: "關於 HTML 標籤的類型，下列哪一組標籤屬於「群組標籤」，必須成群存在並共同運作才能完成設定？",
+        options: [
+            "<h1> 與 <p>",
+            "<ul> 與 <li>",
+            "<br /> 與 <hr />",
+            "<a> 與 <img>"
+        ],
+        correctIndex: 1,
+        rationale: "項目列表需要由 &lt;ul&gt; (定義列表範圍) 與 &lt;li&gt; (定義個別項目) 共同組成，這類標籤必須成群存在才有意義。"
+    },
+    {
+        question: "當我們在 HTML 開始標籤中設定屬性 (Attribute) 時，下列關於格式的敘述何者正確？",
+        options: [
+            "屬性必須放在結束標籤內，例如 </p class=\"text\">",
+            "屬性名稱 (name) 前後必須加上雙引號標記",
+            "屬性格式為 name=\"value\"，且值 (value) 前後必須使用雙引號",
+            "一個標籤限制只能設定一個屬性，不可重複設定"
+        ],
+        correctIndex: 2,
+        rationale: "屬性只放在開始標籤中，格式固定為名稱不帶引號、值帶雙引號（name=\"value\"），且數量無限制。"
+    },
+    {
+        question: "關於「成對標籤」與「獨立標籤」的設定原則，下列敘述何者正確？",
+        options: [
+            "獨立標籤（如 <br />）通常會作用到後方所有的內容範圍。",
+            "成對標籤的結束標籤，是在標籤名稱「後方」加上斜線，例如 <p/>。",
+            "成對標籤的結束標籤，是在標籤名稱「前方」加上斜線，例如 </p>。",
+            "所有標籤不論類型，都必須具備開始標籤與結束標籤才符合架構。"
+        ],
+        correctIndex: 2,
+        rationale: "成對標籤由開始標籤與結束標籤組成，結束標籤的特徵是在名稱前加上「/」斜線；而獨立標籤則不需要對應的結束標籤。"
+    }
+];
+
+    const quizContainer = document.getElementById('quiz-container');
+
+    function initQuiz() {
+        while (!studentId || studentId.trim() === "") {
+            studentId = prompt("測驗開始前，請輸入您的學號：", "");
+            if (studentId === null) {
+                studentId = "未提供學號 (訪客)";
+                break;
+            }
+        }
+
+        // 如果容器已經有內容，先清空 (為了支援"再試一次"功能)
+        quizContainer.innerHTML = '';
+
+        quizData.forEach((data, qIndex) => {
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card';
+            
+            const questionTitle = document.createElement('div');
+            questionTitle.className = 'question-title';
+            questionTitle.innerText = `Q${qIndex + 1}. ${data.question}`;
+            questionCard.appendChild(questionTitle);
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'options';
+
+            data.options.forEach((option, oIndex) => {
+                const label = document.createElement('label');
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = `question${qIndex}`;
+                radio.value = oIndex;
+                
+                label.appendChild(radio);
+                label.appendChild(document.createTextNode(option));
+                optionsDiv.appendChild(label);
+            });
+
+            questionCard.appendChild(optionsDiv);
+
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.id = `feedback${qIndex}`;
+            feedbackDiv.className = 'feedback';
+            questionCard.appendChild(feedbackDiv);
+
+            quizContainer.appendChild(questionCard);
+        });
+    }
+
+    function submitQuiz() {
+        let score = 0;
+        let allAnswered = true;
+
+        for (let i = 0; i < quizData.length; i++) {
+            const selected = document.querySelector(`input[name="question${i}"]:checked`);
+            if (!selected) {
+                allAnswered = false;
+                break;
+            }
+        }
+
+        if (!allAnswered) {
+            alert('請回答所有問題後再送出！');
+            return;
+        }
+
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "成績結算中..."; 
+        const allRadios = document.querySelectorAll('input[type="radio"]');
+        allRadios.forEach(radio => radio.disabled = true);
+
+        quizData.forEach((data, i) => {
+            const selected = document.querySelector(`input[name="question${i}"]:checked`);
+            const selectedValue = parseInt(selected.value);
+            const feedbackDiv = document.getElementById(`feedback${i}`);
+
+            if (selectedValue === data.correctIndex) {
+                score++;
+                feedbackDiv.innerHTML = `<strong>✅ 答對了！</strong><br>${data.rationale}`;
+                feedbackDiv.className = 'feedback correct';
+            } else {
+                feedbackDiv.innerHTML = `<strong>❌ 答錯了！正確答案是：${data.options[data.correctIndex]}</strong><br>${data.rationale}`;
+                feedbackDiv.className = 'feedback incorrect';
+            }
+        });
+
+        // 呼叫顯示結果函數
+        showResult(score, submitBtn);
+    }
+
+    // 將顯示結果的邏輯獨立成一個函數
+    function showResult(score, submitBtn) {
+        submitBtn.style.display = 'none'; 
+        
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const submitTime = `${yyyy}/${mm}/${dd} ${hh}:${min}`;
+
+        const scoreDisplay = document.getElementById('score-display');
+        const isPerfect = (score === quizData.length);
+        const scoreColor = isPerfect ? '#2ecc71' : (score >= 3 ? '#f39c12' : '#e74c3c');
+        
+        let resultHTML = '';
+
+        if (isPerfect) {
+            // 滿分的排版（左圖右文）
+            resultHTML = `
+                <div class="perfect-score-container">
+                    <img src="certificate.png" alt="完成合格" class="certificate-img">
+                    <div>
+                        <div>學號：<span class="student-id-highlight">${studentId}</span></div>
+                        <div style="font-size: 1.2em; margin-top: 10px;">
+                            🎉 <strong>太棒了！完全答對！</strong><br>
+                            您的得分是：<strong style="color: ${scoreColor}; font-size: 1.5em;">${score} / ${quizData.length}</strong>
+                        </div>
+                        <div style="font-size: 0.9em; color: #7f8c8d; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
+                            完成時間：${submitTime}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // 非滿分的排版（加入再試一次按鈕）
+            resultHTML = `
+                <div style="text-align: center;">
+                    <div>學號：<span class="student-id-highlight">${studentId}</span></div>
+                    <div style="font-size: 1.2em; margin-top: 10px;">
+                        測驗完成！<br>
+                        您的得分是：<strong style="color: ${scoreColor}; font-size: 1.5em;">${score} / ${quizData.length}</strong>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="retry-btn" onclick="resetQuiz()">再試一次 🔄</button>
+                    </div>
+                    <div style="font-size: 0.9em; color: #7f8c8d; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
+                        完成時間：${submitTime}
+                    </div>
+                </div>
+            `;
+        }
+        
+        scoreDisplay.innerHTML = resultHTML;
+        scoreDisplay.style.display = 'block';
+    }
+
+    // 再試一次的重置邏輯
+    function resetQuiz() {
+        // 隱藏成績顯示區
+        const scoreDisplay = document.getElementById('score-display');
+        scoreDisplay.style.display = 'none';
+
+        // 恢復送出按鈕
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerText = "送出並查看結果";
+
+        // 清空選項與隱藏回饋
+        for (let i = 0; i < quizData.length; i++) {
+            // 清除選取狀態並解除禁用
+            const radios = document.querySelectorAll(`input[name="question${i}"]`);
+            radios.forEach(radio => {
+                radio.checked = false;
+                radio.disabled = false;
+            });
+
+            // 隱藏解析方塊
+            const feedbackDiv = document.getElementById(`feedback${i}`);
+            feedbackDiv.style.display = 'none';
+            feedbackDiv.className = 'feedback';
+            feedbackDiv.innerHTML = '';
+        }
+
+        // 畫面平滑捲動回最上方，讓學生重新作答
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.onload = initQuiz;
+</script>
+
+</body>
+</html>

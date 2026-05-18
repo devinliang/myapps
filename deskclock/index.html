@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 設定 Favicon: 使用 ./favicon.ico -->
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <title>復古風時鐘</title>
+    <style>
+        /* 引入襯線字體，增加古典感 */
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700&display=swap');
+
+        :root {
+            --bg-wood: #2c1e14;
+            --brass-light: #f5d061;
+            --brass-dark: #b8860b;
+            --face-bg: #f4e4bc;
+            --face-shadow: #dcc289;
+            --hand-color: #1a1a1a;
+            --cal-bg: #fffbf0;
+            --cal-red: #c0392b;
+            --cal-green: #27ae60;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-wood);
+            /* 模擬木紋背景 (紋理維持像素單位比較細緻) */
+            background-image: repeating-linear-gradient(45deg, #3d2b1f 0px, #3d2b1f 2px, #2c1e14 2px, #2c1e14 8px);
+            margin: 0;
+            overflow: hidden; /* 防止捲軸出現 */
+            font-family: 'Cinzel', serif;
+        }
+
+        /* --- 傳統日曆樣式開始 --- */
+        .calendar {
+            position: absolute;
+            top: 5vmin;
+            left: 5vmin;
+            width: 18vmin;
+            height: 24vmin; /* 長方形比例 */
+            background-color: var(--cal-bg);
+            border-radius: 1vmin;
+            box-shadow: 0 2vmin 4vmin rgba(0,0,0,0.6); /* 強烈的陰影讓它看起來浮在牆上 */
+            text-align: center;
+            font-family: 'Noto Serif TC', serif; /* 使用中文字體 */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 20; /* 確保在最上層 */
+            /* 模擬紙張微翹的效果 */
+            transform: rotate(-2deg); 
+        }
+
+        /* 日曆頂部紅色裝訂條 */
+        .cal-header {
+            background-color: var(--cal-red);
+            color: white;
+            padding: 1vmin 0;
+            font-size: 2.5vmin;
+            font-weight: bold;
+            letter-spacing: 0.2vmin;
+            box-shadow: 0 0.5vmin 1vmin rgba(0,0,0,0.2);
+        }
+
+        /* 日曆中間大日期 */
+        .cal-body {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10vmin; /* 超大數字 */
+            font-weight: 900;
+            color: #2c3e50;
+            /* 模擬紙張紋理 */
+            background-image: radial-gradient(#e0e0e0 1px, transparent 1px);
+            background-size: 1vmin 1vmin;
+            line-height: 1;
+        }
+
+        /* 假日變成紅色 (用 JS 控制 class) */
+        .cal-body.weekend {
+            color: var(--cal-red);
+        }
+
+        /* 日曆底部資訊 */
+        .cal-footer {
+            display: flex;
+            justify-content: space-around;
+            padding: 1.5vmin 0;
+            background-color: transparent;
+            font-size: 2.5vmin;
+            font-weight: bold;
+            color: #555;
+            border-top: 1px dashed #ccc; /* 撕線效果 */
+        }
+        
+        .cal-year { font-size: 2vmin; color: #888; }
+        .cal-weekday { color: #333; }
+        /* --- 傳統日曆樣式結束 --- */
+
+
+        /* 時鐘主體 */
+        .clock {
+            /* 使用 vmin 單位 */
+            width: 80vmin;  /* 佔據螢幕短邊的 80% */
+            height: 80vmin;
+            border-radius: 50%;
+            position: relative;
+            /* 黃銅邊框效果 */
+            border: 3vmin solid #b8860b;
+            box-shadow: 
+                0 0 0 1vmin #8b6508, 
+                0 5vmin 12vmin rgba(0,0,0,0.8), 
+                inset 0 0 8vmin rgba(0,0,0,0.5);
+            background: radial-gradient(circle, var(--face-bg) 60%, var(--face-shadow) 100%);
+        }
+
+        /* 鐘面上的刻度數字容器 */
+        .number {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            color: #2b1d0e;
+            font-size: 6.5vmin;
+            font-weight: bold;
+            padding-top: 4vmin;
+            box-sizing: border-box;
+            pointer-events: none;
+            font-family: 'Cinzel', serif; /* 保持時鐘字體 */
+        }
+
+        /* 中心裝飾點 */
+        .center-nut {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5vmin;
+            height: 5vmin;
+            background: radial-gradient(circle, var(--brass-light), var(--brass-dark));
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0.5vmin 0.5vmin 1vmin rgba(0,0,0,0.4);
+            border: 0.2vmin solid #5c4002;
+        }
+
+        /* 指針共用設定 */
+        .hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(0deg);
+            border-radius: 50% 50% 0 0;
+            z-index: 5;
+            box-shadow: 0.4vmin 0.4vmin 1vmin rgba(0,0,0,0.3);
+        }
+
+        /* 時針 */
+        .hour-hand {
+            width: 2.5vmin;
+            height: 22vmin;
+            background: var(--hand-color);
+            border-radius: 2vmin;
+        }
+        .hour-hand::before {
+            content: '';
+            position: absolute;
+            top: 2.5vmin;
+            left: -1vmin;
+            width: 4.5vmin;
+            height: 4.5vmin;
+            border-radius: 50%;
+            background: var(--hand-color);
+        }
+
+        /* 分針 */
+        .min-hand {
+            width: 1.5vmin;
+            height: 30vmin;
+            background: var(--hand-color);
+            border-radius: 1vmin;
+        }
+
+        /* 秒針 */
+        .second-hand {
+            width: 0.5vmin;
+            height: 36vmin;
+            background: #a52a2a;
+            transform-origin: 50% 80%; 
+            bottom: calc(50% - 7.2vmin);
+            z-index: 6;
+            border-radius: 0;
+        }
+        
+        .second-hand::after {
+            content: '';
+            position: absolute;
+            bottom: 1.2vmin;
+            left: -1vmin;
+            width: 2.5vmin;
+            height: 2.5vmin;
+            border-radius: 50%;
+            background: #a52a2a;
+        }
+
+        /* 品牌字樣 */
+        .brand-text {
+            position: absolute;
+            top: 65%;
+            width: 100%;
+            text-align: center;
+            font-size: 2.5vmin;
+            letter-spacing: 0.5vmin;
+            color: #665;
+            text-transform: uppercase;
+            font-family: 'Cinzel', serif;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 新增：傳統日曆組件 -->
+    <div class="calendar">
+        <div class="cal-header" id="cal-month"></div>
+        <div class="cal-body" id="cal-date"></div>
+        <div class="cal-footer">
+            <span class="cal-year" id="cal-year"></span>
+            <span class="cal-weekday" id="cal-day"></span>
+        </div>
+    </div>
+
+    <div class="clock" id="clock-face">
+        <!-- 裝飾文字 -->
+        <div class="brand-text">天涯過客</div>
+        
+        <!-- 中心裝飾 -->
+        <div class="center-nut"></div>
+
+        <!-- 指針 -->
+        <div class="hand hour-hand"></div>
+        <div class="hand min-hand"></div>
+        <div class="hand second-hand"></div>
+    </div>
+
+    <script>
+        const clockFace = document.getElementById('clock-face');
+        const secondHand = document.querySelector('.second-hand');
+        const minHand = document.querySelector('.min-hand');
+        const hourHand = document.querySelector('.hour-hand');
+
+        // 日曆元素
+        const calMonth = document.getElementById('cal-month');
+        const calDate = document.getElementById('cal-date');
+        const calDay = document.getElementById('cal-day');
+        const calYear = document.getElementById('cal-year');
+
+        const romanNumerals = [
+            'XII', 'I', 'II', 'III', 'IV', 'V', 
+            'VI', 'VII', 'VIII', 'IX', 'X', 'XI'
+        ];
+
+        const weekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+
+        function createNumbers() {
+            for (let i = 0; i < 12; i++) {
+                const numDiv = document.createElement('div');
+                numDiv.classList.add('number');
+                const rotation = i * 30;
+                numDiv.style.transform = `rotate(${rotation}deg)`;
+                numDiv.innerHTML = `<span style="display:inline-block;">${romanNumerals[i]}</span>`;
+                clockFace.appendChild(numDiv);
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const seconds = now.getSeconds();
+            const mins = now.getMinutes();
+            const hours = now.getHours();
+
+            const secondsDegrees = (seconds * 6); 
+            const minsDegrees = (mins * 6) + (seconds * 0.1); 
+            const hoursDegrees = (hours * 30) + (mins * 0.5);
+            
+            secondHand.style.transform = `translateX(-50%) rotate(${secondsDegrees}deg)`;
+            minHand.style.transform = `translateX(-50%) rotate(${minsDegrees}deg)`;
+            hourHand.style.transform = `translateX(-50%) rotate(${hoursDegrees}deg)`;
+        }
+
+        function updateCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1; // 0-11
+            const date = now.getDate();
+            const day = now.getDay(); // 0-6
+
+            // 更新文字
+            calMonth.textContent = `${month}月`;
+            calDate.textContent = date;
+            calDay.textContent = weekDays[day];
+            calYear.textContent = year;
+
+            // 週末判斷 (0是週日, 6是週六)
+            if (day === 0 || day === 6) {
+                calDate.classList.add('weekend');
+                calDay.style.color = 'var(--cal-red)';
+            } else {
+                calDate.classList.remove('weekend');
+                calDay.style.color = '#333';
+            }
+        }
+
+        // 初始化
+        createNumbers();
+        
+        // 啟動時鐘和日曆
+        setInterval(() => {
+            updateClock();
+            // 其實日曆不用每秒更新，但為了程式碼簡潔，放在一起無妨
+            // 若在跨日時會自動更新
+            if(new Date().getSeconds() === 0) {
+                updateCalendar();
+            }
+        }, 1000);
+        
+        updateClock();
+        updateCalendar();
+
+    </script>
+</body>
+</html>

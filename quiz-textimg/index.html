@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 常用標籤與影像 - 課後複習測驗</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --background-color: #f5f7fa;
+            --text-color: #333;
+            --correct-color: #2ecc71;
+            --incorrect-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft JhengHei', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        .question-card {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #fafafa;
+            border-left: 5px solid var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .question-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .options label {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .options label:hover {
+            background: #f0f8ff;
+        }
+
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+            font-size: 0.95em;
+        }
+
+        .feedback.correct {
+            display: block;
+            background-color: #e8f8f5;
+            color: #27ae60;
+            border: 1px solid #2ecc71;
+        }
+
+        .feedback.incorrect {
+            display: block;
+            background-color: #fdedec;
+            color: #c0392b;
+            border: 1px solid #e74c3c;
+        }
+
+        #submit-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 20px;
+        }
+
+        #submit-btn:hover {
+            background-color: #357abd;
+        }
+
+        #submit-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        #score-display {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            border: 2px dashed #ccc;
+            display: none;
+        }
+
+        .student-id-highlight {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .perfect-score-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            text-align: left;
+        }
+
+        .certificate-img {
+            width: 150px;
+            height: auto;
+            flex-shrink: 0;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .retry-btn {
+            padding: 10px 25px;
+            font-size: 1.1em;
+            background-color: var(--incorrect-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        .retry-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .retry-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 600px) {
+            .perfect-score-container {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>HTML 常用標籤與影像</h1>
+    <div id="quiz-container"></div>
+    <button id="submit-btn" onclick="submitQuiz()">送出並查看結果</button>
+    <div id="score-display"></div>
+</div>
+
+<script>
+    let studentId = "";
+
+    const quizData = [
+    {
+        question: "在 HTML 原始碼中輸入多個空格或換行，瀏覽器最終呈現出的文字效果為何？",
+        options: [
+            "完整保留所有的空格與換行",
+            "所有的空格與換行都會消失，文字緊貼在一起",
+            "所有的連續空格與換行都會被視為「一個空格」",
+            "瀏覽器會自動在每個換行處加入水平線"
+        ],
+        correctIndex: 2,
+        rationale: "HTML 會壓縮連續的空白字元。若要保留原始格式，需使用 <pre> 標籤；若要強制換行則需使用 <br>。"
+    },
+    {
+        question: "關於標題標籤 h1 ~ h6 的敘述，下列何者「錯誤」？",
+        options: [
+            "h1 代表最重要的標題，字體通常最大",
+            "搜尋引擎會利用標題標籤來了解網頁架構並建立索引",
+            "適當使用標題有助於使用者快速掃讀網頁資訊",
+            "h6 的標題層級比 h1 更重要，常用於頁面大標"
+        ],
+        correctIndex: 3,
+        rationale: "數字越小代表層級越高。h1 是最重要的大標題，h6 則是層級最低的小標題。"
+    },
+    {
+        question: "若要展示「程式碼範例」並保持縮進與空格的原始排列格式，應該使用哪種標籤？",
+        options: [
+            "使用 <p> 標籤搭配多個空格",
+            "使用 <br> 標籤手動換行",
+            "使用 <pre> 標籤包裹內容",
+            "使用 <strong> 標籤標註"
+        ],
+        correctIndex: 2,
+        rationale: "<pre> (Preformatted text) 標籤會保留文字中的空格與換行，非常適合顯示程式原始碼。"
+    },
+    {
+        question: "關於影像標籤 <img> 的 alt 屬性，下列敘述何者正確？",
+        options: [
+            "它是用來設定影像的 URL 來源地址 (src)",
+            "當影像載入失敗時，瀏覽器會呈現 alt 設定的替代文字",
+            "alt 屬性僅供參考，不設定也不會影響網頁標準認證",
+            "alt 設定的文字會直接顯示在圖片正中央"
+        ],
+        correctIndex: 1,
+        rationale: "alt 屬性提供替代資訊。當圖片載入失敗或使用無障礙螢幕閱讀器時，會讀出此文字幫助理解內容。"
+    },
+    {
+        question: "關於現代網頁建議使用的影像格式 WebP，下列敘述何者正確？",
+        options: [
+            "它是由 Google 公布，具有高效能壓縮且支援透明與動畫",
+            "它屬於向量格式，無限放大也不會產生失真",
+            "它是目前瀏覽器支援的唯一向量格式",
+            "它是點陣格式，但不支援透明圖層功能"
+        ],
+        correctIndex: 0,
+        rationale: "WebP 格式能顯著壓縮網頁照片體積，加快載入速度，且支援透明層與動畫，是 PNG 與 GIF 的絕佳替代方案。"
+    }
+];
+
+    const quizContainer = document.getElementById('quiz-container');
+
+    function initQuiz() {
+        while (!studentId || studentId.trim() === "") {
+            studentId = prompt("測驗開始前，請輸入您的學號：", "");
+            if (studentId === null) {
+                studentId = "未提供學號 (訪客)";
+                break;
+            }
+        }
+
+        quizContainer.innerHTML = '';
+
+        quizData.forEach((data, qIndex) => {
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card';
+            
+            const questionTitle = document.createElement('div');
+            questionTitle.className = 'question-title';
+            questionTitle.innerText = `Q${qIndex + 1}. ${data.question}`;
+            questionCard.appendChild(questionTitle);
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'options';
+
+            data.options.forEach((option, oIndex) => {
+                const label = document.createElement('label');
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = `question${qIndex}`;
+                radio.value = oIndex;
+                
+                label.appendChild(radio);
+                label.appendChild(document.createTextNode(option));
+                optionsDiv.appendChild(label);
+            });
+
+            questionCard.appendChild(optionsDiv);
+
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.id = `feedback${qIndex}`;
+            feedbackDiv.className = 'feedback';
+            questionCard.appendChild(feedbackDiv);
+
+            quizContainer.appendChild(questionCard);
+        });
+    }
+
+    function submitQuiz() {
+        let score = 0;
+        let allAnswered = true;
+
+        for (let i = 0; i < quizData.length; i++) {
+            const selected = document.querySelector(`input[name="question${i}"]:checked`);
+            if (!selected) {
+                allAnswered = false;
+                break;
+            }
+        }
+
+        if (!allAnswered) {
+            alert('請回答所有問題後再送出！');
+            return;
+        }
+
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "成績結算中..."; 
+        const allRadios = document.querySelectorAll('input[type="radio"]');
+        allRadios.forEach(radio => radio.disabled = true);
+
+        quizData.forEach((data, i) => {
+            const selected = document.querySelector(`input[name="question${i}"]:checked`);
+            const selectedValue = parseInt(selected.value);
+            const feedbackDiv = document.getElementById(`feedback${i}`);
+
+            if (selectedValue === data.correctIndex) {
+                score++;
+                // 使用 textContent 避免 HTML 被解析，確保標籤符號可見
+                feedbackDiv.textContent = ""; 
+                const strong = document.createElement("strong");
+                strong.innerText = "✅ 答對了！";
+                feedbackDiv.appendChild(strong);
+                feedbackDiv.appendChild(document.createElement("br"));
+                feedbackDiv.appendChild(document.createTextNode(data.rationale));
+                feedbackDiv.className = 'feedback correct';
+            } else {
+                feedbackDiv.textContent = "";
+                const strong = document.createElement("strong");
+                strong.innerText = `❌ 答錯了！正確答案是：${data.options[data.correctIndex]}`;
+                feedbackDiv.appendChild(strong);
+                feedbackDiv.appendChild(document.createElement("br"));
+                feedbackDiv.appendChild(document.createTextNode(data.rationale));
+                feedbackDiv.className = 'feedback incorrect';
+            }
+        });
+
+        showResult(score, submitBtn);
+    }
+
+    function showResult(score, submitBtn) {
+        submitBtn.style.display = 'none'; 
+        
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const submitTime = `${yyyy}/${mm}/${dd} ${hh}:${min}`;
+
+        const scoreDisplay = document.getElementById('score-display');
+        const isPerfect = (score === quizData.length);
+        const scoreColor = isPerfect ? '#2ecc71' : (score >= 3 ? '#f39c12' : '#e74c3c');
+        
+        let resultHTML = '';
+
+        if (isPerfect) {
+            resultHTML = `
+                <div class="perfect-score-container">
+                    <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="完成合格" class="certificate-img">
+                    <div>
+                        <div>學號：<span class="student-id-highlight">${studentId}</span></div>
+                        <div style="font-size: 1.2em; margin-top: 10px;">
+                            🎉 <strong>完全正確！觀念非常紮實！</strong><br>
+                            您的得分是：<strong style="color: ${scoreColor}; font-size: 1.5em;">${score} / ${quizData.length}</strong>
+                        </div>
+                        <div style="font-size: 0.9em; color: #7f8c8d; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
+                            完成時間：${submitTime}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            resultHTML = `
+                <div style="text-align: center;">
+                    <div>學號：<span class="student-id-highlight">${studentId}</span></div>
+                    <div style="font-size: 1.2em; margin-top: 10px;">
+                        測驗完成！再加把勁就能滿分了！<br>
+                        您的得分是：<strong style="color: ${scoreColor}; font-size: 1.5em;">${score} / ${quizData.length}</strong>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="retry-btn" onclick="resetQuiz()">再試一次 🔄</button>
+                    </div>
+                    <div style="font-size: 0.9em; color: #7f8c8d; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
+                        完成時間：${submitTime}
+                    </div>
+                </div>
+            `;
+        }
+        
+        scoreDisplay.innerHTML = resultHTML;
+        scoreDisplay.style.display = 'block';
+    }
+
+    function resetQuiz() {
+        const scoreDisplay = document.getElementById('score-display');
+        scoreDisplay.style.display = 'none';
+
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerText = "送出並查看結果";
+
+        for (let i = 0; i < quizData.length; i++) {
+            const radios = document.querySelectorAll(`input[name="question${i}"]`);
+            radios.forEach(radio => {
+                radio.checked = false;
+                radio.disabled = false;
+            });
+
+            const feedbackDiv = document.getElementById(`feedback${i}`);
+            feedbackDiv.style.display = 'none';
+            feedbackDiv.className = 'feedback';
+            feedbackDiv.innerHTML = '';
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.onload = initQuiz;
+</script>
+
+</body>
+</html>

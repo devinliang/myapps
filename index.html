@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyApps 應用總覽</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #04111e;
+            --surface: rgba(12, 27, 46, 0.92);
+            --surface-strong: rgba(10, 20, 35, 0.95);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --accent: #60a5fa;
+            --accent-strong: #38bdf8;
+            --shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #164071 0%, #04111e 52%);
+            color: var(--text);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.18), transparent 24%),
+                        radial-gradient(circle at 80% 15%, rgba(96, 165, 250, 0.1), transparent 18%),
+                        radial-gradient(circle at 50% 80%, rgba(255, 255, 255, 0.06), transparent 16%);
+            pointer-events: none;
+        }
+
+        main {
+            position: relative;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 2.5rem;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(14px);
+        }
+
+        h1 {
+            margin: 0 0 0.5rem;
+            font-size: clamp(2.4rem, 3.4vw, 3.4rem);
+            letter-spacing: -0.04em;
+        }
+
+        .lead {
+            margin: 0;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.25rem;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+
+        .card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 190px;
+            padding: 1.5rem;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(96, 165, 250, 0.35);
+            background: rgba(15, 29, 54, 0.95);
+        }
+
+        .card h2 {
+            margin: 0 0 0.75rem;
+            font-size: 1.45rem;
+        }
+
+        .card p {
+            margin: 0 0 1.25rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .card a {
+            align-self: start;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.85rem 1.2rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card a:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 34px rgba(56, 189, 248, 0.22);
+        }
+
+        .footer {
+            margin-top: 3rem;
+            color: var(--muted);
+            text-align: center;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <h1>MyApps 應用總覽</h1>
+            <p class="lead">以下列出目前所有子資料夾中的應用程式，點擊卡片即可開啟對應應用。</p>
+        </header>
+
+        <section class="grid">
+            <article class="card">
+                <div>
+                    <h2>Desk Clock</h2>
+                    <p>復古風時鐘應用，從 `deskclock/index.html` 開啟。</p>
+                </div>
+                <a href="deskclock/index.html">開啟 Desk Clock</a>
+            </article>
+
+            <article class="card">
+                <div>
+                    <h2>Timer</h2>
+                    <p>現代倒數計時器應用，從 `timer/timer.html` 開啟。</p>
+                </div>
+                <a href="timer/timer.html">開啟 Timer</a>
+            </article>
+        </section>
+
+        <div class="footer">如有新增子資料夾應用，可於此頁加入新連結。</div>
+    </main>
+</body>
+</html>

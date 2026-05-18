@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 設定 Favicon: 使用 ./favicon.ico -->
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    
+    <title>線上圖片轉 ICO 轉換器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .drop-zone {
+            transition: all 0.3s ease;
+            border: 2px dashed #cbd5e1;
+        }
+        .drop-zone.drag-over {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-12 px-4">
+
+    <div class="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">圖片轉 ICO 轉換器</h1>
+            <p class="text-gray-500 text-sm">支援將 PNG、JPG 轉換為 Windows 圖標格式 (.ico)</p>
+        </header>
+
+        <!-- 上傳區域 -->
+        <div id="dropZone" class="drop-zone rounded-xl p-10 text-center cursor-pointer mb-8">
+            <input type="file" id="fileInput" accept="image/png, image/jpeg" class="hidden">
+            <div id="uploadUI">
+                <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <p class="text-lg font-medium text-gray-700">點擊或拖曳圖片到此處</p>
+                <p class="text-sm text-gray-400 mt-2">支援 PNG, JPG, JPEG</p>
+            </div>
+            <div id="previewUI" class="hidden">
+                <img id="imagePreview" class="max-h-48 mx-auto rounded shadow-sm mb-4">
+                <div class="space-y-1">
+                    <p id="fileName" class="text-sm text-gray-800 font-semibold truncate max-w-xs mx-auto"></p>
+                    <p id="fileResolution" class="text-xs text-gray-500 font-mono bg-gray-100 inline-block px-2 py-0.5 rounded"></p>
+                </div>
+                <br>
+                <button onclick="resetApp()" class="mt-4 text-sm text-red-500 hover:underline">重新選擇</button>
+            </div>
+        </div>
+
+        <!-- 設定選項 -->
+        <div class="mb-8 bg-gray-50 p-6 rounded-lg border border-gray-100">
+            <h3 class="font-semibold text-gray-700 mb-4">圖標設定</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">輸出尺寸 (像素)</label>
+                    <select id="iconSize" class="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="16">16 x 16 (小圖標)</option>
+                        <option value="32">32 x 32 (一般圖標)</option>
+                        <option value="48">48 x 48 (桌面圖標)</option>
+                        <option value="64">64 x 64</option>
+                        <option value="128">128 x 128</option>
+                        <option value="256" selected>256 x 256 (高品質)</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button id="convertBtn" disabled class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded shadow-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        開始轉換
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 轉換結果 -->
+        <div id="resultArea" class="hidden border-t pt-8 text-center">
+            <p class="text-green-600 font-medium mb-4 flex items-center justify-center">
+                <svg class="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                轉換完成！
+            </p>
+            <div class="inline-block p-4 bg-gray-100 rounded-lg mb-4">
+                <img id="icoPreview" class="w-16 h-16 object-contain mx-auto" alt="ICO Preview">
+                <span id="outputSizeLabel" class="text-[10px] text-gray-400 block mt-2">ICO 預覽</span>
+            </div>
+            <br>
+            <a id="downloadBtn" href="#" class="inline-flex items-center bg-gray-800 text-white px-8 py-3 rounded-full font-bold hover:bg-black transition-transform active:scale-95 shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                下載 .ICO 檔案
+            </a>
+        </div>
+    </div>
+
+    <footer class="mt-12 text-gray-400 text-sm">
+        <p>Wenzao DCAM Devin Liang - 100% 在地化處理 • 安全且私密</p>
+    </footer>
+
+    <!-- 訊息提示 -->
+    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-black text-white px-6 py-3 rounded-full text-sm opacity-0 transition-opacity pointer-events-none shadow-2xl">
+        提示訊息
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadUI = document.getElementById('uploadUI');
+        const previewUI = document.getElementById('previewUI');
+        const imagePreview = document.getElementById('imagePreview');
+        const fileName = document.getElementById('fileName');
+        const fileResolution = document.getElementById('fileResolution');
+        const convertBtn = document.getElementById('convertBtn');
+        const iconSizeSelect = document.getElementById('iconSize');
+        const resultArea = document.getElementById('resultArea');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const icoPreview = document.getElementById('icoPreview');
+        const outputSizeLabel = document.getElementById('outputSizeLabel');
+        const toast = document.getElementById('toast');
+
+        let originalImage = null;
+
+        // 顯示提示訊息
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => toast.classList.add('opacity-0'), 3000);
+        }
+
+        // 點擊區域觸發文件選擇
+        dropZone.onclick = () => { if(!originalImage) fileInput.click(); };
+
+        // 拖曳處理
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); };
+        dropZone.ondragleave = () => { dropZone.classList.remove('drag-over'); };
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            handleFile(file);
+        };
+
+        fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+        function handleFile(file) {
+            if (!file) return;
+            if (!file.type.match('image/png') && !file.type.match('image/jpeg')) {
+                showToast("僅支援 PNG 或 JPG 格式");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    originalImage = img;
+                    imagePreview.src = e.target.result;
+                    fileName.textContent = file.name;
+                    // 顯示原始尺寸
+                    fileResolution.textContent = `原始尺寸: ${img.width} x ${img.height} 像素`;
+                    
+                    uploadUI.classList.add('hidden');
+                    previewUI.classList.remove('hidden');
+                    convertBtn.disabled = false;
+                    resultArea.classList.add('hidden');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetApp() {
+            originalImage = null;
+            fileInput.value = '';
+            uploadUI.classList.remove('hidden');
+            previewUI.classList.add('hidden');
+            convertBtn.disabled = true;
+            resultArea.classList.add('hidden');
+        }
+
+        convertBtn.onclick = () => {
+            if (!originalImage) return;
+
+            const size = parseInt(iconSizeSelect.value);
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // 保持比例居中繪製
+            const ratio = Math.min(size / originalImage.width, size / originalImage.height);
+            const w = originalImage.width * ratio;
+            const h = originalImage.height * ratio;
+            const x = (size - w) / 2;
+            const y = (size - h) / 2;
+
+            ctx.clearRect(0, 0, size, size);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(originalImage, x, y, w, h);
+
+            // 取得 PNG 數據
+            canvas.toBlob((blob) => {
+                createIcoBlob(blob, size);
+            }, 'image/png');
+        };
+
+        // 建立簡單的 ICO 文件頭 (單張 PNG 封裝)
+        async function createIcoBlob(pngBlob, size) {
+            const pngArrayBuffer = await pngBlob.arrayBuffer();
+            const pngSize = pngArrayBuffer.byteLength;
+
+            // ICO Header (6 bytes)
+            const header = new ArrayBuffer(6);
+            const viewH = new DataView(header);
+            viewH.setUint16(0, 0, true);     // Reserved
+            viewH.setUint16(2, 1, true);     // Type (1 = ICO)
+            viewH.setUint16(4, 1, true);     // Number of images
+
+            // Directory Entry (16 bytes)
+            const entry = new ArrayBuffer(16);
+            const viewE = new DataView(entry);
+            viewE.setUint8(0, size >= 256 ? 0 : size); // Width
+            viewE.setUint8(1, size >= 256 ? 0 : size); // Height
+            viewE.setUint8(2, 0);                      // Color palette
+            viewE.setUint8(3, 0);                      // Reserved
+            viewE.setUint16(4, 1, true);               // Color planes
+            viewE.setUint16(6, 32, true);              // Bits per pixel
+            viewE.setUint32(8, pngSize, true);         // Image size (bytes)
+            viewE.setUint32(12, 22, true);             // Offset
+
+            const icoBlob = new Blob([header, entry, pngArrayBuffer], { type: 'image/x-icon' });
+            const icoUrl = URL.createObjectURL(icoBlob);
+
+            icoPreview.src = icoUrl;
+            outputSizeLabel.textContent = `ICO 預覽 (${size}x${size})`;
+            downloadBtn.href = icoUrl;
+            downloadBtn.download = `favicon_${size}.ico`;
+            resultArea.classList.remove('hidden');
+            
+            showToast("轉換成功！");
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

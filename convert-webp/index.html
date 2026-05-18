@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>線上 WebP 轉換器 - 極光森林版</title>
+    <!-- 設定 Favicon: 使用 ./favicon.ico -->
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <style>
+        :root {
+            /* 採用 Adobe Color - Northern Lights 色系 */
+            --color-dark-blue: #024059;   /* 深藍綠 */
+            --color-teal: #026873;        /* 藍綠色 */
+            --color-emerald: #04BF8A;     /* 翠綠色 */
+            --color-forest: #025940;      /* 深森林綠 */
+            --color-bright-green: #03A64A; /* 鮮綠色 */
+            
+            --primary-color: var(--color-emerald);
+            --primary-dark: var(--color-forest);
+            --bg-color: #f0f7f6; /* 極淺的冷色調背景 */
+            --card-bg: #ffffff;
+            --text-main: var(--color-dark-blue);
+            --text-muted: #64748b;
+            --border-color: #e2efed;
+            --secondary-color: #f8fafc;
+            --secondary-hover: #f1f5f9;
+            --success-bg: #dcfce7;
+            --success-text: var(--color-forest);
+            --error-bg: #fef2f2;
+            --error-text: #b91c1c;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 60px 20px;
+            background-image: linear-gradient(135deg, #f0f7f6 0%, #e6f0ee 100%);
+        }
+
+        .container {
+            max-width: 650px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(2, 64, 89, 0.05), 0 10px 10px -5px rgba(2, 64, 89, 0.02);
+            border: 1px solid var(--border-color);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            margin: 0 0 12px 0;
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--color-dark-blue);
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--color-teal);
+            margin: 0;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        /* 上傳區 */
+        .drop-zone {
+            border: 3px dashed var(--color-emerald);
+            border-radius: 20px;
+            padding: 60px 20px;
+            text-align: center;
+            background: #fdfdfd;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .drop-zone:hover {
+            border-color: var(--color-teal);
+            background: #f0f9f7;
+            transform: translateY(-2px);
+        }
+
+        .drop-zone.over {
+            border-color: var(--color-dark-blue);
+            background: #e6f4f1;
+            transform: scale(1.02);
+        }
+
+        .drop-zone svg {
+            width: 72px;
+            height: 72px;
+            color: var(--color-emerald);
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+
+        .drop-zone p {
+            font-weight: 700;
+            margin: 5px 0;
+            font-size: 20px;
+            color: var(--color-teal);
+        }
+
+        .drop-zone span {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* 編輯區 */
+        .editor-zone {
+            display: none;
+            margin-top: 20px;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .preview-container {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .preview-box {
+            background: #fafafa;
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 12px;
+            box-shadow: inset 0 2px 4px rgba(2, 64, 89, 0.02);
+        }
+
+        #previewImg {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .image-info {
+            background: #f0f9f7;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: var(--color-forest);
+            border: 1px solid var(--border-color);
+            line-height: 1.8;
+        }
+
+        .image-info strong {
+            color: var(--color-dark-blue);
+        }
+
+        .controls {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--color-teal);
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+            background: white;
+            transition: border-color 0.2s;
+            color: var(--color-dark-blue);
+        }
+
+        select:focus {
+            border-color: var(--color-emerald);
+        }
+
+        /* 自定義 range 風格 */
+        input[type="range"] {
+            accent-color: var(--color-bright-green);
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            border: none;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: var(--color-teal);
+            color: white;
+            box-shadow: 0 4px 12px rgba(2, 104, 115, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--color-dark-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(2, 64, 89, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--color-teal);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-teal);
+            color: white;
+        }
+
+        .message {
+            margin-top: 25px;
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .message.success {
+            display: block;
+            background: var(--success-bg);
+            color: var(--success-text);
+            border: 1px solid var(--color-emerald);
+        }
+
+        .message.error {
+            display: block;
+            background: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid #fca5a5;
+        }
+
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            color: var(--color-teal);
+            font-size: 14px;
+            opacity: 0.6;
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 640px) {
+            .container { padding: 30px 20px; }
+            .flex-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>WebP 格式轉換器</h1>
+            <p>快速轉換格式，純本地處理</p>
+        </header>
+
+        <!-- 上傳區 -->
+        <div id="dropZone" class="drop-zone">
+            <input type="file" id="fileInput" class="hidden" accept="image/webp">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p>點擊或拖放 WebP 檔案</p>
+            <span>由您的瀏覽器進行轉換，安全無虞</span>
+        </div>
+
+        <!-- 編輯與控制區 -->
+        <div id="editorZone" class="editor-zone">
+            <div class="flex-row">
+                <div class="preview-container">
+                    <label>圖片預覽</label>
+                    <div class="preview-box">
+                        <img id="previewImg" src="" alt="預覽">
+                    </div>
+                    <!-- 尺寸資訊顯示區 -->
+                    <div id="imageInfo" class="image-info">
+                        <div>原始尺寸：<strong id="infoDim">-</strong></div>
+                        <div>檔案大小：<strong id="infoSize">-</strong></div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="form-group">
+                        <label>轉換目標格式</label>
+                        <select id="formatSelect">
+                            <option value="image/png">PNG (保留透明)</option>
+                            <option value="image/jpeg">JPG (壓縮空間)</option>
+                        </select>
+                    </div>
+
+                    <div id="qualityControl" class="form-group hidden">
+                        <label>品質設定: <span id="qualityVal">80</span>%</label>
+                        <input type="range" id="qualityInput" min="1" max="100" value="80">
+                    </div>
+
+                    <div class="btn-group">
+                        <button id="convertBtn" class="btn btn-primary">立即下載</button>
+                        <button id="resetBtn" class="btn btn-secondary">重新選擇</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="statusMsg" class="message"></div>
+    </div>
+
+    <footer>
+        <p>您的隱私對我們很重要，圖片僅在瀏覽器處理，不留痕跡。</p>
+        <p>Copyright &copy; 2026 極光森林版. Devin@Wenzao DCAM, All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const editorZone = document.getElementById('editorZone');
+            const previewImg = document.getElementById('previewImg');
+            const formatSelect = document.getElementById('formatSelect');
+            const qualityControl = document.getElementById('qualityControl');
+            const qualityInput = document.getElementById('qualityInput');
+            const qualityVal = document.getElementById('qualityVal');
+            const convertBtn = document.getElementById('convertBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const statusMsg = document.getElementById('statusMsg');
+            
+            const infoDim = document.getElementById('infoDim');
+            const infoSize = document.getElementById('infoSize');
+
+            let originalName = '';
+
+            function formatBytes(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            }
+
+            dropZone.onclick = () => fileInput.click();
+
+            dropZone.ondragover = (e) => {
+                e.preventDefault();
+                dropZone.classList.add('over');
+            };
+
+            dropZone.ondragleave = () => dropZone.classList.remove('over');
+
+            dropZone.ondrop = (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('over');
+                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+            };
+
+            fileInput.onchange = (e) => {
+                if (e.target.files.length) handleFile(e.target.files[0]);
+            };
+
+            function handleFile(file) {
+                if (!file.name.toLowerCase().endsWith('.webp') && file.type !== 'image/webp') {
+                    showMessage('請上傳 WebP 格式的圖片檔案', 'error');
+                    return;
+                }
+
+                originalName = file.name.replace(/\.[^/.]+$/, "");
+                infoSize.innerText = formatBytes(file.size);
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.onload = () => {
+                        infoDim.innerText = `${previewImg.naturalWidth} x ${previewImg.naturalHeight} Px`;
+                        dropZone.classList.add('hidden');
+                        editorZone.style.display = 'block';
+                        statusMsg.className = 'message';
+                    };
+                    previewImg.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            formatSelect.onchange = () => {
+                qualityControl.classList.toggle('hidden', formatSelect.value !== 'image/jpeg');
+            };
+
+            qualityInput.oninput = () => {
+                qualityVal.innerText = qualityInput.value;
+            };
+
+            convertBtn.onclick = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const format = formatSelect.value;
+                const ext = format === 'image/png' ? 'png' : 'jpg';
+
+                canvas.width = previewImg.naturalWidth;
+                canvas.height = previewImg.naturalHeight;
+
+                if (format === 'image/jpeg') {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+
+                ctx.drawImage(previewImg, 0, 0);
+
+                const q = parseInt(qualityInput.value) / 100;
+                try {
+                    const dataUrl = canvas.toDataURL(format, format === 'image/jpeg' ? q : undefined);
+                    const link = document.createElement('a');
+                    link.download = `${originalName}.${ext}`;
+                    link.href = dataUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showMessage('轉換成功！下載已啟動。', 'success');
+                } catch (e) {
+                    showMessage('轉換失敗，可能圖片過大或瀏覽器限制', 'error');
+                }
+            };
+
+            resetBtn.onclick = () => {
+                editorZone.style.display = 'none';
+                dropZone.classList.remove('hidden');
+                fileInput.value = '';
+                previewImg.src = '';
+                infoDim.innerText = '-';
+                infoSize.innerText = '-';
+                statusMsg.className = 'message';
+            };
+
+            function showMessage(text, type) {
+                statusMsg.innerText = text;
+                statusMsg.className = `message ${type}`;
+            }
+        });
+    </script>
+</body>
+</html>

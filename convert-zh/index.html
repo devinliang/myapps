@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡繁轉換工具</title>
+    
+    <!-- 加入小幼苗 Favicon (使用與標題相同的圖示及薄荷水綠配色) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%2314b8a6' d='M320 32c0-9.9-4.5-19.2-12.3-25.2S289.8-1.4 280.2 1l-95.4 23.9C115.5 42.2 64 103.4 64 175.7V256H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h32v128c0 35.3 28.7 64 64 64h192c35.3 0 64-28.7 64-64V320h32c17.7 0 32-14.3 32-32s-14.3-32-32-32h-32v-48C384 135.7 332.5 74.5 263.2 57.2L320 32z'/></svg>">
+    
+    <!-- 引入 Tailwind CSS 以進行快速且美觀的樣式設計 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 引入 Font Awesome 提供圖示 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 引入 OpenCC-js (開放中文轉換) 核心函式庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
+
+    <style>
+        /* 自訂捲軸樣式，讓畫面更精緻 */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: transparent; 
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #99f6e4; /* teal-200 */
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: #5eead4; /* teal-300 */
+        }
+    </style>
+</head>
+<body class="bg-[#f0fdfa] min-h-screen font-sans text-stone-800">
+
+    <div class="max-w-6xl mx-auto px-4 py-8 md:py-12">
+        
+        <!-- 標題區塊 -->
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-teal-900 mb-3 flex items-center justify-center gap-3">
+                <i class="fa-solid fa-seedling text-teal-500"></i>
+                即時簡繁轉換工具
+            </h1>
+            <p class="text-teal-700/70">輸入文字即可自動轉換，支援簡轉繁與繁轉簡</p>
+        </header>
+
+        <!-- 工具列與轉換區塊 -->
+        <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] shadow-teal-100/50 border border-teal-50 overflow-hidden">
+            
+            <!-- 控制列 -->
+            <div class="flex flex-col sm:flex-row items-center justify-between bg-teal-50/50 p-4 border-b border-teal-50 gap-4">
+                <div class="flex items-center gap-4 bg-white p-1 rounded-xl shadow-sm border border-teal-50">
+                    <button id="mode-s2t" class="px-5 py-2 rounded-lg bg-teal-100 text-teal-800 font-medium transition-all" onclick="setMode('s2t')">
+                        簡體 ➔ 繁體
+                    </button>
+                    <button id="mode-t2s" class="px-5 py-2 rounded-lg text-stone-500 hover:bg-stone-50 font-medium transition-all" onclick="setMode('t2s')">
+                        繁體 ➔ 簡體
+                    </button>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button onclick="clearText()" class="px-4 py-2 text-sm text-rose-400 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-eraser"></i> 清除內容
+                    </button>
+                    <button onclick="copyOutput()" class="px-4 py-2 text-sm bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-all flex items-center gap-2 shadow-md shadow-teal-200">
+                        <i class="fa-regular fa-copy"></i> 複製結果
+                    </button>
+                </div>
+            </div>
+
+            <!-- 文字輸入與輸出區 (支援響應式排版：手機直排，電腦橫排) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-teal-50">
+                
+                <!-- 輸入區 -->
+                <div class="p-5 flex flex-col h-[450px]">
+                    <div class="flex justify-between items-center mb-3 px-1">
+                        <label id="input-label" class="text-sm font-semibold text-teal-600/80 uppercase tracking-wider">輸入 (簡體中文)</label>
+                        <span id="char-count" class="text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded-full">0 字</span>
+                    </div>
+                    <textarea 
+                        id="input-text" 
+                        class="w-full flex-grow resize-none border-0 focus:ring-0 p-2 text-stone-700 text-lg placeholder-stone-300 bg-transparent leading-relaxed" 
+                        placeholder="請在此貼上或輸入您想轉換的文字..."
+                    ></textarea>
+                </div>
+
+                <!-- 輸出區 -->
+                <div class="p-5 flex flex-col h-[450px] bg-gradient-to-br from-teal-50/30 to-transparent">
+                    <div class="flex justify-between items-center mb-3 px-1">
+                        <label id="output-label" class="text-sm font-semibold text-teal-600/80 uppercase tracking-wider">結果 (繁體中文)</label>
+                    </div>
+                    <textarea 
+                        id="output-text" 
+                        class="w-full flex-grow resize-none border-0 focus:ring-0 p-2 text-stone-800 text-lg bg-transparent leading-relaxed" 
+                        placeholder="轉換後的文字會顯示在這裡..."
+                        readonly
+                    ></textarea>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 提示訊息框 -->
+        <div id="toast" class="fixed bottom-8 right-8 transform translate-y-20 opacity-0 transition-all duration-300 bg-white/90 backdrop-blur-sm border border-teal-100 text-stone-700 px-6 py-4 rounded-2xl shadow-xl shadow-teal-100/50 flex items-center gap-3 z-50">
+            <i class="fa-solid fa-leaf text-teal-500 text-lg"></i>
+            <span id="toast-message" class="font-medium">操作成功</span>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM 元素
+        const inputText = document.getElementById('input-text');
+        const outputText = document.getElementById('output-text');
+        const modeS2TBtn = document.getElementById('mode-s2t');
+        const modeT2SBtn = document.getElementById('mode-t2s');
+        const inputLabel = document.getElementById('input-label');
+        const outputLabel = document.getElementById('output-label');
+        const charCount = document.getElementById('char-count');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        // 當前轉換模式：'s2t' (簡轉繁) 或 't2s' (繁轉簡)
+        let currentMode = 's2t';
+        
+        // OpenCC 轉換器實例
+        let converter = null;
+
+        // 初始化轉換器
+        function initConverter() {
+            try {
+                // 如果 OpenCC 已載入，根據當前模式建立轉換器
+                if (window.OpenCC) {
+                    const fromConfig = currentMode === 's2t' ? 'cn' : 'tw';
+                    const toConfig = currentMode === 's2t' ? 'tw' : 'cn';
+                    converter = OpenCC.Converter({ from: fromConfig, to: toConfig });
+                    // 重新觸發轉換以更新現有文字
+                    convert();
+                }
+            } catch (error) {
+                console.error("OpenCC 初始化失敗:", error);
+                showToast("轉換器載入失敗，請檢查網路連線", true);
+            }
+        }
+
+        // 切換模式 (簡轉繁 / 繁轉簡)
+        function setMode(mode) {
+            if (currentMode === mode) return;
+            currentMode = mode;
+
+            // 更新按鈕樣式
+            if (mode === 's2t') {
+                modeS2TBtn.className = "px-5 py-2 rounded-lg bg-teal-100 text-teal-800 font-medium transition-all";
+                modeT2SBtn.className = "px-5 py-2 rounded-lg text-stone-500 hover:bg-stone-50 font-medium transition-all";
+                inputLabel.innerText = "輸入 (簡體中文)";
+                outputLabel.innerText = "結果 (繁體中文)";
+            } else {
+                modeT2SBtn.className = "px-5 py-2 rounded-lg bg-teal-100 text-teal-800 font-medium transition-all";
+                modeS2TBtn.className = "px-5 py-2 rounded-lg text-stone-500 hover:bg-stone-50 font-medium transition-all";
+                inputLabel.innerText = "輸入 (繁體中文)";
+                outputLabel.innerText = "結果 (簡體中文)";
+            }
+
+            // 交換左右兩邊的文字，提升使用者體驗
+            const tempText = inputText.value;
+            inputText.value = outputText.value;
+            // 更新字數統計
+            updateCharCount();
+            
+            // 重新初始化轉換器並轉換
+            initConverter();
+            showToast(`已切換至：${mode === 's2t' ? '簡轉繁' : '繁轉簡'}`);
+        }
+
+        // 執行轉換
+        function convert() {
+            const text = inputText.value;
+            
+            // 更新字數
+            updateCharCount();
+
+            if (!text.trim()) {
+                outputText.value = '';
+                return;
+            }
+
+            if (converter) {
+                // 使用 OpenCC 進行精準轉換
+                outputText.value = converter(text);
+            } else {
+                outputText.value = "轉換器載入中，請稍候...";
+            }
+        }
+
+        // 更新字數統計
+        function updateCharCount() {
+            const length = inputText.value.length;
+            charCount.innerText = `${length} 字`;
+        }
+
+        // 清除內容
+        function clearText() {
+            inputText.value = '';
+            outputText.value = '';
+            updateCharCount();
+            inputText.focus();
+        }
+
+        // 複製輸出結果
+        function copyOutput() {
+            const textToCopy = outputText.value;
+            if (!textToCopy) {
+                showToast("沒有可複製的內容", true);
+                return;
+            }
+
+            // 建立暫存的 textarea 來執行複製動作 (相容性較好)
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = textToCopy;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast("已複製到剪貼簿！");
+            } catch (err) {
+                console.error('複製失敗:', err);
+                showToast("複製失敗，請手動複製", true);
+            } finally {
+                document.body.removeChild(tempTextArea);
+            }
+        }
+
+        // 顯示提示訊息 (Toast)
+        let toastTimeout;
+        function showToast(message, isError = false) {
+            toastMessage.innerText = message;
+            
+            // 變更圖示顏色
+            const icon = toast.querySelector('i');
+            if (isError) {
+                icon.className = "fa-solid fa-circle-exclamation text-rose-400 text-lg";
+            } else {
+                icon.className = "fa-solid fa-leaf text-teal-500 text-lg";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // 監聽輸入事件，實現即時轉換
+        inputText.addEventListener('input', convert);
+
+        // 頁面載入時初始化轉換器
+        window.addEventListener('DOMContentLoaded', () => {
+            // 確認 OpenCC 腳本是否成功載入
+            if (typeof OpenCC !== 'undefined') {
+                initConverter();
+            } else {
+                // 如果稍微延遲載入，設定一個簡單的輪詢等待
+                let retries = 0;
+                const checkInterval = setInterval(() => {
+                    if (typeof OpenCC !== 'undefined') {
+                        clearInterval(checkInterval);
+                        initConverter();
+                    }
+                    retries++;
+                    if (retries > 20) { // 等待約 2 秒
+                        clearInterval(checkInterval);
+                        console.error("無法載入 OpenCC 函式庫");
+                    }
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

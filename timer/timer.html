@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>現代倒數計時器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap');
+        
+        /* CSS 顏色變數設定區 - 已更新為翠綠色主題 */
+        :root {
+            --bg-from: #064e3b;           /* 背景漸層起始 (深綠) */
+            --bg-to: #022c22;             /* 背景漸層結束 (極深綠) */
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            
+            --primary-color: #10b981;     /* 主色調 (翠綠色 - Emerald 500) */
+            --primary-hover: #059669;     /* 懸停色 (深翠綠) */
+            --accent-color: #34d399;      /* 強調色 (淺翠綠) */
+            
+            --warning-color: #f59e0b;     /* 警告色 (保持橘黃以供辨識) */
+            --warning-hover: #d97706;
+            
+            --danger-color: #ef4444;      /* 危險色 (保持紅色以供辨識) */
+            --danger-hover: #dc2626;
+            
+            --gray-color: #374151;        /* 灰色 (重設按鈕) */
+            --gray-hover: #4b5563;
+            
+            --text-main: #ffffff;         /* 主要文字 */
+            --text-dim: #a7f3d0;          /* 次要文字 (淡綠色調) */
+            
+            --ring-bg: rgba(255, 255, 255, 0.1); /* 進度條底色 */
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-from) 0%, var(--bg-to) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        .timer-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+            min-width: 8ch; 
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-group input {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .progress-ring {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* 按鈕基礎樣式 */
+        .btn-primary { background-color: var(--primary-color); }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        
+        .btn-warning { background-color: var(--warning-color); }
+        .btn-warning:hover { background-color: var(--warning-hover); }
+
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+
+        .btn-gray { background-color: var(--gray-color); }
+        .btn-gray:hover { background-color: var(--gray-hover); }
+
+        /* 彈窗動畫 */
+        #alarm-modal {
+            transition: all 0.3s ease-out;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.9);
+        }
+
+        #alarm-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        .time-up {
+            animation: pulse-red 1s infinite;
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 主體內容 -->
+    <div class="glass-card p-8 md:p-12 w-full max-w-md mx-4 text-center">
+        <h1 class="text-3xl font-bold mb-8 tracking-tight" style="color: var(--accent-color);">倒數計時器</h1>
+
+        <!-- 圓形進度條與顯示 -->
+        <div class="relative inline-flex items-center justify-center mb-6">
+            <svg class="w-64 h-64">
+                <circle style="color: var(--ring-bg);" stroke-width="8" stroke="currentColor" fill="transparent" r="120" cx="128" cy="128" />
+                <circle id="progress-bar" style="color: var(--primary-color);" class="progress-ring" stroke-width="8" stroke-dasharray="753.98" stroke-dashoffset="0" stroke-linecap="round" stroke="currentColor" fill="transparent" r="120" cx="128" cy="128" />
+            </svg>
+            <div id="display" class="timer-display absolute text-4xl font-bold tracking-tight">00:00:00</div>
+        </div>
+
+        <!-- 設定區域 -->
+        <div id="setup-controls">
+            <!-- 任務名稱輸入 -->
+            <div class="input-group mb-4 text-left">
+                <label class="block text-xs uppercase tracking-widest mb-1 ml-1" style="color: var(--text-dim);">提醒事項</label>
+                <input type="text" id="taskName" class="w-full px-4 py-3 rounded-xl text-lg transition-all" placeholder="例如：洗衣服、煮開水...">
+            </div>
+
+            <!-- 時間輸入 -->
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="input-group">
+                    <label class="block text-xs uppercase tracking-widest mb-1" style="color: var(--text-dim);">時</label>
+                    <input type="number" id="hrs" min="0" max="23" value="0" class="w-full text-center py-3 rounded-xl text-xl font-bold" placeholder="00">
+                </div>
+                <div class="input-group">
+                    <label class="block text-xs uppercase tracking-widest mb-1" style="color: var(--text-dim);">分</label>
+                    <input type="number" id="mins" min="0" max="59" value="0" class="w-full text-center py-3 rounded-xl text-xl font-bold" placeholder="00">
+                </div>
+                <div class="input-group">
+                    <label class="block text-xs uppercase tracking-widest mb-1" style="color: var(--text-dim);">秒</label>
+                    <input type="number" id="secs" min="0" max="59" value="0" class="w-full text-center py-3 rounded-xl text-xl font-bold" placeholder="00">
+                </div>
+            </div>
+        </div>
+
+        <!-- 按鈕控制 -->
+        <div class="flex gap-4">
+            <button id="startPauseBtn" class="flex-1 btn-primary text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg">
+                開始計時
+            </button>
+            <button id="resetBtn" class="btn-gray text-white font-bold py-4 px-8 rounded-2xl transition-all active:scale-95">
+                重設
+            </button>
+        </div>
+
+        <!-- 訊息提示 -->
+        <div id="message" class="mt-6 text-sm font-medium min-h-[1.25rem]" style="color: var(--text-dim);"></div>
+    </div>
+
+    <!-- 提醒彈窗 (Modal) -->
+    <div id="alarm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-slate-800 border border-white/10 p-8 rounded-3xl max-w-xs w-full text-center shadow-2xl">
+            <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse" style="background-color: rgba(239, 68, 68, 0.2); color: var(--danger-color);">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">時間到了！</h2>
+            <div id="modalTaskName" class="text-xl font-semibold mb-2 break-words" style="color: var(--accent-color);"></div>
+            <p class="mb-8" style="color: var(--text-dim);">計時器已歸零，請確認您的任務。</p>
+            <button id="stopAlarmBtn" class="w-full btn-danger text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg">
+                停止提醒
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let countdown;
+        let totalSeconds = 0;
+        let remainingSeconds = 0;
+        let isRunning = false;
+        let audioCtx = null;
+        let alarmInterval = null;
+
+        const display = document.getElementById('display');
+        const progressBar = document.getElementById('progress-bar');
+        const startPauseBtn = document.getElementById('startPauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const message = document.getElementById('message');
+        const alarmModal = document.getElementById('alarm-modal');
+        const stopAlarmBtn = document.getElementById('stopAlarmBtn');
+        const taskNameInput = document.getElementById('taskName');
+        const modalTaskDisplay = document.getElementById('modalTaskName');
+        
+        const inputFields = {
+            hrs: document.getElementById('hrs'),
+            mins: document.getElementById('mins'),
+            secs: document.getElementById('secs')
+        };
+
+        const CIRCUMFERENCE = 2 * Math.PI * 120;
+        progressBar.style.strokeDasharray = CIRCUMFERENCE;
+        progressBar.style.strokeDashoffset = 0;
+
+        function playAlarmPulse() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            const playSingleBeep = () => {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+                
+                const now = audioCtx.currentTime;
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.2, now + 0.2);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.8);
+
+                oscillator.start(now);
+                oscillator.stop(now + 1.0);
+            };
+
+            playSingleBeep();
+            alarmInterval = setInterval(playSingleBeep, 1500);
+        }
+
+        function stopAlarm() {
+            if (alarmInterval) {
+                clearInterval(alarmInterval);
+                alarmInterval = null;
+            }
+            alarmModal.classList.remove('active');
+            resetTimer();
+        }
+
+        function updateDisplay(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            
+            display.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            
+            if (totalSeconds > 0) {
+                const offset = CIRCUMFERENCE - (seconds / totalSeconds) * CIRCUMFERENCE;
+                progressBar.style.strokeDashoffset = offset;
+            } else {
+                progressBar.style.strokeDashoffset = 0;
+            }
+        }
+
+        function startTimer() {
+            if (!isRunning) {
+                if (remainingSeconds <= 0) {
+                    const h = parseInt(inputFields.hrs.value) || 0;
+                    const m = parseInt(inputFields.mins.value) || 0;
+                    const s = parseInt(inputFields.secs.value) || 0;
+                    
+                    totalSeconds = h * 3600 + m * 60 + s;
+                    remainingSeconds = totalSeconds;
+
+                    if (totalSeconds <= 0) {
+                        showMessage("請設定有效的時間", "text-yellow-500");
+                        return;
+                    }
+                }
+
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                isRunning = true;
+                startPauseBtn.textContent = "暫停";
+                startPauseBtn.classList.replace('btn-primary', 'btn-warning');
+                showMessage(taskNameInput.value ? `正在計時：${taskNameInput.value}` : "計時中...", "");
+                
+                document.getElementById('setup-controls').classList.add('opacity-50', 'pointer-events-none');
+
+                countdown = setInterval(() => {
+                    remainingSeconds--;
+                    updateDisplay(remainingSeconds);
+
+                    if (remainingSeconds <= 0) {
+                        clearInterval(countdown);
+                        timerFinished();
+                    }
+                }, 1000);
+            } else {
+                pauseTimer();
+            }
+        }
+
+        function pauseTimer() {
+            clearInterval(countdown);
+            isRunning = false;
+            startPauseBtn.textContent = "繼續";
+            startPauseBtn.classList.replace('btn-warning', 'btn-primary');
+            showMessage("已暫停", "");
+        }
+
+        function timerFinished() {
+            isRunning = false;
+            display.classList.add('time-up');
+            showMessage("時間到！", "font-bold");
+            
+            modalTaskDisplay.textContent = taskNameInput.value || "未命名任務";
+            
+            alarmModal.classList.add('active');
+            playAlarmPulse();
+        }
+
+        function resetTimer() {
+            clearInterval(countdown);
+            if (alarmInterval) clearInterval(alarmInterval);
+            
+            isRunning = false;
+            remainingSeconds = 0;
+            totalSeconds = 0;
+            
+            updateDisplay(0);
+            display.classList.remove('time-up');
+            startPauseBtn.textContent = "開始計時";
+            startPauseBtn.className = "flex-1 btn-primary text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg";
+            
+            document.getElementById('setup-controls').classList.remove('opacity-50', 'pointer-events-none');
+            showMessage("", "");
+            
+            inputFields.hrs.value = 0;
+            inputFields.mins.value = 0;
+            inputFields.secs.value = 0;
+        }
+
+        function showMessage(text, extraClass) {
+            message.textContent = text;
+            message.className = `mt-6 text-sm min-h-[1.25rem] ${extraClass}`;
+        }
+
+        startPauseBtn.addEventListener('click', startTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        stopAlarmBtn.addEventListener('click', stopAlarm);
+
+        [inputFields.hrs, inputFields.mins, inputFields.secs].forEach(input => {
+            input.addEventListener('change', function() {
+                if (this.value < 0) this.value = 0;
+                if (this.id !== 'hrs' && this.value > 59) this.value = 59;
+                if (this.id === 'hrs' && this.value > 23) this.value = 23;
+            });
+        });
+    </script>
+</body>
+</html>
