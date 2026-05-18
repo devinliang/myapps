@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <title>MyApps 應用總覽</title>
     <style>
         :root {
-            color-scheme: dark;
-            --bg: #04111e;
-            --surface: rgba(12, 27, 46, 0.92);
-            --surface-strong: rgba(10, 20, 35, 0.95);
-            --border: rgba(255, 255, 255, 0.08);
-            --text: #e2e8f0;
-            --muted: #94a3b8;
-            --accent: #60a5fa;
-            --accent-strong: #38bdf8;
-            --shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+            color-scheme: light;
+            --bg: #FFFEF4;
+            --surface: rgba(255, 254, 244, 0.95);
+            --surface-strong: rgba(110, 99, 71, 0.12);
+            --border: rgba(110, 99, 71, 0.18);
+            --text: #18384E;
+            --muted: #6E6347;
+            --accent: #B2BC28;
+            --accent-strong: #CAD961;
+            --shadow: 0 24px 80px rgba(24, 56, 78, 0.18);
         }
 
         * {
@@ -26,7 +27,7 @@
             margin: 0;
             min-height: 100vh;
             font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: radial-gradient(circle at top, #164071 0%, #04111e 52%);
+            background: radial-gradient(circle at top left, #FFFEF4 0%, #CAD961 45%, #18384E 100%);
             color: var(--text);
             line-height: 1.6;
         }
@@ -35,9 +36,9 @@
             content: "";
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.18), transparent 24%),
-                        radial-gradient(circle at 80% 15%, rgba(96, 165, 250, 0.1), transparent 18%),
-                        radial-gradient(circle at 50% 80%, rgba(255, 255, 255, 0.06), transparent 16%);
+            background: radial-gradient(circle at 20% 20%, rgba(178, 188, 40, 0.16), transparent 24%),
+                        radial-gradient(circle at 80% 15%, rgba(110, 99, 71, 0.12), transparent 18%),
+                        radial-gradient(circle at 50% 80%, rgba(255, 255, 244, 0.12), transparent 16%);
             pointer-events: none;
         }
 
@@ -84,7 +85,7 @@
             padding: 1.5rem;
             border-radius: 24px;
             border: 1px solid var(--border);
-            background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+            background: linear-gradient(180deg, rgba(255, 254, 244, 0.95), rgba(255, 254, 244, 0.85));
             box-shadow: var(--shadow);
             backdrop-filter: blur(12px);
             transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
@@ -92,8 +93,8 @@
 
         .card:hover {
             transform: translateY(-4px);
-            border-color: rgba(96, 165, 250, 0.35);
-            background: rgba(15, 29, 54, 0.95);
+            border-color: rgba(178, 188, 40, 0.45);
+            background: rgba(178, 188, 40, 0.08);
         }
 
         .card h2 {
@@ -114,15 +115,16 @@
             padding: 0.85rem 1.2rem;
             border-radius: 999px;
             background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-            color: #fff;
+            color: #18384E;
             text-decoration: none;
             font-weight: 600;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
         }
 
         .card a:hover {
             transform: translateY(-1px);
-            box-shadow: 0 16px 34px rgba(56, 189, 248, 0.22);
+            opacity: 0.95;
+            box-shadow: 0 16px 34px rgba(178, 188, 40, 0.25);
         }
 
         .footer {
