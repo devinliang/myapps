@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>照片 EXIF 水印相框產生器</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 升級為強大、現代化且無 Bug 的 Exifr 核心引擎 -->
+    <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
+    <!-- Heic2any CDN (用於在瀏覽器本地解碼 HEIC/HEIF 格式) -->
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=300;400;500;700&family=Playfair+Display:ital,wght=0,500;0,700;1,400&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .serif-text {
+            font-family: 'Playfair Display', 'Georgia', serif;
+        }
+        /* 自訂拉條樣式 */
+        input[type="range"] {
+            accent-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800">
+
+    <!-- 頂部導航欄 -->
+    <header class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg shadow-md shadow-blue-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-900">照片 EXIF 水印相框產生器</h1>
+                    <p class="text-xs text-slate-500">自動讀取手機/相機參數，一鍵生成精美聯名浮水印</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                    v2.9 Exifr Pro+
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左側控制面板 (佔 5 欄) -->
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- 1. 上傳區域 -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm transition hover:shadow-md">
+                <h2 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span>
+                    步驟 1：上傳您的相片 (支援 HEIC)
+                </h2>
+                
+                <div id="dropzone" class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition group">
+                    <input type="file" id="fileInput" accept="image/*, .heic, .heif, image/heic, image/heif" class="hidden">
+                    <div class="flex flex-col items-center">
+                        <svg class="w-12 h-12 text-slate-400 group-hover:text-blue-500 group-hover:scale-110 transition duration-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <p class="text-sm font-semibold text-slate-700 group-hover:text-blue-600">點擊此處或拖放照片至此</p>
+                        <p class="text-xs text-slate-400 mt-1">支援 JPG, PNG, WEBP, HEIC, HEIF (完全於本地處理)</p>
+                    </div>
+                </div>
+
+                <!-- EXIF 讀取狀態提示 -->
+                <div id="exifWarning" class="mt-3 p-3 bg-blue-50 text-blue-800 rounded-xl text-xs border border-blue-100 flex items-center gap-2">
+                    <span class="flex-shrink-0 text-base">ℹ️</span>
+                    <span>網頁已預載<strong>高雄港夕陽(向量仿真示範圖)</strong>，您可以先用下方的控制面板調整效果，或直接上傳您自己的照片！</span>
+                </div>
+            </div>
+
+            <!-- 2. 外觀樣式預設快速鍵 -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <h2 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span>
+                    樣式預設快速套用
+                </h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <button onclick="applyPreset('zeiss-white')" class="px-3 py-2 bg-slate-50 border border-slate-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl text-xs font-medium transition text-left flex flex-col justify-between h-14">
+                        <span class="text-slate-700 font-bold">vivo 蔡司經典</span>
+                        <span class="text-[10px] text-blue-600">白底 / 蔡司藍標</span>
+                    </button>
+                    <button onclick="applyPreset('leica-white')" class="px-3 py-2 bg-slate-50 border border-slate-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl text-xs font-medium transition text-left flex flex-col justify-between h-14">
+                        <span class="text-slate-700 font-bold">小米 徠卡風采</span>
+                        <span class="text-[10px] text-red-600">白底 / 徠卡紅標</span>
+                    </button>
+                    <button onclick="applyPreset('hasselblad-dark')" class="px-3 py-2 bg-slate-50 border border-slate-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl text-xs font-medium transition text-left flex flex-col justify-between h-14">
+                        <span class="text-slate-700 font-bold">一加 哈蘇夜神</span>
+                        <span class="text-[10px] text-amber-600">黑底 / 哈蘇經典</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. 浮水印客製化設定 -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col gap-4">
+                <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span>
+                    步驟 2：客製化浮水印參數
+                </h2>
+
+                <!-- 版型與基礎色彩 -->
+                <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">相框版型</label>
+                        <select id="inputLayout" class="w-full text-xs bg-white border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="bottom">僅加底部欄 (經典)</option>
+                            <option value="frame">拍立得全包邊框</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">字體風格</label>
+                        <select id="inputFontStyle" class="w-full text-xs bg-white border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="sans">無襯線體 (現代風格)</option>
+                            <option value="serif">襯線字體 (Leica風格)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">相框底色</label>
+                        <div class="flex gap-2 items-center">
+                            <input type="color" id="inputBgColor" value="#ffffff" class="w-8 h-8 rounded border border-slate-200 cursor-pointer">
+                            <button onclick="setBannerColors('#ffffff', '#111827')" class="px-2 py-1 bg-white text-slate-800 text-[10px] border border-slate-200 rounded">亮白</button>
+                            <button onclick="setBannerColors('#0a0a0a', '#f3f4f6')" class="px-2 py-1 bg-slate-900 text-white text-[10px] rounded">曜黑</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">文字顏色</label>
+                        <input type="color" id="inputTextColor" value="#111827" class="w-8 h-8 rounded border border-slate-200 cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- 品牌與標誌 -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">左側主品牌 (手機/相機)</label>
+                        <input type="text" id="inputBrand" value="vivo V60" class="w-full text-xs border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">聯名標誌 (選用)</label>
+                        <select id="inputCoBrand" class="w-full text-xs border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="zeiss">ZEISS 蔡司藍標</option>
+                            <option value="leica">Leica 徠卡紅圓標</option>
+                            <option value="hasselblad">Hasselblad 哈蘇經典</option>
+                            <option value="apple">Apple 經典標誌</option>
+                            <option value="none">不使用聯名標誌</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 參數資訊欄位 -->
+                <div class="border-t border-slate-100 pt-3">
+                    <span class="text-xs font-bold text-slate-400 block mb-2">相片 EXIF 拍攝參數 (支援手動修改)</span>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600 mb-1">焦距 (等效焦距)</label>
+                            <input type="text" id="inputFocal" value="134mm" placeholder="placeholder" class="w-full text-xs border border-slate-200 rounded-lg p-2 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600 mb-1">光圈值</label>
+                            <input type="text" id="inputAperture" value="f/2.65" placeholder="placeholder" class="w-full text-xs border border-slate-200 rounded-lg p-2 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600 mb-1">快門速度</label>
+                            <input type="text" id="inputShutter" value="1/588s" placeholder="placeholder" class="w-full text-xs border border-slate-200 rounded-lg p-2 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600 mb-1">感光度 ISO</label>
+                            <input type="text" id="inputISO" value="ISO71" placeholder="placeholder" class="w-full text-xs border border-slate-200 rounded-lg p-2 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 日期與進階 -->
+                <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">拍攝時間</label>
+                        <input type="text" id="inputDateTime" value="2026/03/08 17:17" class="w-full text-xs border border-slate-200 rounded-lg p-2 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">攝影師署名 (置中)</label>
+                        <input type="text" id="inputPhotographer" placeholder="可留空，如：Photo by Max" value=""  class="w-full text-xs border border-slate-200 rounded-lg p-2 outline-none">
+                    </div>
+                </div>
+
+                <!-- 拉條進階微調 -->
+                <div class="border-t border-slate-100 pt-3 flex flex-col gap-3">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-slate-500">相框高度比例</label>
+                            <span id="labelBannerHeight" class="text-xs text-blue-600 font-bold">12%</span>
+                        </div>
+                        <input type="range" id="inputBannerHeight" min="8" max="20" value="12" class="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-slate-500">相片壓縮品質 (JPEG)</label>
+                            <span id="labelQuality" class="text-xs text-blue-600 font-bold">95%</span>
+                        </div>
+                        <input type="range" id="inputQuality" min="70" max="100" value="95" class="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- 右側預覽與下載區 (佔 7 欄) -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
+            
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col flex-grow min-h-[450px]">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span>
+                        即時效果預覽
+                    </h2>
+                    <span id="resolutionInfo" class="text-xs text-slate-400 font-mono">
+                        預覽尺寸: 1600x1200
+                    </span>
+                </div>
+
+                <!-- 畫布容器，對齊上方 (改為 items-start 靠上對齊，並微調 padding) -->
+                <div class="flex-grow flex items-start justify-center bg-slate-50 rounded-xl p-4 border border-slate-100 relative min-h-[350px]">
+                    <canvas id="previewCanvas" class="max-w-full max-h-[60vh] rounded-lg shadow-lg border border-slate-200 object-contain"></canvas>
+                </div>
+
+                <!-- 下載與操作按鈕 -->
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                    <button id="btnReset" class="px-4 py-3 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-xl text-sm font-medium transition text-slate-600 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        重設回範例
+                    </button>
+                    <button id="btnDownload" class="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 text-sm transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        下載高畫質照片
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="bg-white border-t border-slate-100 py-6 mt-12 text-center text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p>© 2026 照片 EXIF 水印相框產生器. 您的相片完全在本地端瀏覽器中處理，絕對不會上傳至伺服器，安全無虞。</p>
+            <p class="flex items-center gap-1">專為質感攝影打造 <span class="text-red-500">❤</span></p>
+        </div>
+    </footer>
+
+    <!-- 全域 JavaScript 核心引擎 -->
+    <script>
+        // 取得重要 DOM 節點
+        const canvas = document.getElementById("previewCanvas");
+        const ctx = canvas.getContext("2d");
+        const fileInput = document.getElementById("fileInput");
+        const dropzone = document.getElementById("dropzone");
+        const warningEl = document.getElementById("exifWarning");
+
+        // 所有輸入元件
+        const inputLayout = document.getElementById("inputLayout");
+        const inputFontStyle = document.getElementById("inputFontStyle");
+        const inputBgColor = document.getElementById("inputBgColor");
+        const inputTextColor = document.getElementById("inputTextColor");
+        const inputBrand = document.getElementById("inputBrand");
+        const inputCoBrand = document.getElementById("inputCoBrand");
+        const inputFocal = document.getElementById("inputFocal");
+        const inputAperture = document.getElementById("inputAperture");
+        const inputShutter = document.getElementById("inputShutter");
+        const inputISO = document.getElementById("inputISO");
+        const inputDateTime = document.getElementById("inputDateTime");
+        const inputPhotographer = document.getElementById("inputPhotographer");
+        const inputBannerHeight = document.getElementById("inputBannerHeight");
+        const inputQuality = document.getElementById("inputQuality");
+
+        // 標籤顯示
+        const labelBannerHeight = document.getElementById("labelBannerHeight");
+        const labelQuality = document.getElementById("labelQuality");
+        const resolutionInfo = document.getElementById("resolutionInfo");
+
+        // 按鈕
+        const btnDownload = document.getElementById("btnDownload");
+        const btnReset = document.getElementById("btnReset");
+
+        // 全域字體常數定義
+        const SANS_FAMILY = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+        const SERIF_FAMILY = '"Playfair Display", "Georgia", "Times New Roman", Times, serif';
+
+        // 100% 完美匹配官方 Apple-Logo.png 的 18x24 經典扁平化黃金比例向量路徑
+        const APPLE_BODY_PATH = new Path2D("M15.52 11.26c-.04-2.5 2.03-3.7 2.12-3.76-1.16-1.7-2.97-1.93-3.6-1.98-1.52-.15-2.97.9-3.74.9-.77 0-1.99-.88-3.27-.86-1.68.03-3.23.98-4.1 2.49-1.75 3.04-.45 7.53 1.23 9.95.83 1.19 1.8 2.53 3.08 2.48 1.24-.05 1.71-.8 3.2-.8s1.93.8 3.22.78c1.32-.03 2.17-1.21 2.98-2.39.94-1.37 1.33-2.7 1.35-2.77-.03-.02-2.61-1-2.64-4.18z");
+        const APPLE_LEAF_PATH = new Path2D("M12.03 3.22c.68-.82 1.13-1.96.99-3.1-1 .04-2.22.67-2.94 1.51-.62.73-1.16 1.89-1.02 3.01 1.12.09 2.27-.58 2.97-1.42z");
+
+        // 內部核心變數
+        let currentImage = null; // 上傳的照片 (Image 物件)
+        let isSampleActive = true; // 是否正在顯示預設的高雄港示範
+        let uploadedFileName = "kaohsiung_harbor.jpg";
+        let tempHeicExif = null;  // 暫存的原生 HEIC EXIF
+
+        // 當網頁載入完成，直接初始化範例
+        window.onload = function() {
+            initSample();
+            setupEventListeners();
+        };
+
+        // 初始化範例
+        function initSample() {
+            currentImage = null;
+            isSampleActive = true;
+            uploadedFileName = "kaohsiung_harbor.jpg";
+            tempHeicExif = null;
+
+            // 設定預設輸入數值 (蔡司經典風格)
+            inputLayout.value = "bottom";
+            inputFontStyle.value = "sans";
+            inputBgColor.value = "#ffffff";
+            inputTextColor.value = "#111827";
+            inputBrand.value = "vivo V60";
+            inputCoBrand.value = "zeiss";
+            inputFocal.value = "134mm";
+            inputAperture.value = "f/2.65";
+            inputShutter.value = "1/588s";
+            inputISO.value = "ISO71";
+            inputDateTime.value = "2026/03/08 17:17";
+            inputPhotographer.value = "天涯過客";
+            inputBannerHeight.value = "12";
+            
+            labelBannerHeight.innerText = "12%";
+            
+            warningEl.className = "mt-3 p-3 bg-blue-50 text-blue-800 rounded-xl text-xs border border-blue-100 flex items-center gap-2";
+            warningEl.innerHTML = `
+                <span class="flex-shrink-0 text-base">ℹ️</span>
+                <span>網頁已預載<strong>高雄港夕陽(向量仿真示範圖)</strong>，您可以先用下方的控制面板調整效果，或直接上傳您自己的照片！</span>
+            `;
+
+            redraw();
+        }
+
+        // 綁定所有事件監聽器
+        function setupEventListeners() {
+            // 控制面板全數值變更即時繪製
+            const inputs = [
+                inputLayout, inputFontStyle, inputBgColor, inputTextColor, 
+                inputBrand, inputCoBrand, inputFocal, inputAperture, 
+                inputShutter, inputISO, inputDateTime, inputPhotographer,
+                inputBannerHeight, inputQuality
+            ];
+            
+            inputs.forEach(element => {
+                element.addEventListener("input", () => {
+                    // 更新標籤數值
+                    labelBannerHeight.innerText = `${inputBannerHeight.value}%`;
+                    labelQuality.innerText = `${inputQuality.value}%`;
+                    redraw();
+                });
+            });
+
+            // 拖曳上傳
+            dropzone.addEventListener("click", () => fileInput.click());
+            
+            dropzone.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                dropzone.classList.add("border-blue-500", "bg-blue-50/50");
+            });
+
+            dropzone.addEventListener("dragleave", () => {
+                dropzone.classList.remove("border-blue-500", "bg-blue-50/50");
+            });
+
+            dropzone.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dropzone.classList.remove("border-blue-500", "bg-blue-50/50");
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleImageUpload(files[0]);
+                }
+            });
+
+            fileInput.addEventListener("change", (e) => {
+                if (e.target.files.length > 0) {
+                    handleImageUpload(e.target.files[0]);
+                }
+            });
+
+            // 重新整理與下載
+            btnReset.addEventListener("click", initSample);
+            btnDownload.addEventListener("click", downloadWatermarkedImage);
+        }
+
+        // 快捷風格切換
+        function applyPreset(preset) {
+            if (preset === 'zeiss-white') {
+                inputBgColor.value = "#ffffff";
+                inputTextColor.value = "#111827";
+                inputCoBrand.value = "zeiss";
+                if (isSampleActive) {
+                    inputBrand.value = "vivo V60";
+                    inputFocal.value = "134mm";
+                    inputAperture.value = "f/2.65";
+                    inputShutter.value = "1/588s";
+                    inputISO.value = "ISO71";
+                }
+            } else if (preset === 'leica-white') {
+                inputBgColor.value = "#ffffff";
+                inputTextColor.value = "#000000";
+                inputCoBrand.value = "leica";
+                if (isSampleActive) {
+                    inputBrand.value = "Xiaomi 14 Ultra";
+                    inputFocal.value = "75mm";
+                    inputAperture.value = "f/2.0";
+                    inputShutter.value = "1/1000s";
+                    inputISO.value = "ISO100";
+                }
+            } else if (preset === 'hasselblad-dark') {
+                inputBgColor.value = "#0a0a0a";
+                inputTextColor.value = "#f3f4f6";
+                inputCoBrand.value = "hasselblad";
+                if (isSampleActive) {
+                    inputBrand.value = "OnePlus 12";
+                    inputFocal.value = "23mm";
+                    inputAperture.value = "f/1.6";
+                    inputShutter.value = "1/50s";
+                    inputISO.value = "ISO400";
+                }
+            }
+            redraw();
+        }
+
+        function setBannerColors(bg, text) {
+            inputBgColor.value = bg;
+            inputTextColor.value = text;
+            redraw();
+        }
+
+        // 核心上傳與雙階段相容轉碼處理函數
+        function handleImageUpload(file) {
+            const fileNameLower = file.name.toLowerCase();
+            const isHEIC = fileNameLower.endsWith(".heic") || fileNameLower.endsWith(".heif") || file.type === "image/heic" || file.type === "image/heif";
+
+            if (isHEIC) {
+                // 1. 顯示解碼中提示
+                warningEl.className = "mt-3 p-3 bg-indigo-50 text-indigo-800 rounded-xl text-xs border border-indigo-100 flex items-center gap-2 animate-pulse";
+                warningEl.innerHTML = `
+                    <span class="flex-shrink-0 text-base">⏳</span>
+                    <span>偵測到 <strong>HEIC/HEIF</strong> 格式！正在優先讀取原生 EXIF 並進行轉碼（約需 2~4 秒）...</span>
+                `;
+
+                // 2. 驗證 heic2any 組件
+                if (typeof heic2any === "undefined") {
+                    warningEl.className = "mt-3 p-3 bg-red-50 text-red-800 rounded-xl text-xs border border-red-100 flex flex-col gap-1";
+                    warningEl.innerHTML = `
+                        <div class="font-bold flex items-center gap-1">⚠️ 解碼元件載入失敗</div>
+                        <p class="text-[11px] text-red-700">無法載入 HEIC 轉碼組件，請確認您的網路連線，或手動轉為 JPG 後再上傳。</p>
+                    `;
+                    return;
+                }
+
+                const pureBlob = file.slice(0, file.size, "image/heic");
+
+                // 【極致優化】先提取 HEIC 原圖 EXIF，避免 heic2any 解碼後失去中繼資料
+                exifr.parse(file)
+                    .then(tags => {
+                        tempHeicExif = tags;
+                    })
+                    .catch(err => {
+                        console.warn("無法取得 HEIC 原圖的 EXIF", err);
+                        tempHeicExif = null;
+                    })
+                    .finally(() => {
+                        // 開始進行 heic 解碼轉換
+                        heic2any({
+                            blob: pureBlob,
+                            toType: "image/jpeg",
+                            quality: 0.92
+                        })
+                        .then(function (resultBlob) {
+                            proceedWithBlob(resultBlob);
+                        })
+                        .catch(function (error) {
+                            console.warn("第一階段解碼失敗，啟用多圖層相容解碼...", error);
+                            heic2any({
+                                blob: pureBlob,
+                                toType: "image/jpeg",
+                                quality: 0.92,
+                                multiple: true
+                            })
+                            .then(function (resultBlobs) {
+                                proceedWithBlob(Array.isArray(resultBlobs) ? resultBlobs[0] : resultBlobs);
+                            })
+                            .catch(function (secondError) {
+                                console.error("HEIC 雙階段解碼均失敗:", secondError);
+                                warningEl.className = "mt-3 p-3 bg-red-50 text-red-800 rounded-xl text-xs border border-red-100 flex flex-col gap-1";
+                                warningEl.innerHTML = `
+                                    <div class="font-bold flex items-center gap-1">❌ HEIC 轉換失敗</div>
+                                    <p class="text-[11px] text-red-700">此 HEIC 檔案在瀏覽器中無法被正常解碼（${secondError.message || secondError}）。建議您手動將相片轉換為 JPG 後再次上傳。</p>
+                                `;
+                            });
+                        });
+                    });
+
+                // 本地轉碼成功後的下一步包裝
+                function proceedWithBlob(resultBlob) {
+                    const newFileName = file.name.replace(/\.(heic|heif)$/i, ".jpg");
+                    const convertedFile = new File([resultBlob], newFileName, { type: "image/jpeg" });
+                    processConvertedFile(convertedFile);
+                }
+            } else {
+                tempHeicExif = null; // 非 HEIC，清空暫存區
+                processConvertedFile(file);
+            }
+        }
+
+        // 讀取相片二進位資料、載入 Image 與提取 EXIF 核心邏輯
+        function processConvertedFile(file) {
+            uploadedFileName = file.name;
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    currentImage = img;
+                    isSampleActive = false;
+
+                    // 3. 讀取 EXIF
+                    if (tempHeicExif) {
+                        // 如果有預載自 HEIC 的原生 EXIF 暫存，直接使用它
+                        parseAndFillExif(tempHeicExif);
+                        tempHeicExif = null; // 清除暫存
+                        redraw();
+                    } else {
+                        // 否則使用先進的 exifr 直接讀取當前的 JPEG/PNG 檔案
+                        exifr.parse(file)
+                            .then(tags => {
+                                parseAndFillExif(tags);
+                                redraw();
+                            })
+                            .catch(err => {
+                                console.error("EXIF 解析錯誤 (exifr):", err);
+                                parseAndFillExif(null);
+                                redraw();
+                            });
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 解析 EXIF 並填入表單 (基於現代化 exifr 回傳格式優化)
+        function parseAndFillExif(tags) {
+            if (!tags) {
+                showNoExifWarning();
+                return;
+            }
+
+            let make = tags.Make || "";
+            let model = tags.Model || "";
+
+            make = make.trim();
+            model = model.trim();
+
+            // 拼合優美的品牌名稱
+            let brandText = "";
+            if (make && model) {
+                if (model.toLowerCase().startsWith(make.toLowerCase())) {
+                    brandText = model;
+                } else {
+                    const brandName = make.charAt(0).toUpperCase() + make.slice(1);
+                    brandText = `${brandName} ${model}`;
+                }
+            } else if (model) {
+                brandText = model;
+            } else if (make) {
+                brandText = make;
+            } else {
+                brandText = "My Camera";
+            }
+
+            // 特殊手機品牌合作識別
+            let coBrand = "none";
+            const lowerBrand = brandText.toLowerCase();
+            if (lowerBrand.includes("vivo")) {
+                coBrand = "zeiss";
+            } else if (lowerBrand.includes("xiaomi") || lowerBrand.includes("huawei")) {
+                coBrand = "leica";
+            } else if (lowerBrand.includes("oneplus") || lowerBrand.includes("oppo") || lowerBrand.includes("hasselblad")) {
+                coBrand = "hasselblad";
+            } else if (lowerBrand.includes("iphone") || lowerBrand.includes("apple")) {
+                coBrand = "apple";
+            }
+
+            // 更新到輸入框
+            inputBrand.value = brandText;
+            inputCoBrand.value = coBrand;
+
+            // 焦距 (等效焦距或物理焦距)
+            let focal = "";
+            if (tags.FocalLengthIn35mmFilm) {
+                focal = tags.FocalLengthIn35mmFilm + "mm";
+            } else if (tags.FocalLength) {
+                focal = Math.round(tags.FocalLength) + "mm";
+            }
+            inputFocal.value = focal;
+
+            // 光圈值 (例如：f/1.8)
+            let aperture = "";
+            if (tags.FNumber) {
+                aperture = "f/" + Number(tags.FNumber.toFixed(2));
+            }
+            inputAperture.value = aperture;
+
+            // 快門速度 (轉換小數為高精度倒數分數，例如 0.0017 -> 1/588s)
+            let shutter = "";
+            if (tags.ExposureTime) {
+                const expTime = tags.ExposureTime;
+                if (expTime >= 1) {
+                    shutter = expTime.toFixed(1).replace(/\.0$/, '') + 's';
+                } else {
+                    shutter = `1/${Math.round(1 / expTime)}s`;
+                }
+            }
+            inputShutter.value = shutter;
+
+            // ISO
+            let iso = "";
+            if (tags.ISO) {
+                iso = "ISO" + tags.ISO;
+            }
+            inputISO.value = iso;
+
+            // 拍攝日期 (優雅格式化)
+            let dt = "";
+            if (tags.DateTimeOriginal && tags.DateTimeOriginal instanceof Date) {
+                const d = tags.DateTimeOriginal;
+                dt = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            } else if (tags.DateTimeOriginal) {
+                dt = formatDateString(tags.DateTimeOriginal.toString());
+            } else {
+                const now = new Date();
+                dt = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            }
+            inputDateTime.value = dt;
+
+            // 更新警示框狀態
+            if (tags.Model || tags.FocalLength || tags.FNumber) {
+                warningEl.className = "mt-3 p-3 bg-green-50 text-green-800 rounded-xl text-xs border border-green-100 flex items-center gap-2";
+                warningEl.innerHTML = `
+                    <span class="flex-shrink-0 text-base">✅</span>
+                    <span><strong>讀取成功！</strong>已使用先進的 Exifr 引擎自動填充 EXIF 中繼資料，您隨時可以在下方手動微調。</span>
+                `;
+            } else {
+                showNoExifWarning();
+            }
+        }
+
+        // 當讀取失敗時顯示資訊引導
+        function showNoExifWarning() {
+            warningEl.className = "mt-3 p-3 bg-amber-50 text-amber-800 rounded-xl text-xs border border-amber-100 flex flex-col gap-1";
+            warningEl.innerHTML = `
+                <div class="font-bold flex items-center gap-1">⚠️ 照片中未偵測到完整的 EXIF 資訊</div>
+                <p class="text-[11px] text-amber-700">這通常是因為照片在透過社群軟體(如 LINE)或聊天介面上傳時，被平台自動壓縮並抹除了元數據。您依然可以在下方手動輸入參數，或嘗試於本地瀏覽器打開此 HTML 載入原圖測試！</p>
+            `;
+        }
+
+        // 格式化日期： 2026:03:08 17:17:12 -> 2026/03/08 17:17
+        function formatDateString(str) {
+            if (!str) return "";
+            const parts = str.split(" ");
+            if (parts.length >= 2) {
+                const date = parts[0].replace(/:/g, "/");
+                const time = parts[1].substring(0, 5);
+                return `${date} ${time}`;
+            }
+            return str;
+        }
+
+        // ----------------- 畫布繪製核心引擎 -----------------
+        function redraw() {
+            let imgW = 1600;
+            let imgH = 1200;
+
+            if (!isSampleActive && currentImage) {
+                imgW = currentImage.naturalWidth || currentImage.width;
+                imgH = currentImage.naturalHeight || currentImage.height;
+            }
+
+            // 計算邊框與浮水印高度
+            const heightRatio = parseInt(inputBannerHeight.value) / 100;
+            const bannerHeight = Math.round(imgH * heightRatio);
+            
+            const isFrameMode = (inputLayout.value === "frame");
+            const borderWidth = isFrameMode ? Math.round(imgW * 0.035) : 0; // 3.5% 邊框
+
+            // 重新設定 Canvas 高解析度物理尺寸
+            if (isFrameMode) {
+                canvas.width = imgW + borderWidth * 2;
+                canvas.height = imgH + borderWidth + bannerHeight;
+            } else {
+                canvas.width = imgW;
+                canvas.height = imgH + bannerHeight;
+            }
+
+            // 顯示當前處理與輸出規格
+            resolutionInfo.innerText = `輸出尺寸: ${canvas.width}x${canvas.height}`;
+
+            // 1. 填滿整體背景 (底色)
+            ctx.fillStyle = inputBgColor.value;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 2. 繪製照片 (本機上傳圖片 或 向量示範風景)
+            if (isSampleActive) {
+                drawSampleLandscape(ctx, imgW, imgH, borderWidth);
+            } else if (currentImage) {
+                if (isFrameMode) {
+                    ctx.drawImage(currentImage, borderWidth, borderWidth, imgW, imgH);
+                } else {
+                    ctx.drawImage(currentImage, 0, 0, imgW, imgH);
+                }
+            }
+
+            // 3. 繪製浮水印文字與聯名標章
+            const bannerY = isFrameMode ? (imgH + borderWidth) : imgH;
+            drawWatermarkContent(ctx, canvas.width, bannerHeight, bannerY, imgW, borderWidth, isFrameMode);
+        }
+
+        // 繪製聯名小標誌
+        function drawCoBrandBadge(ctx, type, x, y, badgeSize, color) {
+            if (type === 'zeiss') {
+                const badgeW = badgeSize * 1.6;
+                const badgeH = badgeSize * 0.95;
+                const radius = badgeSize * 0.15;
+
+                // 蔡司藍標
+                ctx.fillStyle = "#0051ba";
+                ctx.beginPath();
+                ctx.roundRect(x, y - badgeH/2, badgeW, badgeH, radius);
+                ctx.fill();
+
+                // 蔡司文字
+                ctx.fillStyle = "#ffffff";
+                ctx.font = `bold ${badgeH * 0.42}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("ZEISS", x + badgeW / 2, y + badgeH * 0.05);
+                return badgeW;
+            }
+            else if (type === 'leica') {
+                const radius = badgeSize * 0.48;
+                
+                // 徠卡紅標
+                ctx.fillStyle = "#e60000";
+                ctx.beginPath();
+                ctx.arc(x + radius, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 徠卡文字
+                ctx.fillStyle = "#ffffff";
+                ctx.font = `italic bold ${radius * 0.92}px "Georgia", serif`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("Leica", x + radius, y);
+                return radius * 2;
+            }
+            else if (type === 'hasselblad') {
+                // 哈蘇極簡 Serif H 框
+                const boxSize = badgeSize * 0.85;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = boxSize * 0.08;
+                ctx.strokeRect(x, y - boxSize/2, boxSize, boxSize);
+
+                ctx.fillStyle = color;
+                ctx.font = `bold ${boxSize * 0.65}px "Georgia", serif`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("H", x + boxSize / 2, y);
+
+                ctx.font = `bold ${boxSize * 0.3}px "Georgia", serif`;
+                ctx.textAlign = "left";
+                ctx.fillText("HASSELBLAD", x + boxSize * 1.25, y);
+                return boxSize + boxSize * 1.25 + ctx.measureText("HASSELBLAD").width;
+            }
+            else if (type === 'apple') {
+                // 完美匹配 Apple-Logo.png 的 18x24 黃金比例 Canvas 精確平移縮放渲染
+                ctx.save();
+                ctx.fillStyle = color;
+                
+                // 平移至指定座標位置
+                ctx.translate(x, y);
+                
+                // 縮放設定：將原圖實際高度 (17.4) 映射至相框對應的 badgeSize
+                const scale = badgeSize / 17.4;
+                ctx.scale(scale, scale);
+                
+                // 精確對齊：將 X 的起點 (1.5) 對齊到 0，並使 Y 的幾何中心 (8.81) 垂直置中
+                ctx.translate(-1.5, -8.81);
+                
+                // 渲染主體與葉片路徑
+                ctx.fill(APPLE_BODY_PATH);
+                ctx.fill(APPLE_LEAF_PATH);
+                
+                ctx.restore();
+                
+                // 寬度回傳：實際寬度 (16.15) 經縮放後的實際佔用畫布寬度
+                return 16.15 * scale;
+            }
+            return 0;
+        }
+
+        // 繪製浮水印的主要文字資訊
+        function drawWatermarkContent(ctx, canvasW, bannerH, bannerY, imgW, borderWidth, isFrameMode) {
+            const fontStyle = inputFontStyle.value;
+            const textColor = inputTextColor.value;
+
+            // 定義安全文字起點 (邊緣內縮)
+            const paddingX = isFrameMode ? borderWidth : Math.round(canvasW * 0.05);
+
+            // 基於相框高度，等比例縮放所有字級大小，確保在 4K 與低解析度下視覺完美一致
+            const brandSize = bannerH * 0.25;
+            const exifSize = bannerH * 0.21;
+            const subSize = bannerH * 0.145;
+
+            // 設置字體族 (使用全域字體常數)
+            const currentFamily = (fontStyle === 'serif') ? SERIF_FAMILY : SANS_FAMILY;
+
+            // --- 左半部：品牌名稱 & 聯名標誌 ---
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = textColor;
+            ctx.textAlign = "left";
+
+            // 1. 先寫手機相機主品牌
+            ctx.font = `bold ${brandSize}px ${currentFamily}`;
+            const brandText = inputBrand.value;
+            const brandTextY = bannerY + bannerH * 0.5; // 水平置中
+            ctx.fillText(brandText, paddingX, brandTextY);
+            
+            // 量測寬度以放置分隔號與副商標
+            const brandW = ctx.measureText(brandText).width;
+            let currentX = paddingX + brandW;
+
+            // 2. 如果有聯名標誌，繪製優雅的分隔豎線「 | 」
+            const coBrandType = inputCoBrand.value;
+            if (coBrandType !== 'none') {
+                const dividerGap = bannerH * 0.18;
+                const dividerX = currentX + dividerGap;
+                
+                // 畫精美的細實線，而非直接打字，線條更具高質感
+                ctx.strokeStyle = textColor;
+                ctx.lineWidth = Math.max(1, bannerH * 0.012);
+                ctx.beginPath();
+                ctx.moveTo(dividerX, bannerY + bannerH * 0.38);
+                ctx.lineTo(dividerX, bannerY + bannerH * 0.62);
+                ctx.stroke();
+
+                currentX = dividerX + dividerGap;
+
+                // 繪製副商標
+                const badgeWidth = drawCoBrandBadge(ctx, coBrandType, currentX, bannerY + bannerH * 0.5, brandSize * 1.1, textColor);
+                currentX += badgeWidth;
+            }
+
+            // --- 中間部：自訂攝影師名 (選填，採置中雅緻手寫或精美 Serif) ---
+            const photographer = inputPhotographer.value.trim();
+            if (photographer) {
+                ctx.textAlign = "center";
+                ctx.fillStyle = textColor;
+                ctx.font = `italic 500 ${bannerH * 0.17}px ${SERIF_FAMILY}`;
+                ctx.fillText(photographer, canvasW / 2, bannerY + bannerH * 0.5);
+            }
+
+            // --- 右半部：EXIF 資訊 (雙行排列) ---
+            ctx.textAlign = "right";
+            
+            // 讀取輸入參數值
+            const focal = inputFocal.value.trim();
+            const aperture = inputAperture.value.trim();
+            const shutter = inputShutter.value.trim();
+            const iso = inputISO.value.trim();
+            const datetime = inputDateTime.value.trim();
+
+            // 組合第一行 EXIF 數據：134mm f/2.65 1/588s ISO71
+            const exifArray = [];
+            if (focal) exifArray.push(focal);
+            if (aperture) exifArray.push(aperture);
+            if (shutter) shutter === "" ? null : exifArray.push(shutter);
+            if (iso) exifArray.push(iso);
+            const exifText = exifArray.join("   "); // 帶有寬間隔排版
+
+            const rightAlignX = canvasW - paddingX;
+
+            // 繪製第一行 (相機參數)
+            ctx.fillStyle = textColor;
+            ctx.font = `600 ${exifSize}px ${currentFamily}`;
+            if (ctx.letterSpacing !== undefined) {
+                ctx.letterSpacing = "0.8px"; // 提供高階字元間距
+            }
+            ctx.fillText(exifText, rightAlignX, bannerY + bannerH * 0.42);
+
+            // 繪製第二行 (拍攝時間)
+            ctx.fillStyle = (textColor === '#ffffff' || textColor === '#f3f4f6') ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'; // 雅致半透明
+            ctx.font = `normal ${subSize}px ${currentFamily}`;
+            if (ctx.letterSpacing !== undefined) {
+                ctx.letterSpacing = "0.5px";
+            }
+            ctx.fillText(datetime, rightAlignX, bannerY + bannerH * 0.72);
+            
+            // 還原 letter-spacing 設定避免影響其他
+            if (ctx.letterSpacing !== undefined) {
+                ctx.letterSpacing = "0px";
+            }
+        }
+
+        // 🎨 奇蹟的高雄港夕陽向量插畫繪製引擎！ (免上傳預期體驗)
+        function drawSampleLandscape(ctx, w, h, border) {
+            ctx.save();
+            if (border > 0) {
+                ctx.translate(border, border);
+            }
+
+            // 1. 夢幻夕陽漸層天空
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.72);
+            skyGrad.addColorStop(0, '#2e1c4b'); // 深紫夜空
+            skyGrad.addColorStop(0.35, '#7b3e71'); // 瑰麗紫紅
+            skyGrad.addColorStop(0.7, '#de5d3b'); // 艷麗暮橘
+            skyGrad.addColorStop(1, '#f1b749'); // 金黃餘暉
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, w, h * 0.72);
+
+            // 2. 朦朧遠山 silhouette
+            ctx.fillStyle = 'rgba(74, 52, 95, 0.45)';
+            ctx.beginPath();
+            ctx.moveTo(0, h * 0.72);
+            ctx.lineTo(w * 0.18, h * 0.58);
+            ctx.lineTo(w * 0.38, h * 0.67);
+            ctx.lineTo(w * 0.58, h * 0.6);
+            ctx.lineTo(w * 0.8, h * 0.72);
+            ctx.closePath();
+            ctx.fill();
+
+            // 3. 巨幅絢麗落日與光暈
+            const sunX = w * 0.76;
+            const sunY = h * 0.68;
+            const sunR = h * 0.11;
+            const sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunR);
+            sunGrad.addColorStop(0, '#ffffff');
+            sunGrad.addColorStop(0.18, '#fff2bc');
+            sunGrad.addColorStop(0.5, '#f39c12');
+            sunGrad.addColorStop(1, 'transparent');
+            
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+            ctx.fillStyle = sunGrad;
+            ctx.fill();
+
+            // 4. 高雄 85 大樓剪影 (精美結構)
+            const tx = w * 0.65;
+            const ty = h * 0.72;
+            const tw = w * 0.082;
+            const th = h * 0.46; // 樓高
+
+            ctx.fillStyle = '#221e3b'; // 融入背景暮紫
+            ctx.beginPath();
+            // 左大樓柱
+            ctx.rect(tx, ty - th * 0.7, tw * 0.33, th * 0.7);
+            // 右大樓柱
+            ctx.rect(tx + tw * 0.67, ty - th * 0.7, tw * 0.33, th * 0.7);
+            // 底座大樓
+            ctx.rect(tx, ty - th * 0.32, tw, th * 0.32);
+            // 中央空中天橋連結
+            ctx.rect(tx + tw * 0.33, ty - th * 0.7, tw * 0.34, th * 0.15);
+            // 中間主尖塔
+            ctx.rect(tx + tw * 0.38, ty - th, tw * 0.24, th * 0.42);
+            // 頂部天線避雷針
+            ctx.rect(tx + tw * 0.48, ty - th * 1.15, tw * 0.04, th * 0.15);
+            ctx.fill();
+
+            // 85大樓的微弱燈光 (點綴細節)
+            ctx.fillStyle = 'rgba(241, 196, 15, 0.7)';
+            ctx.fillRect(tx + tw * 0.08, ty - th * 0.22, tw * 0.05, h * 0.005);
+            ctx.fillRect(tx + tw * 0.87, ty - th * 0.22, tw * 0.05, h * 0.005);
+            ctx.fillRect(tx + tw * 0.45, ty - th * 0.88, tw * 0.1, h * 0.005);
+
+            // 5. 波光粼粼的高雄港海水
+            const seaGrad = ctx.createLinearGradient(0, h * 0.72, 0, h);
+            seaGrad.addColorStop(0, '#101730');
+            seaGrad.addColorStop(1, '#080d1a');
+            ctx.fillStyle = seaGrad;
+            ctx.fillRect(0, h * 0.72, w, h * 0.28);
+
+            // 金黃海面反光
+            const reflectionGrad = ctx.createLinearGradient(sunX - w*0.1, h*0.72, sunX + w*0.1, h*0.72);
+            reflectionGrad.addColorStop(0, 'rgba(241, 183, 73, 0)');
+            reflectionGrad.addColorStop(0.5, 'rgba(241, 183, 73, 0.25)');
+            reflectionGrad.addColorStop(1, 'rgba(241, 183, 73, 0)');
+            ctx.fillStyle = reflectionGrad;
+            ctx.fillRect(sunX - w*0.12, h*0.72, w*0.24, h*0.28);
+
+            // 6. 主角貨櫃輪船 (參考圖：XINDE KEELUNG 鑫德基隆號)
+            const sx = w * 0.12;
+            const sy = h * 0.77;
+            const sw = w * 0.38;
+            const sh = h * 0.062;
+
+            // 船體下層紅底
+            ctx.fillStyle = '#b63022';
+            ctx.beginPath();
+            ctx.moveTo(sx + sh * 0.5, sy + sh * 0.6);
+            ctx.lineTo(sx + sw - sh * 0.8, sy + sh * 0.6);
+            ctx.lineTo(sx + sw - sh * 1.0, sy + sh);
+            ctx.lineTo(sx + sh * 0.8, sy + sh);
+            ctx.closePath();
+            ctx.fill();
+
+            // 船體主黑色側身
+            ctx.fillStyle = '#161921';
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(sx + sw, sy);
+            ctx.lineTo(sx + sw - sh * 0.8, sy + sh * 0.65);
+            ctx.lineTo(sx + sh * 0.5, sy + sh * 0.65);
+            ctx.closePath();
+            ctx.fill();
+
+            // 鑫德基隆英文標示 (使用全域字體常數)
+            ctx.fillStyle = '#f1c40f';
+            ctx.font = `italic bold ${sh * 0.2}px ${SANS_FAMILY}`;
+            ctx.fillText("XINDE KEELUNG", sx + sw * 0.15, sy + sh * 0.38);
+
+            // 船尾多層白色駕駛艙與高聳煙囪
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(sx + sw * 0.72, sy - sh * 0.82, sw * 0.18, sh * 0.82);
+            ctx.fillStyle = '#e74c3c'; // 紅色煙囪
+            ctx.fillRect(sx + sw * 0.81, sy - sh * 1.15, sw * 0.04, sh * 0.35);
+
+            // 多層彩色貨櫃 (精密整齊排列)
+            const boxColors = ['#2980b9', '#c0392b', '#27ae60', '#f39c12', '#2c3e50'];
+            const boxW = sw * 0.062;
+            const boxH = sh * 0.42;
+            let startContainerX = sx + sw * 0.05;
+            
+            // 繪製兩層堆疊貨櫃
+            for (let layer = 0; layer < 2; layer++) {
+                const cy = sy - (layer + 1) * boxH;
+                const cx = startContainerX + layer * (boxW * 0.25);
+                for (let i = 0; i < 9; i++) {
+                    ctx.fillStyle = boxColors[(i + layer * 2) % boxColors.length];
+                    const currX = cx + i * (boxW + w*0.002);
+                    ctx.fillRect(currX, cy, boxW, boxH);
+                    
+                    // 貨櫃精緻條紋
+                    ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(currX, cy, boxW, boxH);
+                }
+            }
+
+            // 繪製綠色頂棚罩
+            ctx.fillStyle = '#27ae60';
+            ctx.beginPath();
+            ctx.moveTo(sx + sw * 0.04, sy);
+            ctx.lineTo(sx + sw * 0.25, sy);
+            ctx.lineTo(sx + sw * 0.2, sy - sh * 0.25);
+            ctx.lineTo(sx + sw * 0.08, sy - sh * 0.25);
+            ctx.closePath();
+            ctx.fill();
+
+            // 7. 航行激起的白浪 (航行感)
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.beginPath();
+            ctx.ellipse(sx - w*0.01, sy + sh * 0.85, w * 0.03, h * 0.006, -Math.PI/30, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // 💾 下載高解析度帶水印的照片
+        function downloadWatermarkedImage() {
+            // 提供視覺觸控反饋，變更按鈕狀態
+            const originText = btnDownload.innerHTML;
+            btnDownload.disabled = true;
+            btnDownload.innerHTML = `
+                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                正在封裝影像...
+            `;
+
+            setTimeout(() => {
+                try {
+                    const quality = parseInt(inputQuality.value) / 100;
+                    
+                    // 從 canvas 匯出 JPEG 大圖
+                    const dataURL = canvas.toDataURL("image/jpeg", quality);
+                    
+                    // 產生無阻礙虛擬下載連結
+                    const link = document.createElement("a");
+                    const nameWithoutExt = uploadedFileName.substring(0, uploadedFileName.lastIndexOf('.')) || uploadedFileName;
+                    link.download = `${nameWithoutExt}_exif.jpg`;
+                    link.href = dataURL;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (e) {
+                    console.error(e);
+                    // 備用複製剪貼簿警告 (防止部分沙盒環境限制下載)
+                    alert("下載失敗，可能由於瀏覽器安全性限制。您可以對預覽圖「按右鍵儲存新檔」即可！");
+                } finally {
+                    btnDownload.disabled = false;
+                    btnDownload.innerHTML = originText;
+                }
+            }, 300);
+        }
+    </script>
+</body>
+</html>
