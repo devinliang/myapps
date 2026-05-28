@@ -370,9 +370,6 @@
                     <button id="edit-vote-btn" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-xl text-sm transition-colors">
                         修改我的回答
                     </button>
-                    <button id="success-home-btn" class="w-full text-slate-400 hover:text-slate-600 font-bold py-2 text-xs transition-colors">
-                        回到設定頁面建立新調查
-                    </button>
                 </div>
             </div>
         </section>
@@ -422,6 +419,10 @@
         }
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'realtime-survey-app';
+
+        // 嘗試啟動 Firebase
+        if (firebaseConfig && firebaseConfig.apiKey) {
+            try {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -439,10 +440,12 @@
         // ==========================================
         let relayEventSource = null;
         let relayRequestInterval = null;
+        let relayConnectionFailed = false;
 
         function connectToRelay(pollId) {
             if (isFirebaseActive) return; // 如果有 Firebase，則完全不需此中繼
 
+            relayConnectionFailed = false;
             if (relayEventSource) {
                 relayEventSource.close();
             }
@@ -460,6 +463,13 @@
                     }
                 } catch (e) {
                     // 靜默過濾不合規的系統訊息
+                }
+            };
+
+            relayEventSource.onerror = () => {
+                if (!relayConnectionFailed) {
+                    relayConnectionFailed = true;
+                    showNotification("即時中繼連線失敗，請檢查網路或啟用 Firebase。", "error");
                 }
             };
         }
@@ -571,6 +581,14 @@
             );
         }
 
+        function promiseWithTimeout(promise, ms, timeoutMessage = 'Request timed out') {
+            let timeoutId;
+            const timeoutPromise = new Promise((_, reject) => {
+                timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), ms);
+            });
+            return Promise.race([promise.finally(() => clearTimeout(timeoutId)), timeoutPromise]);
+        }
+
         // ==========================================
         // UI 通知與路由模組
         // ==========================================
@@ -614,7 +632,7 @@
             });
 
             // 回設定頁按鈕顯示判定
-            if (viewName !== 'setup') {
+            if (viewName === 'dashboard') {
                 navHomeBtn.classList.remove('hidden');
             } else {
                 navHomeBtn.classList.add('hidden');
@@ -649,10 +667,17 @@
                     await signInAnonymously(auth);
                 }
             } catch (error) {
-                console.error("Auth error:", error);
                 isFirebaseActive = false; // 降級為中繼通道模式
+                if (error && error.code === 'auth/configuration-not-found') {
+                    console.warn("Firebase Auth configuration not found, falling back to relay mode.", error);
+                    showNotification("Firebase 認證未啟用，已改用中繼模式", "warning");
+                } else {
+                    console.error("Auth error:", error);
+                    showNotification("Firebase 認證失敗，已改用中繼模式", "error");
+                }
             } finally {
                 updateStatusBadge();
+                checkUrlParamsAndInit();
             }
         }
 
@@ -696,7 +721,7 @@
         // ==========================================
         // 4. 資料同步與即時更新監聽 (遵循 RULE 1, RULE 2)
         // ==========================================
-        function startRealtimeSubscription() {
+        async function startRealtimeSubscription() {
             // 每次重新綁定前，先將之前的監聽與計時器清理
             if (unsubscribePoll) unsubscribePoll();
             if (unsubscribeVotes) unsubscribeVotes();
@@ -733,8 +758,26 @@
             if (!currentUser) return;
 
             // B. Firebase 即時雲端數據監聽 (遵循 RULE 1 & 2)
-            // (1) 監聽 Poll 設定
+            // 先讀取一次問卷內容，避免 loader 長時間停留
             const pollDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'polls', activePollId);
+            try {
+                const pollSnapshot = await promiseWithTimeout(getDoc(pollDocRef), 8000, '讀取調查資訊逾時，請稍候再試');
+                if (pollSnapshot.exists()) {
+                    currentPoll = pollSnapshot.data();
+                    if (currentView === 'vote' || currentView === 'dashboard') {
+                        renderPollData();
+                    }
+                } else {
+                    if (currentView === 'vote' || currentView === 'dashboard') {
+                        showNotification("找不到該意見調查，請確認代碼是否正確", "error");
+                        resetToHome();
+                    }
+                }
+            } catch (error) {
+                console.error("Poll getDoc error:", error);
+                showNotification(error.message || "讀取調查資料失敗，請稍後再試", "error");
+            }
+
             unsubscribePoll = onSnapshot(pollDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     currentPoll = docSnap.data();
@@ -1121,6 +1164,7 @@
                 currentPoll = localPollObject;
                 
                 switchView('dashboard');
+                renderPollData();
                 startRealtimeSubscription();
                 showNotification("調查已建立！手機掃描 QR 碼即可即時互動", "success");
                 return;
@@ -1135,12 +1179,14 @@
                 await setDoc(pollDocRef, localPollObject);
 
                 activePollId = newPollId;
+                currentPoll = localPollObject;
                 switchView('dashboard');
+                renderPollData();
                 startRealtimeSubscription();
                 showNotification("調查已成功建立！開始即時連線", "success");
             } catch (err) {
                 console.error("Create poll fail:", err);
-                showNotification("建立調查時發生錯誤，請稍後再試", "error");
+                showNotification(err.message || "建立調查時發生錯誤，請稍後再試", "error");
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<span>確認並建立即時調查</span> <i class="fa-solid fa-cloud-arrow-up"></i>`;
@@ -1252,14 +1298,20 @@
         });
 
         // 答題成功頁「修改我的回答」
-        document.getElementById('edit-vote-btn').addEventListener('click', () => {
-            switchView('vote');
-        });
+        const editVoteBtn = document.getElementById('edit-vote-btn');
+        if (editVoteBtn) {
+            editVoteBtn.addEventListener('click', () => {
+                switchView('vote');
+            });
+        }
 
-        // 答題成功頁「回到首頁」
-        document.getElementById('success-home-btn').addEventListener('click', () => {
-            resetToHome();
-        });
+        // 若投票成功頁保留回首頁按鈕會導致回答者離開，故目前不綁定 success-home-btn
+        const successHomeBtn = document.getElementById('success-home-btn');
+        if (successHomeBtn) {
+            successHomeBtn.addEventListener('click', () => {
+                resetToHome();
+            });
+        }
 
         // 主機關閉投票房
         document.getElementById('close-poll-btn').addEventListener('click', () => {
@@ -1267,8 +1319,16 @@
         });
 
         // 頂部導航/LOGO 返回
-        navHomeBtn.addEventListener('click', resetToHome);
-        logoBtn.addEventListener('click', resetToHome);
+        navHomeBtn.addEventListener('click', () => {
+            if (currentView === 'dashboard') {
+                resetToHome();
+            }
+        });
+        logoBtn.addEventListener('click', () => {
+            if (currentView === 'dashboard') {
+                resetToHome();
+            }
+        });
 
         // ==========================================
         // 輔助公共重設與清理函數
