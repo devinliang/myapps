@@ -114,6 +114,7 @@
                             id="setup-question"
                             type="text"
                             required
+                            value="今天中午大家想吃什麼？"
                             placeholder="例如：今天中午大家想吃什麼？"
                             class="w-full border border-slate-300 focus:border-indigo-500 rounded-xl px-4 py-3 outline-none transition-colors shadow-inner"
                         />
@@ -393,33 +394,20 @@
         // 1. 防禦性全域變數讀取與安全初始化
         // ==========================================
         // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-        const firebaseConfig = {
-        apiKey: "AIzaSyDlSMGUFRURs_-Fw2Y64aujWQ9cRmkB_P4",
-        authDomain: "realtime-survey-2d4d2.firebaseapp.com",
-        projectId: "realtime-survey-2d4d2",
-        storageBucket: "realtime-survey-2d4d2.firebasestorage.app",
-        messagingSenderId: "873701836050",
-        appId: "1:873701836050:web:19b3e71dfee6fe627a9fcb",
-        measurementId: "G-CJF740G5GV"
+        let firebaseConfig = {
+            apiKey: "AIzaSyDlSMGUFRURs_-Fw2Y64aujWQ9cRmkB_P4",
+            authDomain: "realtime-survey-2d4d2.firebaseapp.com",
+            projectId: "realtime-survey-2d4d2",
+            storageBucket: "realtime-survey-2d4d2.firebasestorage.app",
+            messagingSenderId: "873701836050",
+            appId: "1:873701836050:web:19b3e71dfee6fe627a9fcb",
+            measurementId: "G-CJF740G5GV"
         };
-
-        const appId = "my-custom-survey-app-id"; // 您可以自訂一個唯一的 App ID
 
         let app = null;
         let auth = null;
         let db = null;
-        let isFirebaseActive = true; // 🔴 強制將此變數設為 true
-
-        // 啟動 Firebase
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            console.log("您的專案 Firebase 已經成功對接並運作！");
-        } catch (err) {
-            console.error("初始化失敗:", err);
-            isFirebaseActive = false;
-}
+        let isFirebaseActive = false;
 
         try {
             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
@@ -434,15 +422,6 @@
         }
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'realtime-survey-app';
-
-        let app = null;
-        let auth = null;
-        let db = null;
-        let isFirebaseActive = false;
-
-        // 嘗試啟動 Firebase
-        if (firebaseConfig && firebaseConfig.apiKey) {
-            try {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -700,12 +679,19 @@
             }
         }
 
+        // 預設樣板內容
+        const defaultSurveyQuestion = '今天中午大家想吃什麼？';
+        const defaultSurveyOptions = ['排骨', '雞腿', '魚排'];
+
         // 預設填寫範本內容
         function setupInitialTemplate() {
-            document.getElementById('setup-question').value = '今天中午大家想吃什麼';
-            setupOptions = ['排骨', '雞腿', '魚排'];
+            document.getElementById('setup-question').value = defaultSurveyQuestion;
+            setupOptions = [...defaultSurveyOptions];
             renderSetupOptions();
         }
+
+        // 預設最先初始化，以便頁面載入前端立即顯示題目與選項
+        setupInitialTemplate();
 
         // ==========================================
         // 4. 資料同步與即時更新監聽 (遵循 RULE 1, RULE 2)
