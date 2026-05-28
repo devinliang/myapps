@@ -134,6 +134,40 @@
             font-size: 0.95rem;
         }
 
+        .qr-container {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .qr-image {
+            width: 140px;
+            height: 140px;
+            border-radius: 12px;
+            background: #fff;
+            padding: 6px;
+            box-shadow: 0 8px 20px rgba(24, 56, 78, 0.12);
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .footer a:hover {
+            color: var(--accent-strong);
+            opacity: 0.95;
+            text-decoration: underline;
+        }
+
+        .footer a:focus {
+            outline: 3px solid rgba(202, 217, 97, 0.22);
+            outline-offset: 3px;
+        }
+
         code {
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
             background: rgba(255,255,255,0.05);
@@ -187,9 +221,17 @@
             <article class="card">
                 <div>
                     <h2>WebP 轉換器</h2>
-                    <p>將 WebP 轉換為其他圖片格式(JPG、PNG)的工具。</p>
+                    <p>將 WebP 轉換為常用圖片格式(JPG、PNG)的工具。</p>
                 </div>
                 <a href="convert-webp/index.html">開啟頁面</a>
+            </article>
+
+             <article class="card">
+                <div>
+                    <h2>HEIC 轉換器</h2>
+                    <p>將 HEIC 轉換為常用圖片格式(JPG、PNG)的工具。</p>
+                </div>
+                <a href="convert-heic/index.html">開啟頁面</a>
             </article>
 
             <article class="card">
@@ -253,7 +295,13 @@
 
         </section>
 
-        <div class="footer">已列出目前所有子資料夾中的應用入口。新增應用時請同步更新此頁。</div>
+        <div class="footer">
+            <p>網址：<a href="https://devinliang.github.io/myapps/" target="_blank" rel="noopener noreferrer">https://devinliang.github.io/myapps/</a></p>
+            <div class="qr-container" aria-label="QR code to myapps">
+                <img class="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://devinliang.github.io/myapps/" alt="QR: devinliang.github.io/myapps">
+                <p style="margin:0;font-size:0.9rem;color:var(--muted)">掃描以開啟 GitHub Pages：devinliang.github.io/myapps</p>
+            </div>
+        </div>
     </main>
 </body>
 </html>
