@@ -205,43 +205,79 @@
                     </div>
                 </div>
 
-                <!-- 右欄：QR Code 分享 -->
-                <div class="lg:col-span-5 bg-slate-900 text-white rounded-2xl p-6 shadow-md border border-slate-800 flex flex-col justify-between space-y-6">
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-base font-bold text-indigo-400">掃描 QR Code 參與</h3>
-                            <span class="text-xs font-mono bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-700">
-                                房間代碼: <strong id="dashboard-room-code" class="text-white font-bold">-</strong>
-                            </span>
-                        </div>
-
-                        <!-- QR Code 圖片 -->
-                        <div class="bg-white p-4 rounded-xl flex items-center justify-center shadow-lg w-48 h-48 mx-auto">
-                            <img id="dashboard-qrcode" src="" alt="Survey QR Code" class="w-full h-full object-contain hidden" />
-                            <div id="qrcode-loader" class="text-slate-400 flex flex-col items-center justify-center text-xs">
-                                <i class="fa-solid fa-qrcode text-4xl mb-2 animate-pulse"></i>
-                                載入 QR 碼中...
+                <!-- 右欄：QR Code 分享與測試沙盒 -->
+                <div class="lg:col-span-5 space-y-6 flex flex-col">
+                    <!-- QR Code 卡片 -->
+                    <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-md border border-slate-800 flex flex-col justify-between space-y-6">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-base font-bold text-indigo-400">掃描 QR Code 參與</h3>
+                                <span class="text-xs font-mono bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-700">
+                                    房間代碼: <strong id="dashboard-room-code" class="text-white font-bold">-</strong>
+                                </span>
                             </div>
+
+                            <!-- QR Code 圖片 -->
+                            <div class="bg-white p-4 rounded-xl flex items-center justify-center shadow-lg w-48 h-48 mx-auto">
+                                <img id="dashboard-qrcode" src="" alt="Survey QR Code" class="w-full h-full object-contain hidden" />
+                                <div id="qrcode-loader" class="text-slate-400 flex flex-col items-center justify-center text-xs">
+                                    <i class="fa-solid fa-qrcode text-4xl mb-2 animate-pulse"></i>
+                                    載入 QR 碼中...
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-center text-slate-400 leading-relaxed px-4">
+                                請被詢問者掃描上方條碼直接進入投票頁面。
+                            </p>
                         </div>
 
-                        <p class="text-xs text-center text-slate-400 leading-relaxed px-4">
-                            請被詢問者掃描上方條碼直接進入投票頁面。
-                        </p>
-                    </div>
-
-                    <div class="space-y-3 pt-4 border-t border-slate-800">
-                        <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex items-center justify-between gap-2 overflow-hidden">
-                            <span id="share-link-text" class="text-[11px] font-mono text-slate-400 truncate select-all">
-                                -
-                            </span>
-                            <button id="copy-share-btn" class="shrink-0 text-xs px-3 py-1.5 rounded-lg font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-all">
-                                複製連結
+                        <div class="space-y-3 pt-4 border-t border-slate-800">
+                            <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex items-center justify-between gap-2 overflow-hidden">
+                                <span id="share-link-text" class="text-[11px] font-mono text-slate-400 truncate select-all">
+                                    -
+                                </span>
+                                <button id="copy-share-btn" class="shrink-0 text-xs px-3 py-1.5 rounded-lg font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-all">
+                                    複製連結
+                                </button>
+                            </div>
+                            
+                            <button id="close-poll-btn" class="w-full text-center text-xs text-slate-400 hover:text-white py-2 border border-slate-800 hover:border-slate-700 rounded-lg transition-colors font-medium">
+                                結束此次意見調查
                             </button>
                         </div>
-                        
-                        <button id="close-poll-btn" class="w-full text-center text-xs text-slate-400 hover:text-white py-2 border border-slate-800 hover:border-slate-700 rounded-lg transition-colors font-medium">
-                            結束此次意見調查
-                        </button>
+                    </div>
+
+                    <!-- 模擬測試沙盒 (新加：克服沙盒 iframe 同步限制) -->
+                    <div id="sandbox-card" class="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 shadow-md space-y-4">
+                        <div class="flex items-center space-x-2 text-indigo-800">
+                            <i class="fa-solid fa-flask text-lg"></i>
+                            <h3 class="text-base font-bold">🧪 快捷模擬投票區</h3>
+                        </div>
+                        <p class="text-xs text-indigo-600 leading-relaxed">
+                            💡 由於當前預覽環境具有安全沙盒限制，跨分頁/跨裝置同步在某些瀏覽器中可能會受阻。
+                            您可直接在此模擬多名不同的被詢問者投票，直接體驗毫秒級即時更新！
+                        </p>
+                        <div class="space-y-3 pt-2">
+                            <div>
+                                <label class="block text-xs font-bold text-indigo-700 mb-1">模擬投票人姓名</label>
+                                <div class="flex gap-2">
+                                    <input id="sandbox-name-input" type="text" placeholder="例如：王小明" class="flex-1 text-xs border border-indigo-200 focus:border-indigo-500 rounded-xl px-3 py-2 outline-none bg-white font-medium shadow-inner" />
+                                    <button id="sandbox-random-name-btn" type="button" class="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold px-3 py-1.5 rounded-xl transition-colors">
+                                        隨機生成
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-indigo-700 mb-1">選擇其作答答案</label>
+                                <div id="sandbox-options-container" class="grid grid-cols-2 gap-2">
+                                    <!-- JS 動態渲染選項 -->
+                                </div>
+                            </div>
+                            <button id="sandbox-submit-btn" type="button" class="w-full text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl shadow-md transition-all flex items-center justify-center space-x-1">
+                                <span>送出此模擬投票</span>
+                                <i class="fa-solid fa-bolt text-[10px]"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -344,7 +380,7 @@
 
     <!-- 頁腳 -->
     <footer class="text-center mt-16 pb-8 text-slate-400 text-xs">
-        <p>© 2026 即時意見調查系統 (HTML 版本) - 採用 Tailwind 與 Firestore 技術建置</p>
+        <p>© 2026 即時意見調查系統 (HTML 升級版) - 採用 Tailwind 與 Firestore 技術建置</p>
     </footer>
 
     <!-- Firebase MODULE 導入與邏輯架構 -->
@@ -358,7 +394,13 @@
         // ==========================================
         let firebaseConfig = null;
         try {
-            firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config ? JSON.parse(__firebase_config) : null;
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                if (typeof __firebase_config === 'object') {
+                    firebaseConfig = __firebase_config;
+                } else if (typeof __firebase_config === 'string') {
+                    firebaseConfig = JSON.parse(__firebase_config);
+                }
+            }
         } catch (e) {
             console.error("無法解析 __firebase_config JSON配置", e);
         }
@@ -382,25 +424,107 @@
                 console.error("Firebase 初始化遭遇錯誤:", err);
             }
         } else {
-            console.warn("未檢測到有效 Firebase 設定。系統將自動切換為本機無痕預覽模式。");
+            console.warn("未檢測到有效 Firebase 設定。系統將自動啟用「雲端即時中繼連線」模式，支援跨裝置同步。");
+        }
+
+        // ==========================================
+        // 2. 超級中繼網路 (零配置 P2P 中繼技術 - 克服 LocalStorage 跨裝置障礙)
+        // ==========================================
+        let relayEventSource = null;
+        let relayRequestInterval = null;
+
+        function connectToRelay(pollId) {
+            if (isFirebaseActive) return; // 如果有 Firebase，則完全不需此中繼
+
+            if (relayEventSource) {
+                relayEventSource.close();
+            }
+
+            // 使用安全且免註冊的公共 SSE 中繼站 (依據特定房間 ID 做 Pub/Sub 隔離)
+            const sseUrl = `https://ntfy.sh/realtime-survey-relay-${pollId.toLowerCase()}/sse`;
+            relayEventSource = new EventSource(sseUrl);
+
+            relayEventSource.onmessage = (event) => {
+                try {
+                    const rawData = JSON.parse(event.data);
+                    if (rawData.event === 'message') {
+                        const payload = JSON.parse(rawData.message);
+                        handleIncomingRelayMessage(payload);
+                    }
+                } catch (e) {
+                    // 靜默過濾不合規的系統訊息
+                }
+            };
+        }
+
+        async function publishToRelay(pollId, payload) {
+            if (isFirebaseActive) return;
+            try {
+                await fetch(`https://ntfy.sh/realtime-survey-relay-${pollId.toLowerCase()}`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.error("中繼發送失敗:", err);
+            }
+        }
+
+        // 處理手機端與電腦端傳遞的 P2P 握手訊號
+        function handleIncomingRelayMessage(payload) {
+            if (payload.pollId !== activePollId) return;
+
+            // 情境 A：手機（被詢問者）發送請求，索取當前的題目與選項設定
+            if (payload.type === 'request_poll_config') {
+                if (currentView === 'dashboard' && currentPoll) {
+                    // 主機端收到後，立刻將題目與選項回傳給手機
+                    publishToRelay(activePollId, {
+                        type: 'respond_poll_config',
+                        pollId: activePollId,
+                        poll: currentPoll
+                    });
+                }
+            }
+            // 情境 B：手機接收到主機端回傳的題目選項設定
+            else if (payload.type === 'respond_poll_config') {
+                if (currentView === 'vote' && !currentPoll) {
+                    currentPoll = payload.poll;
+                    renderPollData();
+                }
+            }
+            // 情境 C：手機端按下投票，將得票數據發送回主機端
+            else if (payload.type === 'submit_external_vote') {
+                const existIdx = votesList.findIndex(v => v.voterName.toLowerCase() === payload.voterName.toLowerCase());
+                const incomingVote = {
+                    voterName: payload.voterName,
+                    optionIndex: payload.optionIndex,
+                    pollId: payload.pollId
+                };
+
+                if (existIdx !== -1) {
+                    votesList[existIdx] = incomingVote;
+                } else {
+                    votesList.push(incomingVote);
+                }
+
+                if (currentView === 'dashboard') {
+                    renderDashboardResults();
+                    showNotification(`📱 收到手機用戶【${payload.voterName}】即時投下一票！`, "success");
+                }
+            }
         }
 
         // ==========================================
         // 核心狀態管理
         // ==========================================
         let currentUser = null;
-        let currentView = 'setup'; // 預設直接是 setup 頁面
+        let currentView = 'setup'; // 直接第一頁面進去設定
         let activePollId = '';
         
         // 預設內建範例題目和選項
         let setupOptions = ['排骨', '雞腿', '魚排']; 
-        let currentPoll = null;      // 從資料庫抓到的當前 Poll
+        let currentPoll = null;      // 從資料庫或本機抓到的當前 Poll
         let votesList = [];          // 當前 Poll 的所有投票記錄
         let selectedOptionIndex = null; // 當前投票者勾選的選項 index
-
-        // 本機離線模擬虛擬資料庫 (確保選項設定與輸入完美吻合)
-        let offlinePolls = {};
-        let offlineVotes = [];
 
         // 偵聽器快照反註冊函數
         let unsubscribePoll = null;
@@ -496,13 +620,13 @@
                 cloudStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200";
                 cloudStatusBadge.innerHTML = `<span class="w-2 h-2 mr-1.5 bg-green-500 rounded-full animate-ping"></span>Firestore 即時連線中`;
             } else {
-                cloudStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200";
-                cloudStatusBadge.innerHTML = `<span class="w-2 h-2 mr-1.5 bg-amber-500 rounded-full"></span>本地單機展示中`;
+                cloudStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200";
+                cloudStatusBadge.innerHTML = `<span class="w-2 h-2 mr-1.5 bg-indigo-500 rounded-full animate-pulse"></span>中繼通道連線中`;
             }
         }
 
         // ==========================================
-        // 2. 身份驗證流程 (遵循 RULE 3)
+        // 3. 身份驗證流程 (遵循 RULE 3)
         // ==========================================
         async function authenticate() {
             if (!isFirebaseActive) {
@@ -519,8 +643,7 @@
                 }
             } catch (error) {
                 console.error("Auth error:", error);
-                showNotification("身份安全認證未就緒，將以單機預覽運作", "warning");
-                isFirebaseActive = false; // 降級為本地展示
+                isFirebaseActive = false; // 降級為中繼通道模式
             } finally {
                 updateStatusBadge();
             }
@@ -557,24 +680,46 @@
         }
 
         // ==========================================
-        // 3. 資料同步與即時更新監聽 (遵循 RULE 1, RULE 2)
+        // 4. 資料同步與即時更新監聽 (遵循 RULE 1, RULE 2)
         // ==========================================
         function startRealtimeSubscription() {
-            // 每次重新綁定前，先將之前的監聽取消
+            // 每次重新綁定前，先將之前的監聽與計時器清理
             if (unsubscribePoll) unsubscribePoll();
             if (unsubscribeVotes) unsubscribeVotes();
+            if (relayRequestInterval) clearInterval(relayRequestInterval);
 
             if (!activePollId) return;
 
-            // 若非 Firebase 連線狀態，則使用單機 Mock 模擬功能
+            // A. 中繼通道模式（在沒有 Firebase 連接的環境）
             if (!isFirebaseActive) {
-                setupOfflineMockData();
+                connectToRelay(activePollId);
+                
+                if (currentView === 'vote') {
+                    // 投票者：定時向中繼站發送「求救」信號索取調查設定
+                    relayRequestInterval = setInterval(() => {
+                        if (currentView === 'vote' && !currentPoll) {
+                            publishToRelay(activePollId, {
+                                type: 'request_poll_config',
+                                pollId: activePollId
+                            });
+                        } else {
+                            clearInterval(relayRequestInterval);
+                        }
+                    }, 1500);
+
+                    // 搶先發送第一次請求
+                    publishToRelay(activePollId, {
+                        type: 'request_poll_config',
+                        pollId: activePollId
+                    });
+                }
                 return;
             }
 
             if (!currentUser) return;
 
-            // (1) 監聽 Poll 設定 (RULE 1)
+            // B. Firebase 即時雲端數據監聽 (遵循 RULE 1 & 2)
+            // (1) 監聽 Poll 設定
             const pollDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'polls', activePollId);
             unsubscribePoll = onSnapshot(pollDocRef, (docSnap) => {
                 if (docSnap.exists()) {
@@ -615,48 +760,17 @@
         function stopSubscriptions() {
             if (unsubscribePoll) unsubscribePoll();
             if (unsubscribeVotes) unsubscribeVotes();
+            if (relayRequestInterval) clearInterval(relayRequestInterval);
+            if (relayEventSource) {
+                relayEventSource.close();
+                relayEventSource = null;
+            }
             unsubscribePoll = null;
             unsubscribeVotes = null;
         }
 
-        // 本機離線模擬虛擬資料庫
-        function setupOfflineMockData() {
-            // 1. 優先讀取本機暫存中，調查者自己建立的意見調查
-            if (offlinePolls[activePollId]) {
-                currentPoll = offlinePolls[activePollId];
-            } else {
-                // 如果是直接手動加入未知代碼，則配給預設初始範本，並寫入本機暫存
-                currentPoll = {
-                    pollId: activePollId,
-                    question: "【本機測試模式】今天中午你想吃什麼呢？",
-                    options: ["排骨", "雞腿", "魚排"]
-                };
-                offlinePolls[activePollId] = currentPoll;
-            }
-
-            // 2. 篩選出屬於當前房間代碼的本機投票
-            votesList = offlineVotes.filter(v => v.pollId === activePollId);
-
-            // 3. 如果是剛建立的房間、目前沒有任何人投票，預設塞入兩個模擬數據供畫面好看
-            if (votesList.length === 0) {
-                const defaultMockVotes = [
-                    { voterName: "小明", optionIndex: 0, pollId: activePollId },
-                    { voterName: "莉莉", optionIndex: 1, pollId: activePollId }
-                ].filter(v => v.optionIndex < currentPoll.options.length);
-
-                offlineVotes = [...offlineVotes, ...defaultMockVotes];
-                votesList = defaultMockVotes;
-            }
-
-            // 4. 動態渲染
-            renderPollData();
-            if (currentView === 'dashboard') {
-                renderDashboardResults();
-            }
-        }
-
         // ==========================================
-        // 4. 動態 UI 渲染核心
+        // 5. 動態 UI 渲染核心
         // ==========================================
         
         // 渲染 Poll 資料 (分流至 Dashboard 或 Vote)
@@ -667,11 +781,11 @@
                 document.getElementById('dashboard-question').textContent = currentPoll.question;
                 document.getElementById('dashboard-room-code').textContent = currentPoll.pollId;
                 
-                // 設置分享連結
+                // 設置分享連結 (手機掃描後會直接帶著 pollId 開啟本頁)
                 const shareUrl = `${window.location.origin}${window.location.pathname}?pollId=${currentPoll.pollId}`;
                 document.getElementById('share-link-text').textContent = shareUrl;
 
-                // 產生 QR Code
+                // 產生 QR Code 圖片
                 const qrImg = document.getElementById('dashboard-qrcode');
                 const qrLoader = document.getElementById('qrcode-loader');
                 qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}`;
@@ -679,6 +793,9 @@
                     qrImg.classList.remove('hidden');
                     qrLoader.classList.add('hidden');
                 };
+
+                // 初始化並渲染本地快捷模擬投票沙盒
+                initSandboxSimulator();
 
                 renderDashboardResults();
             } else if (currentView === 'vote') {
@@ -837,7 +954,118 @@
         }
 
         // ==========================================
-        // 5. 事件監聽設定與動作綁定 (保證不中斷)
+        // 6. 本地快捷模擬投票沙盒功能
+        // ==========================================
+        const simulatedNames = ["王大明", "張小華", "陳經理", "李助理", "林總監", "蔡教授", "許工程師", "趙副理", "何特助", "糖糖", "阿強", "小白", "阿吉"];
+        let selectedSandboxIndex = null;
+
+        function setRandomSandboxName() {
+            const randomIdx = Math.floor(Math.random() * simulatedNames.length);
+            document.getElementById('sandbox-name-input').value = simulatedNames[randomIdx];
+        }
+
+        function initSandboxSimulator() {
+            const sandboxCard = document.getElementById('sandbox-card');
+            sandboxCard.classList.remove('hidden');
+
+            setRandomSandboxName();
+            selectedSandboxIndex = null;
+            renderSandboxOptionButtons();
+        }
+
+        // 渲染沙盒單選按鈕
+        function renderSandboxOptionButtons() {
+            const container = document.getElementById('sandbox-options-container');
+            container.innerHTML = '';
+            if (!currentPoll) return;
+
+            currentPoll.options.forEach((option, index) => {
+                const isSelected = selectedSandboxIndex === index;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `text-left p-2.5 rounded-xl border text-xs font-semibold transition-all break-all ${
+                    isSelected 
+                        ? 'border-indigo-600 bg-indigo-100 text-indigo-800 font-bold shadow-sm' 
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                }`;
+                btn.textContent = option;
+                
+                btn.addEventListener('click', () => {
+                    selectedSandboxIndex = index;
+                    renderSandboxOptionButtons();
+                });
+                container.appendChild(btn);
+            });
+        }
+
+        document.getElementById('sandbox-random-name-btn').addEventListener('click', () => {
+            setRandomSandboxName();
+        });
+
+        // 送出模擬投票 (本機與雲端統一處理)
+        document.getElementById('sandbox-submit-btn').addEventListener('click', async () => {
+            const name = document.getElementById('sandbox-name-input').value.trim();
+            if (!name) {
+                showNotification("請輸入或生成一個模擬姓名！", "warning");
+                return;
+            }
+
+            if (selectedSandboxIndex === null) {
+                showNotification("請為模擬者選擇一個選項！", "warning");
+                return;
+            }
+
+            // 中繼通道 / 離線模擬送出
+            if (!isFirebaseActive) {
+                const simulatedPayload = {
+                    type: 'submit_external_vote',
+                    pollId: activePollId,
+                    voterName: name,
+                    optionIndex: selectedSandboxIndex
+                };
+                
+                // 本機發送並直接更新自己
+                publishToRelay(activePollId, simulatedPayload);
+                handleIncomingRelayMessage(simulatedPayload);
+
+                setRandomSandboxName();
+                selectedSandboxIndex = null;
+                renderSandboxOptionButtons();
+                return;
+            }
+
+            // Firebase 模式下的模擬寫入
+            try {
+                const existingVote = votesList.find(v => v.voterName.toLowerCase() === name.toLowerCase());
+                if (existingVote) {
+                    const voteDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'votes', existingVote.id);
+                    await updateDoc(voteDocRef, {
+                        optionIndex: selectedSandboxIndex,
+                        votedAt: Date.now()
+                    });
+                    showNotification(`【雲端即時】已更新 ${name} 的作答！`, "success");
+                } else {
+                    const votesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'votes');
+                    await addDoc(votesColRef, {
+                        pollId: activePollId,
+                        voterName: name,
+                        optionIndex: selectedSandboxIndex,
+                        votedAt: Date.now()
+                    });
+                    showNotification(`【雲端即時】模擬 ${name} 投票成功！`, "success");
+                }
+
+                setRandomSandboxName();
+                selectedSandboxIndex = null;
+                renderSandboxOptionButtons();
+            } catch (err) {
+                console.error("Simulation database write error:", err);
+            }
+        });
+
+
+        // ==========================================
+        // 7. 原有事件監聽與動作綁定 (保證不中斷)
         // ==========================================
 
         // 點擊「新增選項」
@@ -873,18 +1101,14 @@
                 createdAt: Date.now()
             };
 
+            // 沒有 Firebase：將資料寫入中繼通道
             if (!isFirebaseActive) {
-                // 將資料寫入本機虛擬庫，並導向本機儀表板
-                offlinePolls[newPollId] = localPollObject;
                 activePollId = newPollId;
+                currentPoll = localPollObject;
+                
                 switchView('dashboard');
                 startRealtimeSubscription();
-                showNotification("【本機預覽】調查已建立，已為您導入本機模擬儀表板", "success");
-                return;
-            }
-
-            if (!currentUser) {
-                showNotification("安全連線建立中，請稍候再試...", "warning");
+                showNotification("調查已建立！手機掃描 QR 碼即可即時互動", "success");
                 return;
             }
 
@@ -909,7 +1133,7 @@
             }
         });
 
-        // 答題者送出投票
+        // 答題者（手機端）送出投票
         document.getElementById('submit-vote-form').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -924,35 +1148,23 @@
                 return;
             }
 
+            // 中繼通道模式下送出投票
             if (!isFirebaseActive) {
-                // 本機離線模擬送出
-                const newVote = { 
-                    id: 'local-vote-' + Date.now(),
-                    voterName: name, 
-                    optionIndex: selectedOptionIndex, 
+                const votePayload = {
+                    type: 'submit_external_vote',
                     pollId: activePollId,
-                    votedAt: Date.now()
+                    voterName: name,
+                    optionIndex: selectedOptionIndex
                 };
-                
-                // 檢查是否有同名者投過，有的話覆蓋，沒有的話新增
-                const existIdx = offlineVotes.findIndex(v => v.pollId === activePollId && v.voterName.toLowerCase() === name.toLowerCase());
-                if (existIdx !== -1) {
-                    offlineVotes[existIdx] = { 
-                        ...offlineVotes[existIdx], 
-                        optionIndex: selectedOptionIndex, 
-                        votedAt: Date.now() 
-                    };
-                } else {
-                    offlineVotes.push(newVote);
-                }
 
+                // 推送到雲端中繼通道，同步並轉移至成功畫面
+                publishToRelay(activePollId, votePayload);
+                
                 document.getElementById('voted-option-badge').textContent = currentPoll.options[selectedOptionIndex];
                 switchView('voted-success');
-                showNotification("【本機模擬】投票已成功送出！", "success");
+                showNotification("投票已成功送出！", "success");
                 return;
             }
-
-            if (!currentUser || !currentPoll) return;
 
             const confirmBtn = document.getElementById('confirm-vote-btn');
             confirmBtn.disabled = true;
@@ -982,7 +1194,6 @@
                     showNotification("投票成功送出！", "success");
                 }
 
-                // 設定投票成功頁呈現選項
                 document.getElementById('voted-option-badge').textContent = currentPoll.options[selectedOptionIndex];
                 switchView('voted-success');
 
@@ -1059,7 +1270,7 @@
             const defaultUrl = `${window.location.origin}${window.location.pathname}`;
             window.history.pushState({ path: defaultUrl }, '', defaultUrl);
             
-            // 重新載入設定範本並切換
+            // 重新載入設定頁面
             setupInitialTemplate();
             switchView('setup');
         }
