@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>極限粒子凝聚抽籤器 🌟</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for premium look -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            overflow: hidden;
+        }
+        /* Glassmorphism utility */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px rgba(255, 255, 255, 0.08) solid;
+        }
+        /* Custom neon text glow */
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(147, 51, 234, 0.5), 0 0 20px rgba(147, 51, 234, 0.3);
+        }
+        .neon-glow-gold {
+            text-shadow: 0 0 15px rgba(234, 179, 8, 0.6), 0 0 30px rgba(234, 179, 8, 0.4);
+        }
+        /* Smooth scale animation */
+        .scale-in {
+            animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes scaleIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        /* Flash effect overlay */
+        #flashOverlay {
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.05s ease-out;
+        }
+    </style>
+</head>
+<body class="h-full text-slate-100 flex flex-col md:flex-row relative">
+
+    <!-- 全螢幕閃光特效 -->
+    <div id="flashOverlay" class="absolute inset-0 bg-white z-50"></div>
+
+    <!-- 左側設定與控制面板 -->
+    <aside class="w-full md:w-80 lg:w-96 glass-panel z-20 flex flex-col max-h-full border-r border-slate-800 transition-all duration-300 md:relative absolute top-0 bottom-0 left-0 -translate-x-full md:translate-x-0" id="sidebar">
+        <!-- 展開/收合側邊欄按鈕 (手機端) -->
+        <button onclick="toggleSidebar()" class="md:hidden absolute -right-12 top-4 bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-r-lg shadow-lg flex items-center justify-center">
+            <svg id="sidebarToggleIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+
+        <!-- 標題與簡介 -->
+        <div class="p-6 border-b border-slate-800">
+            <div class="flex items-center space-x-2">
+                <span class="text-3xl">✨</span>
+                <div>
+                    <h1 class="text-xl font-black bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">粒子凝聚抽籤器</h1>
+                    <p class="text-xs text-slate-400 mt-1">極限視覺與音效的抽籤體驗</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 輸入區域 -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-5">
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-sm font-semibold text-slate-300">候選名單 / 獎項</label>
+                    <span class="text-xs text-slate-400" id="itemCount">0 個項目</span>
+                </div>
+                <textarea id="namesInput" class="w-full h-44 bg-slate-900/80 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-purple-500 text-slate-100 placeholder-slate-500 resize-none transition" placeholder="請輸入名字或獎品項目，可用換行或逗號「,」分隔..."></textarea>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="loadSample('employees')" class="flex-1 py-1 px-2 text-xs bg-slate-800 hover:bg-slate-700 rounded transition border border-slate-700">載入名單</button>
+                    <button onclick="loadSample('prizes')" class="flex-1 py-1 px-2 text-xs bg-slate-800 hover:bg-slate-700 rounded transition border border-slate-700">載入獎項</button>
+                    <button onclick="clearInput()" class="py-1 px-2 text-xs text-red-400 hover:text-red-300 transition">清空</button>
+                </div>
+            </div>
+
+            <!-- 音效開關與設定 -->
+            <div class="bg-slate-900/40 p-4 rounded-lg border border-slate-800 space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">系統與物理設定</h3>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-300">Web Audio 互動音效</span>
+                    <button id="soundToggleBtn" onclick="toggleSound()" class="px-3 py-1 text-xs font-semibold rounded-full bg-green-900/50 text-green-300 border border-green-700 transition">
+                        🔊 已開啟
+                    </button>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>粒子飛行速度</span>
+                        <span id="speedVal">1.2x</span>
+                    </div>
+                    <input type="range" id="speedSlider" min="0.2" max="3" step="0.1" value="1.2" class="w-full accent-purple-500" oninput="updateSettings()">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>碰撞彈力係數</span>
+                        <span id="bounceVal">0.9</span>
+                    </div>
+                    <input type="range" id="bounceSlider" min="0.5" max="1.1" step="0.05" value="0.9" class="w-full accent-purple-500" oninput="updateSettings()">
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部大按鈕 -->
+        <div class="p-6 border-t border-slate-800 bg-slate-950/60 flex flex-col gap-3">
+            <button onclick="injectParticles()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm font-bold tracking-wide transition shadow-lg flex items-center justify-center space-x-2">
+                <span>🌀 注入粒子名單</span>
+            </button>
+            <button onclick="startLottery()" id="drawBtn" class="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg text-lg font-black tracking-widest transition-all duration-300 shadow-xl shadow-purple-900/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
+                <span>🌟 開始抽籤！</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- 右側畫布主顯示區 -->
+    <main class="flex-1 flex flex-col relative h-full">
+        <!-- 提示區 -->
+        <div class="absolute top-4 left-4 z-10 pointer-events-none">
+            <div class="bg-slate-950/80 backdrop-blur px-4 py-2 rounded-lg border border-slate-800 text-xs text-slate-400">
+                💡 提示：名單注入後，可以用滑鼠在畫面上<span class="text-purple-400 font-bold">撥動</span>或<span class="text-purple-400 font-bold">拖曳</span>粒子喔！
+            </div>
+        </div>
+
+        <!-- 互動 Canvas 區域 -->
+        <div class="flex-1 relative w-full h-full overflow-hidden" id="canvasContainer">
+            <canvas id="canvas" class="block w-full h-full"></canvas>
+        </div>
+    </main>
+
+    <!-- 終極中獎大視窗 Overlay -->
+    <div id="winnerModal" class="fixed inset-0 bg-slate-950/90 z-40 hidden flex items-center justify-center p-4">
+        <div class="max-w-md w-full glass-panel rounded-2xl p-8 text-center relative overflow-hidden border border-amber-500/30 scale-in shadow-2xl shadow-purple-500/10">
+            <!-- 裝飾背景流光 -->
+            <div class="absolute -top-12 -left-12 w-40 h-40 bg-purple-600/20 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-12 -right-12 w-40 h-40 bg-pink-600/20 rounded-full blur-3xl"></div>
+
+            <div class="relative z-10 space-y-6">
+                <div class="inline-block px-4 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-black tracking-widest rounded-full uppercase animate-pulse">
+                    🏆 幸運中獎者 🏆
+                </div>
+                
+                <!-- 璀璨得獎名單 -->
+                <div class="py-6 border-y border-slate-800/80 my-2">
+                    <h2 id="winnerName" class="text-4xl md:text-5xl font-black text-amber-300 tracking-wide neon-glow-gold break-words px-2 leading-tight">
+                        王小明
+                    </h2>
+                </div>
+
+                <p class="text-sm text-slate-400 leading-relaxed">恭喜成為本次的幸運天選之人！</p>
+
+                <!-- 互動選項 -->
+                <div class="flex flex-col gap-3 pt-4">
+                    <button onclick="removeWinnerAndClose()" class="w-full py-3 bg-red-600/80 hover:bg-red-600 border border-red-500 text-white rounded-lg text-sm font-bold transition flex items-center justify-center space-x-2">
+                        <span>❌ 移除此項目並繼續</span>
+                    </button>
+                    <div class="flex gap-3">
+                        <button onclick="closeWinnerModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg text-sm font-bold transition">
+                            保留並再玩一次
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 邏輯 -->
+    <script>
+        // --- 預設名單 ---
+        const SAMPLES = {
+            employees: "張家豪, 林俊傑, 陳怡君, 王美玲, 黃冠宇, 蔡淑芬, 吳志明, 許雅婷, 楊宗翰, 劉廷偉, 趙婉君, 鄭敏雄, 謝佳穎, 郭家豪, 曾郁婷, 周建宏, 葉美儀, 梁家輝, 莊雅雯, 蕭立偉, 袁子晴, 董書豪, 薛曉明, 彭佳玲",
+            prizes: "🌟 豪華特獎：日本雙人遊機票, 🍎 Apple iPhone 16 Pro, 🎮 Sony PlayStation 5 Pro, 💸 紅包 20,000 元, 📺 LG 55吋 4K 聯網電視, 🎧 AirPods Max 藍牙耳機, ☕ 膠囊咖啡機 Pro, 💰 幸運紅包 5,000 元, 💰 開心紅包 3,000 元, 🎫 遠東百貨 2,000元禮券, ☕ 星巴克百元隨行卡"
+        };
+
+        // --- 初始化狀態 ---
+        let particles = [];
+        let confettiList = [];
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let animationFrameId = null;
+
+        let speedMultiplier = 1.2;
+        let elasticity = 0.9;
+        let isAudioEnabled = true;
+
+        // 系統狀態：'idle' (自由飛行), 'gathering' (向心凝聚), 'exploded' (開獎完成)
+        let state = 'idle'; 
+        let winnerIndex = -1;
+        let winnerItem = '';
+        
+        // 凝聚控制變數
+        let gatherProgress = 0; 
+        let targetX = 0;
+        let targetY = 0;
+
+        // --- 互動/滑鼠拖曳 ---
+        let mouse = { x: null, y: null, px: null, py: null, isPressed: false };
+
+        // --- Web Audio 模組 ---
+        let audioCtx = null;
+        let lastBounceTime = 0;
+        let chargeOsc = null;
+        let chargeGain = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 靜音切換
+        function toggleSound() {
+            isAudioEnabled = !isAudioEnabled;
+            const btn = document.getElementById('soundToggleBtn');
+            if (isAudioEnabled) {
+                btn.textContent = "🔊 已開啟";
+                btn.className = "px-3 py-1 text-xs font-semibold rounded-full bg-green-900/50 text-green-300 border border-green-700 transition";
+            } else {
+                btn.textContent = "🔇 已靜音";
+                btn.className = "px-3 py-1 text-xs font-semibold rounded-full bg-slate-800 text-slate-400 border border-slate-700 transition";
+            }
+            initAudio();
+        }
+
+        // 合成碰撞音效 (短促的啾聲)
+        function playBounceSound() {
+            if (!isAudioEnabled) return;
+            initAudio();
+            const now = audioCtx.currentTime;
+            if (now - lastBounceTime < 0.08) return; // 避免過度重疊尖銳
+            lastBounceTime = now;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(140 + Math.random() * 80, now);
+            osc.frequency.exponentialRampToValueAtTime(35, now + 0.1);
+
+            gain.gain.setValueAtTime(0.04, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+            osc.start(now);
+            osc.stop(now + 0.12);
+        }
+
+        // 開始科幻蓄力/凝聚音效 (頻率上升的鋸齒波)
+        function startChargeSound() {
+            if (!isAudioEnabled) return;
+            initAudio();
+            const now = audioCtx.currentTime;
+            
+            chargeOsc = audioCtx.createOscillator();
+            chargeGain = audioCtx.createGain();
+            
+            // 使用低通濾波器增加厚重科技感
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(180, now);
+            filter.frequency.exponentialRampToValueAtTime(1200, now + 2.2);
+
+            chargeOsc.type = 'sawtooth';
+            chargeOsc.frequency.setValueAtTime(90, now);
+            chargeOsc.frequency.exponentialRampToValueAtTime(750, now + 2.2);
+
+            chargeOsc.connect(filter);
+            filter.connect(chargeGain);
+            chargeGain.connect(audioCtx.destination);
+
+            chargeGain.gain.setValueAtTime(0.01, now);
+            chargeGain.gain.linearRampToValueAtTime(0.18, now + 2.2);
+
+            chargeOsc.start(now);
+        }
+
+        function stopChargeSound() {
+            if (chargeOsc) {
+                try {
+                    chargeOsc.stop();
+                } catch(e) {}
+                chargeOsc = null;
+            }
+        }
+
+        // 終極開獎爆炸聲 (重低音掃描 + 白噪音啪碎聲)
+        function playExplosionSound() {
+            if (!isAudioEnabled) return;
+            initAudio();
+            const now = audioCtx.currentTime;
+
+            // 1. 低音轟鳴
+            const subOsc = audioCtx.createOscillator();
+            const subGain = audioCtx.createGain();
+            subOsc.connect(subGain);
+            subGain.connect(audioCtx.destination);
+            subOsc.frequency.setValueAtTime(220, now);
+            subOsc.frequency.exponentialRampToValueAtTime(25, now + 0.5);
+            subGain.gain.setValueAtTime(0.5, now);
+            subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+            subOsc.start(now);
+            subOsc.stop(now + 0.6);
+
+            // 2. 「啪」的白噪音碎裂
+            const bufferSize = audioCtx.sampleRate * 0.4;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'bandpass';
+            noiseFilter.frequency.setValueAtTime(800, now);
+            noiseFilter.frequency.exponentialRampToValueAtTime(150, now + 0.4);
+
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0.35, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+
+            noise.start(now);
+            noise.stop(now + 0.4);
+        }
+
+
+        // --- 粒子類別定義 ---
+        class NameParticle {
+            constructor(text, x, y) {
+                this.text = text;
+                this.x = x;
+                this.y = y;
+                
+                // 隨機初始速度
+                const angle = Math.random() * Math.PI * 2;
+                const speed = (0.5 + Math.random() * 1.5) * speedMultiplier;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+
+                // 測量寬度，設定合適的氣泡尺寸
+                ctx.font = 'bold 15px "Noto Sans TC", sans-serif';
+                const metrics = ctx.measureText(text);
+                this.width = Math.max(metrics.width + 24, 60);
+                this.height = 34;
+                this.radius = this.height / 2; // 碰撞半徑
+
+                // 霓虹色彩
+                const hue = Math.floor(Math.random() * 360);
+                this.color = `hsl(${hue}, 85%, 65%)`;
+                this.glow = `hsl(${hue}, 85%, 55%)`;
+
+                this.alpha = 1;
+                this.scale = 1;
+                this.isTarget = false;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.translate(this.x, this.y);
+                ctx.scale(this.scale, this.scale);
+
+                // 外發光
+                ctx.shadowColor = this.glow;
+                ctx.shadowBlur = 12;
+
+                // 繪製膠囊形狀背景
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.roundRect(-this.width / 2, -this.height / 2, this.width, this.height, this.radius);
+                ctx.fill();
+                ctx.stroke();
+
+                // 關閉外發光繪製純白文字，增強易讀性
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 15px "Noto Sans TC", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.text, 0, 1);
+
+                ctx.restore();
+            }
+
+            update() {
+                if (state === 'idle') {
+                    // 自由飄移物理
+                    this.x += this.vx * speedMultiplier;
+                    this.y += this.vy * speedMultiplier;
+
+                    // 簡單的阻尼
+                    this.vx *= 0.995;
+                    this.vy *= 0.995;
+
+                    // 邊界碰撞
+                    const halfW = this.width / 2;
+                    const halfH = this.height / 2;
+
+                    if (this.x - halfW < 0) {
+                        this.x = halfW;
+                        this.vx = -this.vx * elasticity;
+                        playBounceSound();
+                    } else if (this.x + halfW > canvas.width) {
+                        this.x = canvas.width - halfW;
+                        this.vx = -this.vx * elasticity;
+                        playBounceSound();
+                    }
+
+                    if (this.y - halfH < 0) {
+                        this.y = halfH;
+                        this.vy = -this.vy * elasticity;
+                        playBounceSound();
+                    } else if (this.y + halfH > canvas.height) {
+                        this.y = canvas.height - halfH;
+                        this.vy = -this.vy * elasticity;
+                        playBounceSound();
+                    }
+
+                    // 滑鼠排斥效果 (風力撥動)
+                    if (mouse.x !== null) {
+                        const dx = this.x - mouse.x;
+                        const dy = this.y - mouse.y;
+                        const dist = Math.hypot(dx, dy);
+                        if (dist < 120 && dist > 5) {
+                            const force = (120 - dist) / 120;
+                            // 獲取滑鼠移動向量
+                            const mdx = mouse.x - mouse.px;
+                            const mdy = mouse.y - mouse.py;
+                            this.vx += (dx / dist) * force * 1.5 + mdx * 0.1;
+                            this.vy += (dy / dist) * force * 1.5 + mdy * 0.1;
+                        }
+                    }
+                } 
+                else if (state === 'gathering') {
+                    // 凝聚階段：強力向中心黑洞坍縮、高速旋轉、縮小
+                    const dx = targetX - this.x;
+                    const dy = targetY - this.y;
+                    const dist = Math.hypot(dx, dy);
+
+                    if (dist > 15) {
+                        // 螺旋軌道：帶有一點向心力與正交旋轉力
+                        const angle = Math.atan2(dy, dx);
+                        const speed = 7 + (1 - gatherProgress) * 12;
+                        
+                        // 向心加速
+                        this.vx = Math.cos(angle) * speed + Math.sin(angle) * (speed * 0.4);
+                        this.vy = Math.sin(angle) * speed - Math.cos(angle) * (speed * 0.4);
+
+                        this.x += this.vx;
+                        this.y += this.vy;
+                    } else {
+                        // 非常接近中心：粒子「縮小、淡出、完全融合成一個奇點」
+                        this.scale *= 0.82;
+                        this.alpha *= 0.82;
+                    }
+                }
+            }
+        }
+
+
+        // --- 五彩禮花紙屑粒子類別 ---
+        class ConfettiParticle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 3 + Math.random() * 9;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed - (2 + Math.random() * 5); // 稍微向上噴發
+                
+                this.size = 5 + Math.random() * 8;
+                this.color = `hsl(${Math.random() * 360}, 95%, 60%)`;
+                this.alpha = 1;
+                this.decay = 0.01 + Math.random() * 0.02;
+                this.gravity = 0.2;
+                this.rotation = Math.random() * 360;
+                this.rotSpeed = (Math.random() - 0.5) * 15;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                this.rotation += this.rotSpeed;
+                this.alpha -= this.decay;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+
+        // --- 核心邏輯控制 ---
+
+        // 重新測量 Canvas 大小
+        function resizeCanvas() {
+            const rect = canvas.parentNode.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            targetX = canvas.width / 2;
+            targetY = canvas.height / 2;
+        }
+
+        // 解析輸入並填充粒子
+        function injectParticles() {
+            if (state !== 'idle') return;
+
+            initAudio();
+
+            const text = document.getElementById('namesInput').value.trim();
+            // 支援逗號或換行切割
+            const rawNames = text.split(/[\n,，]+/).map(n => n.trim()).filter(n => n.length > 0);
+
+            if (rawNames.length === 0) {
+                showToast("⚠️ 請先在輸入框輸入或貼上一些候選名單喔！");
+                return;
+            }
+
+            // 更新個數顯示
+            document.getElementById('itemCount').textContent = `${rawNames.length} 個項目`;
+
+            // 清除現有粒子
+            particles = [];
+            confettiList = [];
+
+            // 限制最大渲染粒子數 (防止百萬名單時網頁當機)
+            const MAX_PARTICLES_TO_SHOW = 150;
+            const shownNames = rawNames.slice(0, MAX_PARTICLES_TO_SHOW);
+
+            // 分散生成粒子
+            shownNames.forEach(name => {
+                const border = 50;
+                const rx = border + Math.random() * (canvas.width - border * 2);
+                const ry = border + Math.random() * (canvas.height - border * 2);
+                particles.push(new NameParticle(name, rx, ry));
+            });
+
+            // 如果總名單大於上限，背景陣列存儲全部名單，以便抽籤可以抽到完整名單
+            this.fullListPool = rawNames;
+
+            showToast(`🌀 成功注入 ${rawNames.length} 個項目！粒子已同步飛出`);
+        }
+
+        // 開始抽籤程序（粒子聚集 -> 奇點 -> 啪！爆炸 -> 慶祝）
+        function startLottery() {
+            if (state !== 'idle') return;
+            initAudio();
+
+            const text = document.getElementById('namesInput').value.trim();
+            const rawNames = text.split(/[\n,，]+/).map(n => n.trim()).filter(n => n.length > 0);
+            
+            if (rawNames.length === 0) {
+                showToast("⚠️ 畫面上沒有名單，請先輸入名單並注入粒子！");
+                return;
+            }
+
+            // 如果畫面上沒有粒子，先幫忙注入
+            if (particles.length === 0) {
+                injectParticles();
+            }
+
+            this.fullListPool = rawNames;
+
+            // 隨機選出中獎人
+            winnerIndex = Math.floor(Math.random() * this.fullListPool.length);
+            winnerItem = this.fullListPool[winnerIndex];
+
+            // 鎖定 UI 按鈕
+            document.getElementById('drawBtn').disabled = true;
+
+            // 進入凝聚模式
+            state = 'gathering';
+            gatherProgress = 0;
+            
+            // 啟動蓄力音效
+            startChargeSound();
+        }
+
+        // 終極瞬間：「啪！」一聲融爆
+        function triggerExplosion() {
+            state = 'exploded';
+            stopChargeSound();
+
+            // 1. 播放超震撼爆炸聲
+            playExplosionSound();
+
+            // 2. 白色全螢幕閃光視覺衝擊
+            const flash = document.getElementById('flashOverlay');
+            flash.style.opacity = '1';
+            setTimeout(() => {
+                flash.style.opacity = '0';
+            }, 100);
+
+            // 3. 在中心生成超大量的慶祝粒子 (200個 Confetti)
+            confettiList = [];
+            for (let i = 0; i < 220; i++) {
+                confettiList.push(new ConfettiParticle(targetX, targetY));
+            }
+
+            // 4. 清除凝聚的粒子
+            particles = [];
+
+            // 5. 延遲 400 毫秒後跳出精美的中獎 Modal，讓玩家看到滿天飛舞的灑花
+            setTimeout(() => {
+                document.getElementById('winnerName').textContent = winnerItem;
+                document.getElementById('winnerModal').classList.remove('hidden');
+            }, 350);
+        }
+
+        // 移除中獎人並關閉 modal 繼續
+        function removeWinnerAndClose() {
+            // 從輸入框中刪除該名字
+            const text = document.getElementById('namesInput').value;
+            // 正則精準比對與移除 (包含逗號/換行)
+            const regex = new RegExp('(?:^[\\n,，\\s]*' + escapeRegExp(winnerItem) + '[\\n,，\\s]*)|(?:[\\n,，\\s]*' + escapeRegExp(winnerItem) + ')', 'g');
+            let newText = text.replace(regex, '\n').trim();
+            
+            // 去除連續多餘的逗號
+            newText = newText.replace(/[\n,，]+/g, '\n').trim();
+            // 清理前後殘餘逗號
+            if(newText.startsWith(',')) newText = newText.substring(1);
+            if(newText.endsWith(',')) newText = newText.substring(0, newText.length - 1);
+
+            document.getElementById('namesInput').value = newText;
+            
+            closeWinnerModal();
+            // 自動幫忙重新注入粒子
+            setTimeout(() => {
+                injectParticles();
+            }, 300);
+        }
+
+        // 正則轉義
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // 僅關閉中獎視窗
+        function closeWinnerModal() {
+            document.getElementById('winnerModal').classList.add('hidden');
+            document.getElementById('drawBtn').disabled = false;
+            state = 'idle';
+            confettiList = [];
+            // 自動把剩下的粒子再次注入，重新好整以暇飛舞
+            injectParticles();
+        }
+
+        // 載入預設範本
+        function loadSample(key) {
+            if (state !== 'idle') return;
+            document.getElementById('namesInput').value = SAMPLES[key].replace(/,\s*/g, '\n');
+            injectParticles();
+        }
+
+        function clearInput() {
+            if (state !== 'idle') return;
+            document.getElementById('namesInput').value = '';
+            particles = [];
+            confettiList = [];
+            document.getElementById('itemCount').textContent = "0 個項目";
+        }
+
+        // 動態讀取側邊欄設定
+        function updateSettings() {
+            speedMultiplier = parseFloat(document.getElementById('speedSlider').value);
+            elasticity = parseFloat(document.getElementById('bounceSlider').value);
+
+            document.getElementById('speedVal').textContent = `${speedMultiplier.toFixed(1)}x`;
+            document.getElementById('bounceVal').textContent = `${elasticity.toFixed(2)}`;
+        }
+
+
+        // --- 物理模擬與渲染主迴圈 ---
+        function animate() {
+            // 背景微弱漸層拖影 (製造流光餘暉)
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 如果是凝聚狀態，更新凝聚進度
+            if (state === 'gathering') {
+                gatherProgress += 0.009; // 漸進增強凝聚引力
+                if (gatherProgress >= 1) {
+                    triggerExplosion();
+                }
+                
+                // 畫布中央繪製一個微弱、發光且逐漸擴大的「星雲坍縮」旋渦
+                ctx.save();
+                ctx.translate(targetX, targetY);
+                ctx.rotate(Date.now() * 0.005);
+                const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 50 + gatherProgress * 150);
+                grad.addColorStop(0, '#ffffff');
+                grad.addColorStop(0.2, 'rgba(168, 85, 247, 0.4)');
+                grad.addColorStop(0.6, 'rgba(236, 72, 153, 0.15)');
+                grad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(0, 0, 200, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 2. 處理名單粒子碰撞與移動 (雙重循環)
+            if (state === 'idle') {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        let p1 = particles[i];
+                        let p2 = particles[j];
+
+                        let dx = p2.x - p1.x;
+                        let dy = p2.y - p1.y;
+                        let dist = Math.hypot(dx, dy);
+                        // 以兩者半徑和作為近似碰撞距離
+                        let minDist = p1.radius + p2.radius;
+
+                        if (dist < minDist) {
+                            // 修正重疊 (避免卡住)
+                            let overlap = minDist - dist;
+                            let nx = dx / dist;
+                            let ny = dy / dist;
+
+                            p1.x -= nx * overlap * 0.5;
+                            p1.y -= ny * overlap * 0.5;
+
+                            // 完美的彈性碰撞物理運算
+                            let kx = p1.vx - p2.vx;
+                            let ky = p1.vy - p2.vy;
+                            let p = 2 * (nx * kx + ny * ky) / 2; // 假設質量相等
+                            
+                            p1.vx -= p * nx * elasticity;
+                            p1.vy -= p * ny * elasticity;
+                            p2.vx += p * nx * elasticity;
+                            p2.vy += p * ny * elasticity;
+
+                            // 發出極清脆的輕微碰撞聲
+                            playBounceSound();
+                        }
+                    }
+                }
+            }
+
+            // 更新並繪製所有名單粒子
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // 3. 處理爆破後的漫天灑花禮紙屑
+            for (let i = confettiList.length - 1; i >= 0; i--) {
+                const c = confettiList[i];
+                c.update();
+                c.draw();
+                if (c.alpha <= 0) {
+                    confettiList.splice(i, 1);
+                }
+            }
+
+            // 在 exploded 模式，即便名單粒子消失，也會繼續渲染中心禮花背景
+            if (state === 'exploded' && confettiList.length > 0) {
+                // 中心維持閃耀金光
+                ctx.save();
+                const starGrad = ctx.createRadialGradient(targetX, targetY, 0, targetX, targetY, 180);
+                starGrad.addColorStop(0, 'rgba(234, 179, 8, 0.15)');
+                starGrad.addColorStop(1, 'rgba(2, 6, 23, 0)');
+                ctx.fillStyle = starGrad;
+                ctx.beginPath();
+                ctx.arc(targetX, targetY, 180, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+
+        // --- 手機端 UI 優化與側邊欄開關 ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const icon = document.getElementById('sidebarToggleIcon');
+            const isOpen = sidebar.classList.contains('translate-x-0');
+
+            if (isOpen) {
+                sidebar.classList.remove('translate-x-0');
+                sidebar.classList.add('-translate-x-full');
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>`;
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>`;
+            }
+        }
+
+        // Toast 訊息提示
+        function showToast(msg) {
+            // 移除舊的
+            const oldToast = document.getElementById('customToast');
+            if (oldToast) oldToast.remove();
+
+            const toast = document.createElement('div');
+            toast.id = "customToast";
+            toast.className = "fixed top-4 left-1/2 -translate-x-1/2 z-50 glass-panel border border-purple-500/40 text-purple-200 px-6 py-3 rounded-xl text-sm font-semibold shadow-lg scale-in flex items-center gap-2";
+            toast.innerHTML = `<span>✨</span><span>${msg}</span>`;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.transition = 'all 0.4s ease';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, -20px)';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+
+        // --- 滑鼠與觸控事件綁定 ---
+        function setupInteraction() {
+            // 動態更新滑鼠物理軌跡
+            function updateMousePos(x, y) {
+                mouse.px = mouse.x;
+                mouse.py = mouse.y;
+                mouse.x = x;
+                mouse.y = y;
+            }
+
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                updateMousePos(e.clientX - rect.left, e.clientY - rect.top);
+            });
+
+            canvas.addEventListener('mouseleave', () => {
+                mouse.x = null;
+                mouse.y = null;
+                mouse.px = null;
+                mouse.py = null;
+            });
+
+            // 觸控支援
+            canvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 0) {
+                    const rect = canvas.getBoundingClientRect();
+                    updateMousePos(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+                }
+            });
+
+            canvas.addEventListener('touchend', () => {
+                mouse.x = null;
+                mouse.y = null;
+                mouse.px = null;
+                mouse.py = null;
+            });
+        }
+
+
+        // --- 視窗載入與啟動 ---
+        window.onload = function() {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            setupInteraction();
+
+            // 預設載入並注入同仁名單
+            loadSample('employees');
+
+            // 啟動主渲染迴圈
+            animate();
+        };
+
+    </script>
+</body>
+</html>
