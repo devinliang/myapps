@@ -391,14 +391,16 @@
 
     <!-- Firebase MODULE 導入與邏輯架構 -->
     <script type="module">
-        // Firebase modules removed: running in relay-only mode
+        // Firebase SDK imports (Auth removed - using Firestore-only mode)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
         // 1. 防禦性全域變數讀取與安全初始化
         // ==========================================
         // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         // 強制使用中繼模式（若需開啟 Firebase，請設為 false）
-        const FORCE_RELAY_ONLY = true;
+        const FORCE_RELAY_ONLY = false;
 
         let firebaseConfig = {
             apiKey: "AIzaSyDlSMGUFRURs_-Fw2Y64aujWQ9cRmkB_P4",
@@ -411,7 +413,6 @@
         };
 
         let app = null;
-        let auth = null;
         let db = null;
         let isFirebaseActive = false;
 
@@ -433,7 +434,6 @@
         if (!FORCE_RELAY_ONLY && firebaseConfig && firebaseConfig.apiKey) {
             try {
                 app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
                 db = getFirestore(app);
                 isFirebaseActive = true;
                 console.log("Firebase 雲端模組已成功啟動！");
@@ -712,42 +712,12 @@
         }
 
         // ==========================================
-        // 3. 身份驗證流程 (遵循 RULE 3)
+        // 3. Firestore 初始化流程（無 Auth）
         // ==========================================
         async function authenticate() {
-            if (!isFirebaseActive) {
-                updateStatusBadge();
-                checkUrlParamsAndInit();
-                return;
-            }
-
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                isFirebaseActive = false; // 降級為中繼通道模式
-                if (error && error.code === 'auth/configuration-not-found') {
-                    console.warn("Firebase Auth configuration not found, falling back to relay mode.", error);
-                    showNotification("Firebase 認證未啟用，已改用中繼模式", "warning");
-                } else {
-                    console.error("Auth error:", error);
-                    showNotification("Firebase 認證失敗，已改用中繼模式", "error");
-                }
-            } finally {
-                updateStatusBadge();
-                checkUrlParamsAndInit();
-            }
-        }
-
-        // 綁定 Auth 狀態監聽
-        if (isFirebaseActive) {
-            onAuthStateChanged(auth, (userInstance) => {
-                currentUser = userInstance;
-                checkUrlParamsAndInit();
-            });
+            // Firestore-only mode: no Auth needed, proceed directly
+            updateStatusBadge();
+            checkUrlParamsAndInit();
         }
 
         // 偵測網址參數是否夾帶 ?pollId=XXXXXX
@@ -828,9 +798,7 @@
                     return;
                 }
 
-                if (!currentUser) return;
-
-                // B. Firebase 即時雲端數據監聽 (遵循 RULE 1 & 2)
+                // B. Firebase 即時雲端數據監聽 (Firestore-only mode, no Auth required)
                 // 先讀取一次問卷內容，避免 loader 長時間停留
                 const pollDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'polls', activePollId);
                 try {
@@ -1232,7 +1200,7 @@
                 pollId: newPollId,
                 question: question,
                 options: validOptions,
-                creatorUid: currentUser ? currentUser.uid : 'local-host',
+                creatorUid: 'local-host',
                 createdAt: Date.now()
             };
 
@@ -1279,7 +1247,38 @@
         (function bindVoteRetry() {
             const retryBtn = document.getElementById('vote-retry-btn');
             if (!retryBtn) return;
+            let retryCountdownTimer = null;
+
+            function updateRetryBtnState() {
+                const cooldownUntil = RELAY_COOLDOWNS[activePollId];
+                const now = Date.now();
+                const isInCooldown = cooldownUntil && now < cooldownUntil;
+
+                if (isInCooldown) {
+                    const remainingSec = Math.ceil((cooldownUntil - now) / 1000);
+                    retryBtn.disabled = true;
+                    retryBtn.textContent = `請稍候... (${remainingSec}s)`;
+                    retryBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    retryBtn.disabled = false;
+                    retryBtn.textContent = '重新取得';
+                    retryBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+
+            function startCooldownCountdown() {
+                if (retryCountdownTimer) clearInterval(retryCountdownTimer);
+                retryCountdownTimer = setInterval(updateRetryBtnState, 500);
+            }
+
             retryBtn.addEventListener('click', () => {
+                const cooldownUntil = RELAY_COOLDOWNS[activePollId];
+                if (cooldownUntil && Date.now() < cooldownUntil) {
+                    showNotification('中繼服務仍在冷卻期，請稍候再試。', 'warning');
+                    startCooldownCountdown();
+                    return;
+                }
+
                 const loader = document.getElementById('vote-loader');
                 const error = document.getElementById('vote-error');
                 if (loader) loader.classList.remove('hidden');
@@ -1300,6 +1299,9 @@
                     }
                 }, 12000);
             });
+
+            // 初始化按鈕狀態
+            updateRetryBtnState();
         })();
 
         // 答題者（手機端）送出投票
