@@ -436,9 +436,12 @@
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 isFirebaseActive = true;
-                console.log("Firebase 雲端模組已成功啟動！");
+                console.log("✅ Firebase 雲端模組已成功啟動！");
+                console.log("   若「建立中」卡住，請按 F12 打開 Developer Console 查看詳細日誌");
+                console.log("   或右鍵 > 檢查 > Console 分頁");
             } catch (err) {
-                console.error("Firebase 初始化遭遇錯誤:", err);
+                console.error("❌ Firebase 初始化遭遇錯誤:", err);
+                isFirebaseActive = false;
             }
         } else {
             if (!FORCE_RELAY_ONLY) {
@@ -615,6 +618,7 @@
         const notificationText = document.getElementById('notification-text');
         const notificationIcon = document.getElementById('notification-icon');
         const cloudStatusBadge = document.getElementById('cloud-status-badge');
+        const isLocalFileProtocol = window.location.protocol === 'file:';
 
         // 全域錯誤與未處理 Promise 捕捉，便於診斷投票端卡住問題
         window.addEventListener('error', (ev) => {
@@ -704,19 +708,193 @@
 
         // 更新狀態徽章
         function updateStatusBadge() {
-            // 不在 UI 中顯示連線狀態，保持欄位隱藏以簡化被詢問者介面
-            if (cloudStatusBadge) {
+            if (!cloudStatusBadge) return;
+
+            if (isLocalFileProtocol) {
+                cloudStatusBadge.classList.remove('hidden');
+                cloudStatusBadge.innerHTML = `
+                    <span class="w-2 h-2 mr-1.5 bg-orange-500 rounded-full animate-pulse"></span>
+                    本機 file:// 開啟，已改用中繼模式
+                `;
+                return;
+            }
+
+            if (isFirebaseActive) {
                 cloudStatusBadge.classList.add('hidden');
                 cloudStatusBadge.innerHTML = '';
+                return;
             }
+
+            cloudStatusBadge.classList.add('hidden');
+            cloudStatusBadge.innerHTML = '';
         }
 
         // ==========================================
-        // 3. Firestore 初始化流程（無 Auth）
+        // 3. Firestore 診斷與初始化流程（無 Auth）
         // ==========================================
+        async function testFirebaseConnection() {
+            console.log("🔍 Firebase 連接診斷開始");
+            console.log("  - FORCE_RELAY_ONLY:", FORCE_RELAY_ONLY);
+            console.log("  - isFirebaseActive:", isFirebaseActive);
+            console.log("  - app:", app ? "✅ 已初始化" : "❌ 未初始化");
+            console.log("  - db:", db ? "✅ 已初始化" : "❌ 未初始化");
+            console.log("  - projectId:", firebaseConfig.projectId);
+            
+            if (!isFirebaseActive) {
+                console.warn("⚠️  Firebase 未啟用，使用中繼模式");
+                return false;
+            }
+            
+            if (!db) {
+                console.error("❌ Firestore 未初始化 - 請確認 Firebase 配置正確");
+                return false;
+            }
+            
+            try {
+                // 嘗試寫入一個測試文檔（使用 REST API）
+                console.log("  📤 測試寫入權限...");
+                await restSetDoc('surveys', 'test-connection-check', {
+                    test: true,
+                    timestamp: Date.now()
+                });
+                console.log("✅ Firestore REST 寫入測試成功 - 安全規則允許寫入");
+
+                // 嘗試讀取測試文檔
+                console.log("  📖 測試讀取權限...");
+                const testDocRef = doc(db, 'surveys', 'test-connection-check');
+                const testSnapshot = await getDoc(testDocRef);
+                if (testSnapshot.exists()) {
+                    console.log("✅ Firestore 讀取測試成功 - 安全規則允許讀取");
+                    console.log("   -> 連接正常，問題可能在其他地方");
+                }
+
+                return true;
+            } catch (error) {
+                console.error("❌ Firestore 連接失敗!");
+                console.error("  - 錯誤代碼:", error.code);
+                console.error("  - 完整錯誤:", error);
+
+                const normalizedCode = String(error.code || '').toLowerCase();
+                if (error.code === 'NOT_FOUND' || normalizedCode === 'not_found' || (error.message && error.message.includes('does not exist'))) {
+                    console.error("   ⚠️  Firestore 資料庫尚未啟用，請至 Firebase 控制台啟用 Firestore。");
+                    showNotification("Firebase 專案未啟用 Firestore，已改用中繼模式", "warning");
+                    isFirebaseActive = false;
+                    updateStatusBadge();
+                } else if (normalizedCode === 'permission_denied' || normalizedCode === 'permission-denied' || normalizedCode === '403' || normalizedCode === 'forbidden') {
+                    console.error("   ⚠️  權限被拒絕 - 請檢查 Firestore 安全規則是否允許讀寫");
+                    console.error("   建議在 Firebase 控制台設定安全規則為：");
+                    console.error(`
+        rules_version = '2';
+        service cloud.firestore {
+          match /databases/{database}/documents {
+            match /surveys/{document=**} {
+              allow read, write: if true;
+            }
+            match /votes/{document=**} {
+              allow read, write: if true;
+            }
+          }
+        }
+                    `);
+                    showNotification("Firestore 權限不足，已改用中繼模式", "warning");
+                    isFirebaseActive = false;
+                    updateStatusBadge();
+                } else if (normalizedCode === 'unavailable' || normalizedCode === '503') {
+                    console.error("   ⚠️  服務不可用 - 請檢查網路連接");
+                }
+                return false;
+            }
+        }
+
+        function buildFirestoreValue(value) {
+            if (value === null || value === undefined) {
+                return { nullValue: null };
+            }
+            if (typeof value === 'string') {
+                return { stringValue: value };
+            }
+            if (typeof value === 'number') {
+                return { integerValue: String(value) };
+            }
+            if (typeof value === 'boolean') {
+                return { booleanValue: value };
+            }
+            if (Array.isArray(value)) {
+                return {
+                    arrayValue: {
+                        values: value.map((item) => buildFirestoreValue(item))
+                    }
+                };
+            }
+            return { stringValue: String(value) };
+        }
+
+        function buildFirestoreDocument(data) {
+            const fields = {};
+            Object.entries(data).forEach(([key, value]) => {
+                fields[key] = buildFirestoreValue(value);
+            });
+            return { fields };
+        }
+
+        async function firestoreRestRequest(path, method, body) {
+            const apiKey = firebaseConfig.apiKey;
+            const projectId = firebaseConfig.projectId;
+            const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}?key=${encodeURIComponent(apiKey)}`;
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: body ? JSON.stringify(body) : undefined
+            });
+            const responseText = await response.text();
+            if (!response.ok) {
+                const json = responseText ? JSON.parse(responseText) : {};
+                const err = new Error(json.error?.message || `Firestore REST ${response.status}`);
+                err.code = json.error?.status || response.status;
+                throw err;
+            }
+            return responseText ? JSON.parse(responseText) : {};
+        }
+
+        async function restSetDoc(collectionName, docId, data) {
+            const path = `${collectionName}/${encodeURIComponent(docId)}`;
+            const payload = buildFirestoreDocument(data);
+            return await firestoreRestRequest(path, 'PATCH', payload);
+        }
+
+        async function restAddDoc(collectionName, data) {
+            const path = `${collectionName}`;
+            const payload = buildFirestoreDocument(data);
+            return await firestoreRestRequest(path, 'POST', payload);
+        }
+
+        async function restUpdateDoc(collectionName, docId, data) {
+            const path = `${collectionName}/${encodeURIComponent(docId)}`;
+            const payload = buildFirestoreDocument(data);
+            return await firestoreRestRequest(path, 'PATCH', payload);
+        }
+
         async function authenticate() {
             // Firestore-only mode: no Auth needed, proceed directly
             updateStatusBadge();
+
+            if (isLocalFileProtocol && isFirebaseActive) {
+                console.warn("⚠️  目前透過 file:// 開啟頁面，Firestore 可能無法正常連線，已改用中繼模式。");
+                showNotification("目前從本機檔案(file://)開啟，Firestore 可能無法連線，已改用中繼模式", "warning");
+                isFirebaseActive = false;
+                updateStatusBadge();
+            }
+
+            // 診斷 Firebase 連接
+            if (isFirebaseActive) {
+                const isConnected = await testFirebaseConnection();
+                if (!isConnected) {
+                    console.warn("⚠️  Firebase 連接失敗，您可能需要檢查網路或 Firestore 規則");
+                }
+            }
+
             checkUrlParamsAndInit();
         }
 
@@ -800,15 +978,18 @@
 
                 // B. Firebase 即時雲端數據監聽 (Firestore-only mode, no Auth required)
                 // 先讀取一次問卷內容，避免 loader 長時間停留
-                const pollDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'polls', activePollId);
+                const pollDocRef = doc(db, 'surveys', activePollId);
+                console.log("📖 嘗試從 Firestore 讀取問卷:", { path: `artifacts/${appId}/public/data/polls/${activePollId}` });
                 try {
                     const pollSnapshot = await promiseWithTimeout(getDoc(pollDocRef), 8000, '讀取調查資訊逾時，請稍候再試');
                     if (pollSnapshot.exists()) {
                         currentPoll = pollSnapshot.data();
+                        console.log("✅ 成功讀取問卷資料:", currentPoll);
                         if (currentView === 'vote' || currentView === 'dashboard') {
                             renderPollData();
                         }
                     } else {
+                        console.warn("⚠️  問卷不存在:", activePollId);
                         if (currentView === 'vote' || currentView === 'dashboard') {
                             showNotification("找不到該意見調查，請確認代碼是否正確", "error");
                             resetToHome();
@@ -835,7 +1016,7 @@
                 });
 
                 // (2) 監聽所有投票數據 (依據 RULE 2：前端篩選以避開複合索引問題)
-                const votesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'votes');
+                const votesColRef = collection(db, 'votes');
                 unsubscribeVotes = onSnapshot(votesColRef, (querySnapshot) => {
                     const allVotes = [];
                     querySnapshot.forEach((doc) => {
@@ -1141,14 +1322,14 @@
             try {
                 const existingVote = votesList.find(v => v.voterName.toLowerCase() === name.toLowerCase());
                 if (existingVote) {
-                    const voteDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'votes', existingVote.id);
+                    const voteDocRef = doc(db, 'votes', existingVote.id);
                     await updateDoc(voteDocRef, {
                         optionIndex: selectedSandboxIndex,
                         votedAt: Date.now()
                     });
                     showNotification(`【雲端即時】已更新 ${name} 的作答！`, "success");
                 } else {
-                    const votesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'votes');
+                    const votesColRef = collection(db, 'votes');
                     await addDoc(votesColRef, {
                         pollId: activePollId,
                         voterName: name,
@@ -1204,6 +1385,13 @@
                 createdAt: Date.now()
             };
 
+            if (isLocalFileProtocol && isFirebaseActive) {
+                console.warn("⚠️  本機 file:// 開啟，Firestore 可能無法連線，改用中繼模式建立問卷。" );
+                showNotification("本機 file:// 開啟，Firestore 可能無法連線，已改用中繼模式", "warning");
+                isFirebaseActive = false;
+                updateStatusBadge();
+            }
+
             // 沒有 Firebase：將資料寫入中繼通道
             if (!isFirebaseActive) {
                 activePollId = newPollId;
@@ -1221,8 +1409,14 @@
             submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin mr-2"></i> 建立中...`;
 
             try {
-                const pollDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'polls', newPollId);
-                await setDoc(pollDocRef, localPollObject);
+                console.log("📝 開始建立問卷:", { newPollId, db: !!db, isFirebaseActive });
+                console.log("📤 將問卷寫入 Firestore REST API...", { surveyId: newPollId });
+                await promiseWithTimeout(
+                    restSetDoc('surveys', newPollId, localPollObject),
+                    15000,
+                    'Firestore REST 寫入逾時，請檢查網路連線或 Firebase 規則'
+                );
+                console.log("✅ 問卷已成功寫入 Firestore");
 
                 activePollId = newPollId;
                 currentPoll = localPollObject;
@@ -1231,8 +1425,14 @@
                 startRealtimeSubscription();
                 showNotification("調查已成功建立！開始即時連線", "success");
             } catch (err) {
-                console.error("Create poll fail:", err);
-                showNotification(err.message || "建立調查時發生錯誤，請稍後再試", "error");
+                console.error("❌ 建立問卷失敗:", err);
+                console.error("  - 錯誤代碼:", err.code);
+                console.error("  - 錯誤訊息:", err.message);
+                if (err.message && err.message.includes('逾時')) {
+                    showNotification("Firestore 寫入逾時，請改用 http(s) 伺服器開啟此頁面或檢查網路", "error");
+                } else {
+                    showNotification(err.message || "建立調查時發生錯誤，請稍後再試", "error");
+                }
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<span>確認並建立即時調查</span> <i class="fa-solid fa-cloud-arrow-up"></i>`;
@@ -1347,16 +1547,14 @@
 
                 if (existingVote) {
                     // 更新上一次投票選擇
-                    const voteDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'votes', existingVote.id);
-                    await updateDoc(voteDocRef, {
+                    await restUpdateDoc('votes', existingVote.id, {
                         optionIndex: selectedOptionIndex,
                         votedAt: Date.now()
                     });
                     showNotification("您的投票已更新成功！", "success");
                 } else {
                     // 寫入全新投票
-                    const votesColRef = collection(db, 'artifacts', appId, 'public', 'data', 'votes');
-                    await addDoc(votesColRef, {
+                    await restAddDoc('votes', {
                         pollId: activePollId,
                         voterName: name,
                         optionIndex: selectedOptionIndex,
