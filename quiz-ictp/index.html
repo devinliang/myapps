@@ -296,6 +296,7 @@
         .option-btn:hover:not(:disabled) {
             border-color: var(--color-blue);
             background: var(--color-blue);
+            color: #ffffff;
         }
         @media (prefers-color-scheme: light) {
             .option-btn:hover:not(:disabled) {
@@ -305,6 +306,7 @@
         .option-btn:disabled { cursor: not-allowed; }
         .option-btn.correct { border-color: var(--color-green); background: var(--color-green); }
         .option-btn.wrong { border-color: var(--color-red); background: var(--color-red); }
+        .option-btn.correct, .option-btn.wrong { color: #ffffff; }
         @media (prefers-color-scheme: light) {
             .option-btn.correct { background: var(--color-green); }
             .option-btn.wrong { background: var(--color-red); }
@@ -322,6 +324,7 @@
         }
         .option-btn.correct .option-letter { background: var(--color-green); }
         .option-btn.wrong .option-letter { background: var(--color-red); }
+        .option-btn.correct .option-letter, .option-btn.wrong .option-letter { color: #ffffff; }
         
         .feedback {
             padding: 15px;
