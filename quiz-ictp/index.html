@@ -1,972 +1,757 @@
 <!DOCTYPE html>
-<html lang="zh-TW" class="dark">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-    <title>Python 專業技能互動測驗</title>
-    <!-- Tailwind CSS Play CDN (official, local-dev friendly) -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography" crossorigin="anonymous"></script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <!-- Google Fonts with better fallback -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"></noscript>
-    <script>
-        if (typeof tailwind !== 'undefined') {
-            tailwind.config = {
-                darkMode: 'class',
-                theme: {
-                    extend: {
-                        fontFamily: {
-                            sans: ['Noto Sans TC', 'system-ui', 'sans-serif'],
-                            mono: ['JetBrains Mono', 'monospace'],
-                        },
-                    },
-                }
-            }
-        }
-    </script>
+    <title>Python 技能檢定測驗</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { font-size: 16px; }
+        html { font-size: 16px; scroll-behavior: smooth; }
         body { 
-            font-family: 'Noto Sans TC', system-ui, sans-serif;
-            background-color: #0f172a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: #f1f5f9;
+            line-height: 1.6;
+            min-height: 100vh;
         }
-        .dark body { background-color: #0f172a; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        .dark ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .option-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        .slide-in { animation: slideIn 0.3s ease-out forwards; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-bottom: 1px solid #334155;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title { display: flex; align-items: center; gap: 15px; }
+        .header-title h1 { font-size: 24px; font-weight: bold; }
+        .header-subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+        .header-actions { display: flex; gap: 15px; }
+        .btn-icon {
+            width: 40px; height: 40px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: transparent;
+            color: #cbd5e1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover { background: #1e293b; }
+        .bookmark-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid #475569;
+            background: rgba(15, 23, 42, 0.75);
+            color: #94a3b8;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            padding: 0;
+        }
+        .bookmark-btn .bookmark-icon {
+            width: 20px;
+            height: 20px;
+            display: block;
+            background-image: url('star_blank.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .bookmark-btn.selected {
+            border-color: #facc15;
+            background: rgba(250, 204, 21, 0.12);
+            color: #facc15;
+        }
+        .bookmark-btn.selected .bookmark-icon {
+            background-image: url('star_color.png');
+        }
+        
+        .panel { 
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 900px;
+        }
+        .panel h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .panel-subtitle { color: #94a3b8; margin-bottom: 20px; }
+        
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .mode-card {
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            background: rgba(45, 85, 255, 0.05);
+            transition: all 0.3s;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .mode-card:hover {
+            border-color: #3b82f6;
+            background: rgba(45, 85, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .mode-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .mode-icon {
+            width: 50px; height: 50px;
+            border-radius: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        .mode-title { font-weight: 600; font-size: 16px; }
+        .mode-desc { color: #94a3b8; font-size: 12px; margin-top: 4px; }
+        
+        .settings { background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .checkbox { margin-right: 8px; }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-secondary { background: #334155; color: #e2e8f0; }
+        .btn-secondary:hover { background: #475569; }
+        
+        .question-panel {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            min-height: 520px;
+        }
+        .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .q-number { color: #94a3b8; font-size: 12px; font-weight: 600; }
+        .q-text { font-size: 18px; font-weight: 600; margin: 15px 0; line-height: 1.6; }
+        .q-code {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #cbd5e1;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .options { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
+        .option-btn {
+            padding: 15px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: rgba(45, 85, 255, 0.03);
+            color: #f1f5f9;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .option-btn:hover:not(:disabled) {
+            border-color: #3b82f6;
+            background: rgba(45, 85, 255, 0.08);
+        }
+        .option-btn:disabled { cursor: not-allowed; }
+        .option-btn.correct { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .option-btn.wrong { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .option-letter {
+            width: 30px; height: 30px;
+            border-radius: 6px;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .option-btn.correct .option-letter { background: #10b981; }
+        .option-btn.wrong .option-letter { background: #ef4444; }
+        
+        .feedback {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+        .feedback.show { display: block; }
+        .feedback.correct { background: rgba(16, 185, 129, 0.15); border-left: 3px solid #10b981; color: #10b981; }
+        .feedback.wrong { background: rgba(239, 68, 68, 0.15); border-left: 3px solid #ef4444; color: #ef4444; }
+        .feedback-title { font-weight: 600; margin-bottom: 8px; }
+        
+        .quiz-layout {
+            display: grid;
+            grid-template-columns: 240px minmax(0, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+        .question-sidebar {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 20px;
+            max-height: calc(100vh - 170px);
+            overflow-y: auto;
+        }
+        .sidebar-title {
+            margin-bottom: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+        .question-jump-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .jump-btn {
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 10px 0;
+            background: rgba(15, 23, 42, 0.7);
+            color: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        .jump-btn:hover { background: rgba(59, 130, 246, 0.12); }
+        .jump-btn.current { border-color: #3b82f6; background: rgba(59, 130, 246, 0.18); }
+        .jump-btn.answered { border-color: #10b981; background: rgba(16, 185, 129, 0.12); }
+        .jump-btn.correct { border-color: #10b981; background: rgba(16, 185, 129, 0.18); }
+        .jump-btn.wrong { border-color: #ef4444; background: rgba(239, 68, 68, 0.18); }
+        .jump-actions {
+            margin-top: 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .jump-actions button {
+            width: 100%;
+        }
+        @media (max-width: 1024px) {
+            .quiz-layout { grid-template-columns: 1fr; }
+            .question-sidebar { max-height: none; }
+            .question-jump-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+        }
+        @media (max-width: 640px) {
+            .question-jump-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+        
+        .results-container {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px auto;
+            max-width: 700px;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .result-card {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .result-label { color: #94a3b8; font-size: 12px; margin-bottom: 8px; }
+        .result-value { font-size: 24px; font-weight: 700; color: #3b82f6; }
+        
+        .hidden { display: none !important; }
+        
+        @media (max-width: 768px) {
+            .mode-grid { grid-template-columns: 1fr; }
+            .panel { padding: 20px; }
+            .question-panel { padding: 15px; }
+            .q-text { font-size: 16px; }
+            .results-grid { grid-template-columns: 1fr 1fr; }
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen">
-    <!-- Loading Indicator -->
-    <div id="loading-screen" class="fixed inset-0 flex items-center justify-center bg-slate-950/80 z-[9999]">
-        <div class="text-center">
-            <div class="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="text-slate-400">正在加載測驗系統...</p>
+<body>
+    <div class="header">
+        <div class="header-title">
+            <div style="font-size:24px;">🐍</div>
+            <div>
+                <h1>Python 程式能力檢定題庫</h1>
+                <div class="header-subtitle">目前共 <span id="total-count">加載中</span> 題</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-icon" onclick="toggleMute()" title="靜音">🔊</button>
+            <button class="btn-icon" onclick="toggleTheme()" title="暗色主題">🌙</button>
         </div>
     </div>
-    <div class="fixed inset-0 pointer-events-none overflow-hidden opacity-30 dark:opacity-40">
-        <div class="absolute -top-[40%] -left-[30%] w-[80%] h-[80%] rounded-full bg-blue-600/10 blur-[120px]"></div>
-        <div class="absolute -bottom-[40%] -right-[30%] w-[80%] h-[80%] rounded-full bg-indigo-600/10 blur-[120px]"></div>
-    </div>
 
-    <header class="sticky top-0 z-40 backdrop-blur-md bg-slate-900/80 border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
-                    <i class="fa-brands fa-python text-2xl"></i>
+    <div class="container">
+        <!-- 歡迎面板 -->
+        <div id="welcome-panel" class="panel">
+            <!-- <h2>Python 程式設計測驗</h2>
+            <p class="panel-subtitle" id="welcome-desc">本測驗收錄了精選 Python 重點題目。</p> -->
+
+            <!-- <h3 style="margin: 20px 0 15px; font-weight: 600; font-size: 16px;">📋 請選擇測驗模式</h3> -->
+            <div class="mode-grid">
+                <div class="mode-card" onclick="startQuiz('full')">
+                    <div class="mode-icon">📚</div>
+                    <div>
+                        <div class="mode-title">全能挑戰模式 (<span id="mode-count">加載中</span> 題)</div>
+                        <div class="mode-desc">完整作答所有題目。</div>
+                    </div>
                 </div>
+
+                <div class="mode-card" onclick="startQuiz('speed')">
+                    <div class="mode-icon">⚡</div>
+                    <div>
+                        <div class="mode-title">精選快問模式 (20 題)</div>
+                        <div class="mode-desc">隨機抽取 20 道題目。</div>
+                    </div>
+                </div>
+
+                <div class="mode-card disabled" id="weakness-card">
+                    <div class="mode-icon">⚠️</div>
+                    <div>
+                        <div class="mode-title">錯題強化模式</div>
+                        <div class="mode-desc" id="weakness-desc">目前尚無錯題紀錄。</div>
+                    </div>
+                </div>
+
+                <div class="mode-card disabled" id="bookmark-card">
+                    <div class="mode-icon">🔖</div>
+                    <div>
+                        <div class="mode-title">書籤複習模式</div>
+                        <div class="mode-desc" id="bookmark-desc">目前無書籤。</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings">
+                <label>
+                    <input type="checkbox" class="checkbox" id="practice-mode" checked>
+                    <span>啟用練習回饋</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 測驗面板 -->
+        <div id="quiz-panel" class="hidden">
+            <div style="background: rgba(30, 41, 59, 0.6); border: 1px solid #334155; border-radius: 12px; padding: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
                 <div>
-                    <h1 class="text-xl font-bold tracking-wider bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">Python 技能檢定挑戰</h1>
-                    <p class="text-xs text-slate-400 font-medium"><span id="quiz-total-count">加載中</span> 題・每題 3.0 分</p>
+                    <span style="color: #3b82f6; font-weight: 600;">全能挑戰</span>
+                    <span style="color: #94a3b8; margin-left: 10px;">進度: <span id="progress" class="font-bold">0/0</span></span>
+                </div>
+                <div style="display: flex; gap: 20px;">
+                    <div>計時: <span id="timer" style="font-family: monospace; font-weight: 600;">00:00</span></div>
+                    <div>準確率: <span id="accuracy" style="color: #10b981; font-weight: 600;">100%</span></div>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
-                <button id="mute-btn" onclick="toggleMute()" class="w-10 h-10 rounded-lg flex items-center justify-center border border-slate-800 hover:bg-slate-800">
-                    <i id="mute-icon" class="fa-solid fa-volume-high text-lg text-slate-400"></i>
-                </button>
-                <button onclick="toggleTheme()" class="w-10 h-10 rounded-lg flex items-center justify-center border border-slate-800 hover:bg-slate-800">
-                    <i id="theme-icon" class="fa-solid fa-sun text-lg text-amber-500"></i>
-                </button>
+
+            <div class="quiz-layout">
+                <aside class="question-sidebar">
+                    <div class="sidebar-title">題目選單</div>
+                    <div id="question-nav" class="question-jump-grid"></div>
+                    <div class="jump-actions">
+                        <button class="btn btn-primary" onclick="finishQuizConfirmation()" id="sidebar-submit-btn">交卷</button>
+                    </div>
+                </aside>
+
+                <div class="question-panel">
+                    <div class="q-header">
+                        <span class="q-number">QUESTION <span id="q-num">1</span></span>
+                        <button class="bookmark-btn" onclick="toggleBookmark()" title="加入書籤" id="bookmark-btn"><span class="bookmark-icon"></span></button>
+                    </div>
+
+                    <div class="q-text" id="question-text">題目加載中...</div>
+                    <div class="q-code hidden" id="code-box"></div>
+
+                    <div class="options" id="options-container"></div>
+
+                    <div class="feedback" id="feedback-box">
+                        <div class="feedback-title" id="feedback-title"></div>
+                        <div id="feedback-content"></div>
+                    </div>
+
+                    <div class="nav-buttons">
+                        <button class="btn btn-secondary" onclick="prevQuestion()" id="prev-btn">← 上一題</button>
+                        <button class="btn btn-primary" onclick="finishQuizConfirmation()" id="submit-btn">交卷</button>
+                        <button class="btn btn-primary" onclick="nextQuestion()" id="next-btn">下一題 →</button>
+                    </div>
+                </div>
             </div>
         </div>
-    </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6 relative z-10">
-        <section id="welcome-panel" class="max-w-3xl mx-auto mt-8 slide-in">
-            <div class="bg-white dark:bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-extrabold tracking-tight text-white">Python 程式設計測驗</h2>
-                    <p class="text-slate-400 mt-2" id="welcome-description">本測驗收錄了精選 Python 重點題目。</p>
+        <!-- 結果面板 -->
+        <div id="results-panel" class="hidden results-container">
+            <h2 style="font-size: 32px; margin-bottom: 20px;">🎉 本次作答結果</h2>
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="result-label">答對題數</div>
+                    <div class="result-value" id="result-score">0/0</div>
                 </div>
-
-                <div id="history-card" class="hidden mb-8 p-4 bg-slate-800/50 rounded-xl border border-slate-700 flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-trophy text-amber-500 text-2xl"></i>
-                        <p class="text-sm font-semibold text-slate-200" id="history-score-txt">得分: 0 / 0</p>
-                    </div>
-                    <button onclick="clearHistory()" class="text-xs text-rose-400 hover:underline">清除</button>
+                <div class="result-card">
+                    <div class="result-label">準確率</div>
+                    <div class="result-value" id="result-accuracy">0%</div>
                 </div>
-
-                <h3 class="text-lg font-bold mb-4 text-slate-200"><i class="fa-solid fa-gamepad text-indigo-500 mr-2"></i>請選擇測驗模式</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    <button onclick="startQuiz('full')" class="group p-5 rounded-xl border border-slate-800 text-left hover:border-blue-500 hover:bg-blue-500/5 transition text-slate-200">
-                        <div class="flex items-start gap-4">
-                            <div class="w-12 h-12 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl group-hover:scale-110 transition">
-                                <i class="fa-solid fa-layer-group"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg">全能挑戰模式 (<span id="mode-full-count">加載中</span> 題)</h4>
-                                <p class="text-xs text-slate-400 mt-1">完整作答所有題目。</p>
-                            </div>
-                        </div>
-                    </button>
-
-                    <button onclick="startQuiz('speed')" class="group p-5 rounded-xl border border-slate-800 text-left hover:border-emerald-500 hover:bg-emerald-500/5 transition text-slate-200">
-                        <div class="flex items-start gap-4">
-                            <div class="w-12 h-12 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xl group-hover:scale-110 transition">
-                                <i class="fa-solid fa-bolt"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg">精選快問模式 (20 題)</h4>
-                                <p class="text-xs text-slate-400 mt-1">隨機抽取 20 道題目。</p>
-                            </div>
-                        </div>
-                    </button>
-
-                    <button id="weakness-btn" onclick="startQuiz('weakness')" class="group p-5 rounded-xl border border-slate-800 text-left hover:border-rose-500 hover:bg-rose-500/5 transition opacity-50 cursor-not-allowed text-slate-200" disabled>
-                        <div class="flex items-start gap-4">
-                            <div class="w-12 h-12 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center text-xl">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg">錯題強化模式</h4>
-                                <p class="text-xs text-slate-400 mt-1" id="weakness-desc">目前尚無錯題紀錄。</p>
-                            </div>
-                        </div>
-                    </button>
-
-                    <button id="bookmark-btn" onclick="startQuiz('bookmark')" class="group p-5 rounded-xl border border-slate-800 text-left hover:border-amber-500 hover:bg-amber-500/5 transition opacity-50 cursor-not-allowed text-slate-200" disabled>
-                        <div class="flex items-start gap-4">
-                            <div class="w-12 h-12 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center text-xl">
-                                <i class="fa-solid fa-bookmark"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg">書籤複習模式</h4>
-                                <p class="text-xs text-slate-400 mt-1" id="bookmark-desc">目前無書籤。</p>
-                            </div>
-                        </div>
-                    </button>
-                </div>
-
-                <div class="p-5 bg-slate-800/40 rounded-xl border border-slate-800 text-slate-200">
-                    <h4 class="font-bold text-sm mb-3">額外設定</h4>
-                    <label class="flex items-center gap-2 cursor-pointer text-sm">
-                        <input type="checkbox" id="cfg-practice-mode" checked class="w-4 h-4 rounded">
-                        <span>啟用練習回饋</span>
-                    </label>
+                <div class="result-card">
+                    <div class="result-label">耗費時間</div>
+                    <div class="result-value" id="result-time">00:00</div>
                 </div>
             </div>
-        </section>
 
-        <section id="quiz-panel" class="hidden slide-in">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div class="lg:col-span-3 flex flex-col gap-6">
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4">
-                        <div class="flex items-center gap-3">
-                            <span id="quiz-mode-tag" class="px-2.5 py-1 text-xs font-bold rounded-lg text-blue-500 bg-blue-500/10">全能挑戰模式</span>
-                            <span class="text-sm font-medium text-slate-400">進度: <span id="progress-text" class="text-slate-100 font-bold">0 / 0</span></span>
-                        </div>
-                        <div class="flex items-center gap-6">
-                            <div class="text-sm font-medium text-slate-400">計時: <span id="timer-text" class="font-mono text-slate-100 font-bold">00:00</span></div>
-                            <div class="text-sm font-medium text-slate-400">準確率: <span id="accuracy-live" class="text-emerald-400 font-bold">100%</span></div>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl text-slate-200">
-                        <div class="flex justify-between items-center mb-6">
-                            <span class="text-xs font-bold font-mono px-3 py-1 bg-slate-800 rounded-lg text-slate-400">QUESTION <span id="q-number">1</span></span>
-                            <button onclick="toggleBookmarkCurrent()" class="text-slate-400 hover:text-amber-500 flex items-center gap-1.5 text-sm transition">
-                                <i id="bookmark-icon" class="fa-regular fa-bookmark text-lg"></i>
-                                <span id="bookmark-txt">加入書籤</span>
-                            </button>
-                        </div>
-
-                        <h3 id="question-text" class="text-lg md:text-xl font-bold leading-relaxed text-white mb-4">題目加載中...</h3>
-
-                        <div id="code-box" class="hidden mb-6 p-4 bg-slate-950 rounded-xl border border-slate-800 overflow-x-auto">
-                            <pre id="code-content" class="text-sm text-slate-300"></pre>
-                        </div>
-
-                        <div id="options-container" class="flex flex-col gap-3.5 mb-8">
-                        </div>
-
-                        <div id="feedback-box" class="hidden p-5 rounded-xl mb-6 slide-in">
-                            <div class="flex gap-3">
-                                <div id="feedback-icon-container" class="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0">
-                                    <i id="feedback-icon" class="fa-solid"></i>
-                                </div>
-                                <div class="w-full">
-                                    <h4 id="feedback-title" class="font-bold text-lg">答對了！</h4>
-                                    <p id="feedback-desc" class="text-sm mt-1"></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-between items-center pt-6 border-t border-slate-800">
-                            <button id="prev-btn" onclick="prevQuestion()" class="px-5 py-2.5 rounded-lg border border-slate-800 hover:bg-slate-800 font-semibold transition disabled:opacity-30 text-slate-300">
-                                <i class="fa-solid fa-arrow-left mr-1"></i> 上一題
-                            </button>
-                            <button id="next-btn" onclick="nextQuestion()" class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">
-                                下一題 <i class="fa-solid fa-arrow-right ml-1"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="lg:col-span-1">
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl sticky top-24 text-slate-200">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-base"><i class="fa-solid fa-grip text-blue-500 mr-2"></i>題目跳轉</h3>
-                            <button onclick="confirmQuizExit()" class="text-xs text-rose-400 hover:underline"><i class="fa-solid fa-right-from-bracket mr-1"></i>退出</button>
-                        </div>
-
-                        <div id="navigation-grid" class="grid grid-cols-5 gap-2 max-h-[300px] overflow-y-auto mb-6">
-                        </div>
-
-                        <button onclick="finishQuizConfirmation()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg transition">
-                            提交試卷結算
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="results-panel" class="hidden max-w-4xl mx-auto mt-8 slide-in text-slate-100">
-            <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 w-full h-full"></canvas>
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
-                <div class="text-center mb-8">
-                    <div class="w-20 h-20 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 animate-bounce">
-                        <i class="fa-solid fa-award"></i>
-                    </div>
-                    <h2 class="text-3xl font-extrabold text-white" id="result-greeting">恭喜完成！</h2>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                    <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-800 text-center">
-                        <p class="text-xs text-slate-400 font-semibold">最終得分</p>
-                        <p class="text-2xl font-extrabold text-blue-500 mt-2" id="result-score">0 / 0</p>
-                    </div>
-                    <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-800 text-center">
-                        <p class="text-xs text-slate-400 font-semibold">答對題數</p>
-                        <p class="text-2xl font-extrabold text-emerald-500 mt-2" id="result-correct-count">0 / 0</p>
-                    </div>
-                    <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-800 text-center">
-                        <p class="text-xs text-slate-400 font-semibold">準確率</p>
-                        <p class="text-2xl font-extrabold text-violet-500 mt-2" id="result-accuracy">0%</p>
-                    </div>
-                    <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-800 text-center">
-                        <p class="text-xs text-slate-400 font-semibold">耗費時間</p>
-                        <p class="text-2xl font-extrabold text-amber-500 mt-2" id="result-time">00:00</p>
-                    </div>
-                </div>
-
-                <div id="review-list" class="flex flex-col gap-4 max-h-[500px] overflow-y-auto mb-8 border border-slate-800 rounded-xl p-4 bg-slate-950/40">
-                </div>
-
-                <div class="flex flex-col md:flex-row justify-center items-center gap-4 pt-6 border-t border-slate-800">
-                    <button onclick="returnToWelcome()" class="w-full md:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
-                        返回大廳
-                    </button>
-                    <button id="re-test-btn" onclick="retryCurrentQuiz()" class="w-full md:w-auto px-8 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold rounded-xl transition border border-slate-700">
-                        重新挑戰
-                    </button>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative z-10 slide-in shadow-2xl">
-            <h3 id="modal-title" class="text-lg font-bold text-slate-100 mb-2">確認提示</h3>
-            <p id="modal-desc" class="text-sm text-slate-400 mb-6">您確定嗎？</p>
-            <div class="flex justify-end gap-3">
-                <button id="modal-cancel-btn" onclick="closeConfirmModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-lg text-sm font-medium">取消</button>
-                <button id="modal-ok-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium">確認</button>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-primary" onclick="returnToWelcome()">返回大廳</button>
+                <button class="btn btn-secondary" onclick="retryQuiz()">重新挑戰</button>
             </div>
         </div>
     </div>
 
     <script>
-        let ALL_QUESTIONS = [];
-        let totalQuestions = 0;
-        
-        async function loadQuestionsFromJSON() {
+        let allQuestions = [];
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let answers = {};
+        let bookmarked = new Set();
+        let wrong = new Set();
+        let mode = '';
+        let isPractice = true;
+        let startTime = 0;
+        let timerInterval = null;
+
+        // 初始化
+        async function init() {
             try {
-                const response = await fetch('questions.json');
-                const data = await response.json();
-                ALL_QUESTIONS = data.map((item) => ({
-                    id: item.id,
-                    question: item.q,
-                    options: item.o,
-                    answer: item.a,
-                    explanation: item.note,
-                    code: item.code || null
-                }));
-                totalQuestions = ALL_QUESTIONS.length;
-                document.getElementById('quiz-total-count').textContent = totalQuestions;
-                document.getElementById('mode-full-count').textContent = totalQuestions;
-                document.getElementById('welcome-description').textContent = `本測驗收錄了 ${totalQuestions} 道精選 Python 重點題目。`;
+                const res = await fetch('questions.json');
+                allQuestions = await res.json();
+                document.getElementById('total-count').textContent = allQuestions.length;
+                document.getElementById('mode-count').textContent = allQuestions.length;
                 loadStorage();
             } catch (e) {
-                console.error('無法加載 questions.json:', e);
-                alert('無法加載題目，請重新整理頁面。');
+                alert('無法加載題目: ' + e.message);
             }
         }
-
-        loadQuestionsFromJSON();
-
-        let currentQuizQuestions = [];
-        let currentQuestionIdx = 0;
-        let userAnswers = {};
-        let bookmarkedQuestionIds = new Set();
-        let wrongQuestionIds = new Set();
-        let quizMode = '';
-        let timerInterval = null;
-        let elapsedSeconds = 0;
-        let isPracticeMode = true;
-        let isMuted = false;
-        let audioCtx = null;
 
         function loadStorage() {
-            try {
-                const bks = localStorage.getItem('py_bookmarks');
-                if (bks) bookmarkedQuestionIds = new Set(JSON.parse(bks));
-                const wrs = localStorage.getItem('py_wrong_questions');
-                if (wrs) wrongQuestionIds = new Set(JSON.parse(wrs));
-                const muteState = localStorage.getItem('py_muted');
-                if (muteState !== null) isMuted = JSON.parse(muteState);
-                updateMuteIcon();
-            } catch (e) {}
-            updateWelcomePanelCounters();
+            const bk = localStorage.getItem('py_bookmarks');
+            if (bk) bookmarked = new Set(JSON.parse(bk));
+            const wr = localStorage.getItem('py_wrong');
+            if (wr) wrong = new Set(JSON.parse(wr));
+            updateModes();
         }
 
-        function saveBookmarks() {
-            try {
-                localStorage.setItem('py_bookmarks', JSON.stringify(Array.from(bookmarkedQuestionIds)));
-            } catch (e) {}
-        }
-
-        function saveWrongQuestions() {
-            try {
-                localStorage.setItem('py_wrong_questions', JSON.stringify(Array.from(wrongQuestionIds)));
-            } catch (e) {}
-        }
-
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-        }
-
-        function toggleMute() {
-            isMuted = !isMuted;
-            localStorage.setItem('py_muted', JSON.stringify(isMuted));
-            updateMuteIcon();
-        }
-
-        function updateMuteIcon() {
-            const icon = document.getElementById('mute-icon');
-            icon.className = isMuted ? 'fa-solid fa-volume-xmark text-lg text-rose-400' : 'fa-solid fa-volume-high text-lg text-slate-400';
-        }
-
-        function playChimeSound(freq, duration = 0.1) {
-            if (isMuted) return;
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch (e) {}
-        }
-
-        function updateWelcomePanelCounters() {
-            const wBtn = document.getElementById('weakness-btn');
-            const wDesc = document.getElementById('weakness-desc');
-            if (wrongQuestionIds.size > 0) {
-                wBtn.disabled = false;
-                wBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                wDesc.innerHTML = `目前有 <strong class="text-rose-500">${wrongQuestionIds.size}</strong> 道錯題。`;
-            } else {
-                wBtn.disabled = true;
-                wBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-
-            const bBtn = document.getElementById('bookmark-btn');
-            const bDesc = document.getElementById('bookmark-desc');
-            if (bookmarkedQuestionIds.size > 0) {
-                bBtn.disabled = false;
-                bBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                bDesc.innerHTML = `目前已收藏 <strong class="text-amber-400">${bookmarkedQuestionIds.size}</strong> 道題目。`;
-            } else {
-                bBtn.disabled = true;
-                bBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        }
-
-        function clearHistory() {
-            if (confirm('確定要清除歷史紀錄嗎？')) {
-                localStorage.removeItem('py_high_score');
-                localStorage.removeItem('py_wrong_questions');
-                wrongQuestionIds.clear();
-                updateWelcomePanelCounters();
-            }
-        }
-
-        let currentModalConfirmCallback = null;
-        function openConfirmModal(title, desc, confirmCallback) {
-            document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-desc').textContent = desc;
-            document.getElementById('confirm-modal').classList.remove('hidden');
-            currentModalConfirmCallback = confirmCallback;
-            document.getElementById('modal-ok-btn').onclick = currentModalConfirmCallback;
-        }
-
-        function closeConfirmModal() {
-            document.getElementById('confirm-modal').classList.add('hidden');
-        }
-
-        function shuffleArray(array) {
-            let cur = array.slice();
-            for (let i = cur.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [cur[i], cur[j]] = [cur[j], cur[i]];
-            }
-            return cur;
-        }
-
-        function startQuiz(mode) {
-            quizMode = mode;
-            isPracticeMode = document.getElementById('cfg-practice-mode').checked;
-            const modeTag = document.getElementById('quiz-mode-tag');
+        function updateModes() {
+            const wc = document.getElementById('weakness-card');
+            const bc = document.getElementById('bookmark-card');
             
-            if (mode === 'full') {
-                currentQuizQuestions = ALL_QUESTIONS.slice();
-                modeTag.textContent = `全能挑戰 (${totalQuestions}題)`;
-            } else if (mode === 'speed') {
-                currentQuizQuestions = shuffleArray(ALL_QUESTIONS).slice(0, 20);
-                modeTag.textContent = "精選快問 (20題)";
-            } else if (mode === 'weakness') {
-                currentQuizQuestions = ALL_QUESTIONS.filter(q => wrongQuestionIds.has(q.id));
-                modeTag.textContent = `錯題強化 (${currentQuizQuestions.length}題)`;
-            } else if (mode === 'bookmark') {
-                currentQuizQuestions = ALL_QUESTIONS.filter(q => bookmarkedQuestionIds.has(q.id));
-                modeTag.textContent = `書籤複習 (${currentQuizQuestions.length}題)`;
+            if (wrong.size > 0) {
+                wc.classList.remove('disabled');
+                wc.onclick = () => startQuiz('weakness');
+                document.getElementById('weakness-desc').innerHTML = `有 <strong>${wrong.size}</strong> 道錯題`;
+            } else {
+                wc.classList.add('disabled');
+                wc.onclick = null;
+                document.getElementById('weakness-desc').textContent = '目前尚無錯題紀錄。';
+            }
+            
+            if (bookmarked.size > 0) {
+                bc.classList.remove('disabled');
+                bc.onclick = () => startQuiz('bookmark');
+                document.getElementById('bookmark-desc').innerHTML = `已收藏 <strong>${bookmarked.size}</strong> 道題`;
+            } else {
+                bc.classList.add('disabled');
+                bc.onclick = null;
+                document.getElementById('bookmark-desc').textContent = '目前無書籤。';
+            }
+        }
+
+        function startQuiz(m) {
+            mode = m;
+            isPractice = document.getElementById('practice-mode').checked;
+            
+            if (m === 'full') currentQuestions = allQuestions;
+            else if (m === 'speed') currentQuestions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 20);
+            else if (m === 'weakness') currentQuestions = allQuestions.filter(q => wrong.has(q.id));
+            else if (m === 'bookmark') currentQuestions = allQuestions.filter(q => bookmarked.has(q.id));
+
+            if (currentQuestions.length === 0) {
+                alert('目前沒有可供此模式作答的題目。請先完成一般題目或新增書籤/錯題。');
+                return;
             }
 
-            userAnswers = {};
-            currentQuestionIdx = 0;
-            elapsedSeconds = 0;
+            answers = {};
+            currentIndex = 0;
+            startTime = Date.now();
 
             document.getElementById('welcome-panel').classList.add('hidden');
             document.getElementById('results-panel').classList.add('hidden');
             document.getElementById('quiz-panel').classList.remove('hidden');
 
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                elapsedSeconds++;
-                updateTimerDisplay();
-            }, 1000);
-
             renderQuestion();
-            renderNavigationGrid();
-            playChimeSound(440, 0.15);
+            renderQuestionNav();
+            startTimer();
         }
 
-        function updateTimerDisplay() {
-            const mins = Math.floor(elapsedSeconds / 60);
-            const secs = elapsedSeconds % 60;
-            document.getElementById('timer-text').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        function renderQuestionNav() {
+            const nav = document.getElementById('question-nav');
+            nav.innerHTML = '';
+            currentQuestions.forEach((q, index) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'jump-btn';
+                btn.textContent = index + 1;
+                const answer = answers[q.id];
+
+                if (index === currentIndex) btn.classList.add('current');
+                if (answer !== undefined) {
+                    btn.classList.add('answered');
+                    if (answer === q.a) btn.classList.add('correct');
+                    else btn.classList.add('wrong');
+                }
+
+                btn.onclick = () => {
+                    currentIndex = index;
+                    renderQuestion();
+                    renderQuestionNav();
+                };
+                nav.appendChild(btn);
+            });
         }
 
         function renderQuestion() {
-            if (currentQuizQuestions.length === 0) return;
-            const q = currentQuizQuestions[currentQuestionIdx];
+            if (currentQuestions.length === 0) return;
+            const q = currentQuestions[currentIndex];
 
-            document.getElementById('q-number').textContent = `${currentQuestionIdx + 1} / ${currentQuizQuestions.length}`;
-            updateBookmarkButtonState(q.id);
-            document.getElementById('question-text').innerHTML = `${q.id}. ${q.question}`;
-            document.getElementById('progress-text').textContent = `${currentQuestionIdx + 1} / ${currentQuizQuestions.length}`;
+            document.getElementById('q-num').textContent = `${currentIndex + 1} / ${currentQuestions.length}`;
+            document.getElementById('question-text').textContent = `${q.id}. ${q.q}`;
+            document.getElementById('progress').textContent = `${currentIndex + 1} / ${currentQuestions.length}`;
+            const bookmarkBtn = document.getElementById('bookmark-btn');
+            if (bookmarked.has(q.id)) {
+                bookmarkBtn.classList.add('selected');
+                bookmarkBtn.title = '移除書籤';
+            } else {
+                bookmarkBtn.classList.remove('selected');
+                bookmarkBtn.title = '加入書籤';
+            }
 
-            const codeBox = document.getElementById('code-box');
+            const cb = document.getElementById('code-box');
             if (q.code) {
-                codeBox.classList.remove('hidden');
-                document.getElementById('code-content').textContent = q.code;
+                cb.textContent = q.code;
+                cb.classList.remove('hidden');
             } else {
-                codeBox.classList.add('hidden');
+                cb.classList.add('hidden');
             }
 
-            const optContainer = document.getElementById('options-container');
-            optContainer.innerHTML = '';
+            const oc = document.getElementById('options-container');
+            oc.innerHTML = '';
 
-            const letterPrefix = ['A', 'B', 'C', 'D'];
-            const alreadyAnswered = userAnswers[q.id] !== undefined;
-
-            q.options.forEach((opt, idx) => {
+            const answered = answers[q.id] !== undefined;
+            q.o.forEach((opt, i) => {
                 const btn = document.createElement('button');
-                btn.className = "option-btn w-full p-4 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 hover:border-slate-700 text-left flex items-center justify-between text-base font-medium transition";
+                btn.className = 'option-btn';
+                btn.innerHTML = `<span class="option-letter">${String.fromCharCode(65 + i)}</span><span>${opt}</span>`;
+                
+                if (!answered) btn.onclick = () => selectAnswer(i);
+                else btn.disabled = true;
 
-                btn.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 bg-slate-800 text-slate-500">${letterPrefix[idx]}</span>
-                        <span>${opt}</span>
-                    </div>
-                    <div class="opt-status-icon shrink-0 pl-4"></div>
-                `;
-
-                if (!alreadyAnswered) {
-                    btn.onclick = () => selectOption(idx);
-                } else {
-                    btn.disabled = true;
-                }
-
-                optContainer.appendChild(btn);
+                oc.appendChild(btn);
             });
 
-            const fbBox = document.getElementById('feedback-box');
-            fbBox.classList.add('hidden');
-            if (alreadyAnswered) highlightSelectedOptions(q);
-
-            document.getElementById('prev-btn').disabled = (currentQuestionIdx === 0);
-            const nextBtn = document.getElementById('next-btn');
-            if (currentQuestionIdx === currentQuizQuestions.length - 1) {
-                nextBtn.innerHTML = `結束挑戰並提交 <i class="fa-solid fa-flag-checkered ml-1"></i>`;
-                nextBtn.className = "px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition";
-                nextBtn.onclick = finishQuizConfirmation;
+            if (answered) {
+                highlightAnswer(q);
             } else {
-                nextBtn.innerHTML = `下一題 <i class="fa-solid fa-arrow-right ml-1"></i>`;
-                nextBtn.className = "px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition";
-                nextBtn.onclick = nextQuestion;
+                const fb = document.getElementById('feedback-box');
+                fb.classList.remove('show');
             }
 
-            updateLiveAccuracy();
+            document.getElementById('prev-btn').disabled = currentIndex === 0;
+            const nb = document.getElementById('next-btn');
+            if (currentIndex === currentQuestions.length - 1) {
+                nb.textContent = '最後一題';
+                nb.onclick = nextQuestion;
+            } else {
+                nb.textContent = '下一題 →';
+                nb.onclick = nextQuestion;
+            }
+
+            document.getElementById('submit-btn').disabled = currentQuestions.length === 0;
         }
 
-        function updateBookmarkButtonState(qId) {
-            const icon = document.getElementById('bookmark-icon');
-            const txt = document.getElementById('bookmark-txt');
-            if (bookmarkedQuestionIds.has(qId)) {
-                icon.className = 'fa-solid fa-bookmark text-amber-500 text-lg';
-                txt.textContent = "已收藏";
-            } else {
-                icon.className = 'fa-regular fa-bookmark text-slate-400 text-lg';
-                txt.textContent = "加入書籤";
-            }
+        function selectAnswer(idx) {
+            const q = currentQuestions[currentIndex];
+            answers[q.id] = idx;
+
+            if (idx !== q.a) wrong.add(q.id);
+            else wrong.delete(q.id);
+            
+            localStorage.setItem('py_wrong', JSON.stringify(Array.from(wrong)));
+            highlightAnswer(q);
+            updateAccuracy();
+            updateModes();
+            renderQuestionNav();
         }
 
-        function toggleBookmarkCurrent() {
-            if (currentQuizQuestions.length === 0) return;
-            const q = currentQuizQuestions[currentQuestionIdx];
-            if (bookmarkedQuestionIds.has(q.id)) {
-                bookmarkedQuestionIds.delete(q.id);
-            } else {
-                bookmarkedQuestionIds.add(q.id);
-            }
-            saveBookmarks();
-            updateBookmarkButtonState(q.id);
-            renderNavigationGrid();
-        }
+        function highlightAnswer(q) {
+            const btns = document.querySelectorAll('.option-btn');
+            const ans = answers[q.id];
 
-        function selectOption(optIndex) {
-            const q = currentQuizQuestions[currentQuestionIdx];
-            userAnswers[q.id] = optIndex;
-
-            if (optIndex !== q.answer) {
-                wrongQuestionIds.add(q.id);
-            } else {
-                wrongQuestionIds.delete(q.id);
-            }
-            saveWrongQuestions();
-
-            highlightSelectedOptions(q);
-            renderNavigationGrid();
-            updateLiveAccuracy();
-
-            if (!isPracticeMode) {
-                setTimeout(() => {
-                    if (currentQuestionIdx < currentQuizQuestions.length - 1) nextQuestion();
-                }, 400);
-            }
-        }
-
-        function highlightSelectedOptions(q) {
-            const optBtns = document.querySelectorAll('#options-container .option-btn');
-            const userAns = userAnswers[q.id];
-            const isCorrect = userAns === q.answer;
-
-            optBtns.forEach((btn, idx) => {
+            btns.forEach((btn, i) => {
                 btn.disabled = true;
-                const iconContainer = btn.querySelector('.opt-status-icon');
-
-                if (idx === q.answer) {
-                    btn.className += " border-emerald-500 bg-emerald-500/10 text-emerald-400";
-                    if (isPracticeMode) iconContainer.innerHTML = '<i class="fa-solid fa-circle-check text-xl text-emerald-500"></i>';
-                } else if (idx === userAns && isPracticeMode) {
-                    btn.className += " border-rose-500 bg-rose-500/10 text-rose-400";
-                    iconContainer.innerHTML = '<i class="fa-solid fa-circle-xmark text-xl text-rose-500"></i>';
+                if (i === q.a) {
+                    btn.classList.add('correct');
+                } else if (i === ans && ans !== q.a) {
+                    btn.classList.add('wrong');
                 }
             });
 
-            if (isPracticeMode) {
-                const fbBox = document.getElementById('feedback-box');
-                const fbIconContainer = document.getElementById('feedback-icon-container');
-                const fbIcon = document.getElementById('feedback-icon');
+            if (isPractice) {
+                const fb = document.getElementById('feedback-box');
                 const fbTitle = document.getElementById('feedback-title');
-                const fbDesc = document.getElementById('feedback-desc');
+                const fbContent = document.getElementById('feedback-content');
 
-                fbBox.classList.remove('hidden');
-                fbDesc.innerHTML = `此題正確答案為: <strong class="text-emerald-500">${q.options[q.answer]}</strong><div class="mt-2 pt-2 border-t border-slate-200/20 text-xs opacity-90 text-slate-300"><strong>解析：</strong>${q.explanation}</div>`;
+                fbTitle.textContent = ans === q.a ? '✓ 答案正確！' : '✗ 答案錯誤';
+                fbContent.innerHTML = `正確答案: ${q.o[q.a]}<br>解析: ${q.note}`;
+                fb.classList.add('show');
+                fb.classList.toggle('correct', ans === q.a);
+                fb.classList.toggle('wrong', ans !== q.a);
+            }
+        }
 
-                if (isCorrect) {
-                    fbBox.className = "p-5 rounded-xl mb-6 slide-in bg-emerald-500/10 text-emerald-300 border border-emerald-500/20";
-                    fbIconContainer.className = "w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 bg-emerald-500 text-white";
-                    fbIcon.className = "fa-solid fa-check";
-                    fbTitle.textContent = "答案正確！";
-                } else {
-                    fbBox.className = "p-5 rounded-xl mb-6 slide-in bg-rose-500/10 text-rose-300 border border-rose-500/20";
-                    fbIconContainer.className = "w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 bg-rose-500 text-white";
-                    fbIcon.className = "fa-solid fa-xmark";
-                    fbTitle.textContent = "答案錯誤！";
+        function updateAccuracy() {
+            let correct = 0, total = 0;
+            currentQuestions.forEach(q => {
+                if (answers[q.id] !== undefined) {
+                    total++;
+                    if (answers[q.id] === q.a) correct++;
                 }
+            });
+            document.getElementById('accuracy').textContent = total === 0 ? '100%' : Math.round(correct / total * 100) + '%';
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+                renderQuestionNav();
             }
         }
 
         function nextQuestion() {
-            if (currentQuestionIdx < currentQuizQuestions.length - 1) {
-                currentQuestionIdx++;
+            if (currentIndex < currentQuestions.length - 1) {
+                currentIndex++;
                 renderQuestion();
+                renderQuestionNav();
             }
         }
 
-        function prevQuestion() {
-            if (currentQuestionIdx > 0) {
-                currentQuestionIdx--;
-                renderQuestion();
-            }
-        }
-
-        function jumpToQuestion(index) {
-            currentQuestionIdx = index;
+        function toggleBookmark() {
+            const q = currentQuestions[currentIndex];
+            if (bookmarked.has(q.id)) bookmarked.delete(q.id);
+            else bookmarked.add(q.id);
+            localStorage.setItem('py_bookmarks', JSON.stringify(Array.from(bookmarked)));
+            updateModes();
             renderQuestion();
+            renderQuestionNav();
         }
 
-        function updateLiveAccuracy() {
-            let attempted = 0, correct = 0;
-            currentQuizQuestions.forEach(q => {
-                const ans = userAnswers[q.id];
-                if (ans !== undefined) {
-                    attempted++;
-                    if (ans === q.answer) correct++;
-                }
-            });
-            const liveAcc = document.getElementById('accuracy-live');
-            if (attempted === 0) {
-                liveAcc.textContent = "100%";
-                liveAcc.className = "text-emerald-400 font-bold";
-            } else {
-                const pct = Math.round((correct / attempted) * 100);
-                liveAcc.textContent = `${pct}%`;
-                liveAcc.className = pct >= 80 ? "text-emerald-400 font-bold" : pct >= 60 ? "text-amber-400 font-bold" : "text-rose-400 font-bold";
-            }
-        }
-
-        function renderNavigationGrid() {
-            const grid = document.getElementById('navigation-grid');
-            grid.innerHTML = '';
-            currentQuizQuestions.forEach((q, idx) => {
-                const btn = document.createElement('button');
-                btn.className = "w-10 h-10 rounded-lg text-sm font-semibold flex items-center justify-center relative transition";
-                const isAnswered = userAnswers[q.id] !== undefined;
-                const isBookmarked = bookmarkedQuestionIds.has(q.id);
-                const isCurrent = currentQuestionIdx === idx;
-
-                if (isAnswered) {
-                    btn.className += " bg-blue-600 text-white hover:bg-blue-700";
-                } else {
-                    btn.className += " bg-slate-800 text-slate-300 hover:bg-slate-700";
-                }
-
-                if (isCurrent) btn.className += " outline outline-2 outline-offset-2 outline-blue-500";
-                if (isBookmarked) {
-                    const dot = document.createElement('div');
-                    dot.className = "absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full border-2 border-slate-900";
-                    btn.appendChild(dot);
-                }
-
-                btn.appendChild(document.createTextNode(idx + 1));
-                btn.onclick = () => jumpToQuestion(idx);
-                grid.appendChild(btn);
-            });
-        }
-
-        function confirmQuizExit() {
-            openConfirmModal("確認退出", "確定要退出此測驗嗎？", () => {
-                clearInterval(timerInterval);
-                returnToWelcome();
-                closeConfirmModal();
-            });
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const m = Math.floor(elapsed / 60);
+                const s = elapsed % 60;
+                document.getElementById('timer').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }, 1000);
         }
 
         function finishQuizConfirmation() {
-            openConfirmModal("確認提交", "確定要提交試卷嗎？", () => {
-                clearInterval(timerInterval);
-                finishQuiz();
-                closeConfirmModal();
-            });
+            if (!confirm('確認要交卷嗎？交卷後即無法修改答案。')) return;
+            finishQuiz();
         }
 
         function finishQuiz() {
             let correct = 0;
-            currentQuizQuestions.forEach(q => {
-                if (userAnswers[q.id] === q.answer) correct++;
+            currentQuestions.forEach(q => {
+                if (answers[q.id] === q.a) correct++;
             });
 
-            const total = currentQuizQuestions.length;
-            const score = correct * 3.0;
-            const maxScore = total * 3.0;
-            const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+            const total = currentQuestions.length;
+            const score = correct;
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const m = Math.floor(elapsed / 60);
+            const s = elapsed % 60;
 
-            try {
-                const hs = localStorage.getItem('py_high_score');
-                const highScore = hs ? parseFloat(hs) : 0;
-                if (score > highScore) localStorage.setItem('py_high_score', score.toString());
-            } catch (e) {}
-
-            document.getElementById('result-greeting').textContent = accuracy >= 80 ? "恭喜完成！" : accuracy >= 60 ? "完成測驗！" : "繼續努力！";
-            document.getElementById('result-score').textContent = `${score.toFixed(1)} / ${maxScore.toFixed(1)}`;
-            document.getElementById('result-correct-count').textContent = `${correct} / ${total}`;
+            const accuracy = Math.round(correct / total * 100);
+            document.getElementById('result-score').textContent = `${score} / ${total}`;
             document.getElementById('result-accuracy').textContent = `${accuracy}%`;
-
-            const mins = Math.floor(elapsedSeconds / 60);
-            const secs = elapsedSeconds % 60;
-            document.getElementById('result-time').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-
-            renderReview('all');
-            triggerConfetti();
+            document.getElementById('result-time').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
             document.getElementById('quiz-panel').classList.add('hidden');
             document.getElementById('results-panel').classList.remove('hidden');
         }
 
-        function renderReview(filter = 'all') {
-            const reviewList = document.getElementById('review-list');
-            reviewList.innerHTML = '';
-
-            currentQuizQuestions.forEach((q) => {
-                const userAns = userAnswers[q.id];
-                const isWrong = userAns !== undefined && userAns !== q.answer;
-                const isBookmarked = bookmarkedQuestionIds.has(q.id);
-                const isCorrect = userAns === q.answer;
-                const isAnswered = userAns !== undefined;
-
-                if (filter === 'wrong' && !isWrong) return;
-                if (filter === 'bookmark' && !isBookmarked) return;
-
-                const item = document.createElement('div');
-                const bgClass = isCorrect ? 'bg-emerald-500/5 border-emerald-500/20' : !isAnswered ? 'bg-slate-800/30 border-slate-700/50' : 'bg-rose-500/5 border-rose-500/20';
-                const iconColor = isCorrect ? 'text-emerald-500' : !isAnswered ? 'text-slate-400' : 'text-rose-500';
-
-                item.className = `p-4 rounded-lg border ${bgClass} text-slate-100`;
-                item.innerHTML = `
-                    <div class="flex items-start gap-3 mb-2">
-                        <i class="fa-solid ${isCorrect ? 'fa-check-circle' : !isAnswered ? 'fa-circle' : 'fa-times-circle'} ${iconColor} text-lg mt-0.5"></i>
-                        <div class="flex-1">
-                            <p class="font-semibold">${q.id}. ${q.question}</p>
-                            ${q.code ? `<pre class="mt-2 text-xs bg-slate-950 p-2 rounded">${q.code}</pre>` : ''}
-                        </div>
-                    </div>
-                    <div class="ml-8 space-y-1 text-sm">
-                        <p><strong>選項：</strong> ${q.options.map((opt, i) => `${i === q.answer ? '✓' : ''} ${i === userAns && i !== q.answer ? '✗' : ''} ${opt}`).join(' | ')}</p>
-                        <p><strong>正確答案：</strong> ${q.options[q.answer]}</p>
-                        ${!isAnswered ? '' : isCorrect ? `<p class="text-emerald-400"><strong>✓ 答對！</strong></p>` : `<p class="text-rose-400"><strong>✗ 您選：${q.options[userAns]}</strong></p>`}
-                        <p class="text-slate-300 mt-2"><strong>解析：</strong>${q.explanation}</p>
-                    </div>
-                `;
-                reviewList.appendChild(item);
-            });
-        }
-
         function returnToWelcome() {
-            document.getElementById('welcome-panel').classList.remove('hidden');
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            currentQuestions = [];
+            currentIndex = 0;
             document.getElementById('quiz-panel').classList.add('hidden');
             document.getElementById('results-panel').classList.add('hidden');
-            updateWelcomePanelCounters();
+            document.getElementById('welcome-panel').classList.remove('hidden');
+            updateModes();
         }
 
-        function retryCurrentQuiz() {
-            startQuiz(quizMode);
+        function retryQuiz() {
+            startQuiz(mode);
         }
 
-        function triggerConfetti() {
-            const canvas = document.getElementById('confetti-canvas');
-            if (!canvas) return;
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            const ctx = canvas.getContext('2d');
+        function toggleMute() { alert('音效已禁用 (演示版)'); }
+        function toggleTheme() { document.body.style.filter = document.body.style.filter === 'invert(1)' ? '' : 'invert(1)'; }
 
-            class Particle {
-                constructor() {
-                    this.x = Math.random() * canvas.width;
-                    this.y = Math.random() * canvas.height - canvas.height;
-                    this.size = Math.random() * 10 + 5;
-                    this.speedX = (Math.random() - 0.5) * 8;
-                    this.speedY = Math.random() * 5 + 3;
-                    this.color = ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'][Math.floor(Math.random() * 5)];
-                    this.rotation = Math.random() * 360;
-                }
-                update() {
-                    this.x += this.speedX;
-                    this.y += this.speedY;
-                    this.rotation += 10;
-                }
-                draw() {
-                    ctx.save();
-                    ctx.translate(this.x, this.y);
-                    ctx.rotate(this.rotation * Math.PI / 180);
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
-                    ctx.restore();
-                }
-            }
-
-            const particles = [];
-            for (let i = 0; i < 100; i++) particles.push(new Particle());
-
-            function animate() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                particles.forEach(p => { p.update(); p.draw(); });
-                requestAnimationFrame(animate);
-            }
-            animate();
-            setTimeout(() => ctx.clearRect(0, 0, canvas.width, canvas.height), 6000);
-        }
-
-        window.onload = () => loadStorage();
-    </script>
-</body>
-</html>
-
-        async function init() {
-            try {
-                const response = await fetch('questions.json');
-                if (!response.ok) throw new Error(`載入題目檔失敗：${response.status}`);
-                questionsData = await response.json();
-                progressText.innerText = `0/${questionsData.length}`;
-            } catch (error) {
-                quizContainer.innerHTML = `
-                    <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded">
-                        題庫讀取失敗：${error.message}
-                    </div>
-                `;
-                console.error(error);
-                return;
-            }
-
-            questionsData.forEach((item) => {
-                // 生成導覽按鈕
-                const navBtn = document.createElement('button');
-                navBtn.id = `nav-${item.id}`;
-                navBtn.className = "h-6 w-full flex items-center justify-center bg-white border border-slate-200 rounded text-[10px] font-bold hover:border-blue-400 hover:text-blue-600 transition-all active:scale-95";
-                navBtn.innerText = item.id;
-                navBtn.onclick = () => scrollToQuestion(item.id);
-                navGrid.appendChild(navBtn);
-
-                // 生成題目卡片
-                const qCard = document.createElement('div');
-                qCard.id = `q-${item.id}`;
-                qCard.className = "bg-white p-3 md:p-4 rounded shadow-sm border border-slate-200 transition-all hover:shadow-md";
-                
-                let codeHtml = item.code ? `<pre><code>${escapeHtml(item.code)}</code></pre>` : "";
-                
-                qCard.innerHTML = `
-                    <div class="flex items-start gap-2 mb-2">
-                        <span class="flex-shrink-0 mt-0.5 bg-slate-800 text-white px-1.5 py-0.5 rounded text-[9px] font-black tracking-tighter">Q${item.id}</span>
-                        <h3 class="text-sm md:text-base font-bold text-slate-800 leading-tight">${escapeHtml(item.q)}</h3>
-                    </div>
-                    ${codeHtml}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-1 mt-2">
-                        ${item.o.map((opt, i) => `
-                            <button onclick="checkAnswer(${item.id}, ${i}, ${item.a})" 
-                                    id="opt-${item.id}-${i}"
-                                    class="option-btn group flex items-center p-2 border border-slate-100 rounded hover:border-blue-200 hover:bg-blue-50 transition-all text-left text-base md:text-base">
-                                <span class="w-5 h-5 flex-shrink-0 flex items-center justify-center rounded border border-slate-200 mr-2 text-[11px] font-black group-hover:border-blue-400 group-hover:text-blue-600 uppercase">${String.fromCharCode(65 + i)}</span>
-                                <span class="text-slate-700 font-medium">${escapeHtml(opt)}</span>
-                            </button>
-                        `).join('')}
-                    </div>
-                    <div id="result-${item.id}" class="hidden mt-2 p-2.5 rounded border-l-4 transform animate-in slide-in-from-bottom-1 duration-200">
-                        <p id="feedback-${item.id}" class="text-base font-black mb-1"></p>
-                        <div class="text-base text-slate-800 font-bold">正確答案：${String.fromCharCode(65 + item.a)}</div>
-                        ${item.note ? `<div class="mt-1.5 pt-1.5 border-t border-black/5 text-base text-slate-600 leading-snug"><span class="font-bold text-slate-800">解析：</span>${escapeHtml(item.note)}</div>` : ""}
-                    </div>
-                `;
-                quizContainer.appendChild(qCard);
-            });
-        }
-
-        function scrollToQuestion(id) {
-            const el = document.getElementById(`q-${id}`);
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.classList.add('ring-2', 'ring-blue-500', 'border-blue-500');
-            setTimeout(() => el.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500'), 1500);
-
-            toast.innerText = `已跳轉至 Q${id}`;
-            toast.style.opacity = '1';
-            setTimeout(() => toast.style.opacity = '0', 1000);
-        }
-
-        function checkAnswer(qId, selectedIdx, correctIdx) {
-            const navBtn = document.getElementById(`nav-${qId}`);
-            if (navBtn.classList.contains('answered-nav')) return;
-
-            answeredCount++;
-            navBtn.classList.add('answered-nav');
-
-            const resultDiv = document.getElementById(`result-${qId}`);
-            const feedback = document.getElementById(`feedback-${qId}`);
-
-            for (let i = 0; i < 4; i++) {
-                const btn = document.getElementById(`opt-${qId}-${i}`);
-                btn.disabled = true;
-                if (i === correctIdx) {
-                    btn.classList.add('border-green-500', 'bg-green-50');
-                    btn.querySelector('span').classList.add('border-green-500', 'text-green-600', 'bg-white');
-                } else if (i === selectedIdx) {
-                    btn.classList.add('border-red-400', 'bg-red-50');
-                    btn.querySelector('span').classList.add('border-red-400', 'text-red-500', 'bg-white');
-                } else {
-                    btn.classList.add('opacity-40');
-                }
-            }
-
-            resultDiv.classList.remove('hidden');
-            if (selectedIdx === correctIdx) {
-                correctCount++;
-                feedback.innerText = "✓ 正確";
-                feedback.className = "text-green-700 text-sm font-black mb-1";
-                resultDiv.classList.add('correct-bg');
-                navBtn.classList.add('correct-nav');
-            } else {
-                feedback.innerText = "✗ 錯誤";
-                feedback.className = "text-red-700 text-sm font-black mb-1";
-                resultDiv.classList.add('wrong-bg');
-                navBtn.classList.add('wrong-nav');
-            }
-
-            const percent = (answeredCount / questionsData.length) * 100;
-            progressBar.style.width = `${percent}%`;
-            progressText.innerText = `${answeredCount}/${questionsData.length}`;
-            
-            const scorePercent = Math.round((correctCount / answeredCount) * 100);
-            scoreText.innerText = `${scorePercent}% 正確`;
-        }
-
-        window.onload = init;
+        init();
     </script>
 </body>
 </html>
