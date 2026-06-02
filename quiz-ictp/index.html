@@ -328,15 +328,16 @@
             border-radius: 8px;
             margin: 15px 0;
             display: none;
+            color: #ffffff;
         }
         .feedback.show { display: block; }
-        .feedback.correct { background: var(--color-green); border-left: 3px solid var(--color-green); color: var(--color-green); }
-        .feedback.wrong { background: var(--color-red); border-left: 3px solid var(--color-red); color: var(--color-red); }
+        .feedback.correct { background: var(--color-green); border-left: 3px solid var(--color-green); }
+        .feedback.wrong { background: var(--color-red); border-left: 3px solid var(--color-red); }
         @media (prefers-color-scheme: light) {
             .feedback.correct { background: var(--color-green); }
             .feedback.wrong { background: var(--color-red); }
         }
-        .feedback-title { font-weight: 600; margin-bottom: 8px; }
+        .feedback-title { font-weight: 600; margin-bottom: 8px; color: inherit; }
         
         .quiz-layout {
             display: grid;
