@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python 題庫拖曳排序與編輯工作台</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+              900: '#115e59',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar for premium dark feel */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #14b8a6;
+    }
+    /* Draggable lists styling */
+    .drag-over-top {
+      border-top: 4px solid #14b8a6 !important;
+      transition: border 0.15s ease;
+    }
+    .drag-over-bottom {
+      border-bottom: 4px solid #14b8a6 !important;
+      transition: border 0.15s ease;
+    }
+    .dragging {
+      opacity: 0.4;
+      background-color: #334155 !important;
+      border: 2px dashed #14b8a6 !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+  <!-- Header -->
+  <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 px-6 py-4 shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-brand-500/10 text-brand-500 rounded-xl border border-brand-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            Python 題庫拖曳排序與編輯工作台
+            <span class="text-xs bg-brand-500/20 text-brand-500 px-2 py-0.5 rounded-full border border-brand-500/30">v1.4.0</span>
+          </h1>
+          <p class="text-xs text-slate-400">專屬 168 題 Python 基礎題目順序微調、動態即時編輯與互動測試沙盒</p>
+        </div>
+      </div>
+      
+      <!-- Stats & Quick Actions -->
+      <div class="flex items-center gap-4 flex-wrap">
+        <div class="bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-700 flex items-center gap-3 text-sm">
+          <div>
+            <span class="text-xs text-slate-400 block uppercase tracking-wider font-semibold">總題數</span>
+            <span id="stat-total" class="font-bold text-brand-500 text-lg">168</span>
+          </div>
+          <div class="border-l border-slate-700 h-8"></div>
+          <div>
+            <span class="text-xs text-slate-400 block uppercase tracking-wider font-semibold">含程式碼</span>
+            <span id="stat-code" class="font-bold text-indigo-400 text-lg">0</span>
+          </div>
+          <div class="border-l border-slate-700 h-8"></div>
+          <div>
+            <span class="text-xs text-slate-400 block uppercase tracking-wider font-semibold">已編輯</span>
+            <span id="stat-edited" class="font-bold text-amber-400 text-lg">0</span>
+          </div>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button id="theme-toggle" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg border border-slate-600 transition-all text-slate-300 hover:text-white" title="切換淺色/深色主題">
+          <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m2.828 0l-.707-.707m12.728-12.728l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="load-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/90 backdrop-blur-sm px-4 py-6">
+    <div class="max-w-xl w-full rounded-3xl border border-slate-700 bg-slate-900/95 p-6 text-left shadow-2xl">
+      <div class="flex items-start gap-4">
+        <div class="flex h-12 w-12 items-center justify-center rounded-full border-4 border-brand-500/20 border-t-brand-500 animate-spin"></div>
+        <div class="space-y-2">
+          <p class="text-lg font-semibold text-white">題庫載入中…</p>
+          <p id="load-status-text" class="text-sm text-slate-400">正在透過 fetch 讀取外部 JSON。若瀏覽器封鎖本機載入，系統將提供匯入提示。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message Toast Container (Custom Alert) -->
+  <div id="toast" class="fixed top-6 right-6 z-[120] transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-800 border-l-4 border-brand-500 shadow-xl rounded-lg p-4 flex items-center gap-3 max-w-sm border border-slate-700">
+      <div class="text-brand-500" id="toast-icon">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      </div>
+      <div>
+        <p class="font-medium text-white text-sm" id="toast-title">提示訊息</p>
+        <p class="text-slate-300 text-xs mt-0.5" id="toast-body">操作已成功完成。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Confirmation Modal (Replaces browser confirm) -->
+  <div id="confirm-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-all duration-200">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 transform scale-95 transition-transform duration-200" id="confirm-modal-box">
+      <div class="flex items-center gap-3 text-brand-500" id="confirm-modal-header">
+        <div class="p-2 bg-brand-500/10 rounded-lg border border-brand-500/20 text-brand-500" id="confirm-modal-icon">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-white" id="confirm-modal-title">確定操作嗎？</h3>
+      </div>
+      <p class="text-sm text-slate-300 leading-relaxed" id="confirm-modal-text">您確定要執行此操作嗎？此步驟可能無法還原。</p>
+      <div class="flex justify-end gap-3 pt-2">
+        <button id="confirm-modal-cancel" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition-all">
+          取消
+        </button>
+        <button id="confirm-modal-submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition-all">
+          確定執行
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Space -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
+
+    <div id="manual-import-banner" class="lg:col-span-12 hidden rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-amber-100">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm font-semibold">自動載入 questions.json 失敗</p>
+          <p class="text-xs text-amber-100/80">部分瀏覽器在本機環境下啟動時會封鎖 fetch 讀取 file:// 來源。請使用「選擇並匯入本機 .json 檔案」手動載入題庫。</p>
+        </div>
+        <button id="manual-import-button" class="shrink-0 rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-amber-400 transition-all">手動匯入 JSON</button>
+      </div>
+    </div>
+
+    <!-- Left Panel: Question List & Sorter (8 Columns on desktop) -->
+    <section class="lg:col-span-7 xl:col-span-8 flex flex-col h-[calc(100vh-140px)] min-h-[500px]">
+      
+      <!-- Top Filters & Sorter Warning -->
+      <div class="bg-slate-800 p-4 rounded-t-xl border border-slate-700 border-b-0 space-y-3">
+        <div class="flex flex-col md:flex-row gap-3">
+          <!-- Search Bar -->
+          <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </span>
+            <input type="text" id="search-input" placeholder="依關鍵字或題目 ID 進行搜尋過濾..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-100 placeholder-slate-500 transition-all">
+          </div>
+          <!-- Filter buttons -->
+          <div class="flex gap-2">
+            <button id="btn-filter-all" class="px-3 py-2 text-xs font-semibold rounded-lg bg-brand-600 text-white transition-all">全部題目</button>
+            <button id="btn-filter-code" class="px-3 py-2 text-xs font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all">有程式碼</button>
+            <button id="btn-filter-nocode" class="px-3 py-2 text-xs font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all">純文字</button>
+          </div>
+        </div>
+
+        <!-- Sorter Active / Searching Warning Status -->
+        <div id="search-warning" class="hidden text-xs bg-amber-500/10 text-amber-500 px-3 py-2 rounded-lg border border-amber-500/20 flex items-center gap-2">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          <span>搜尋與過濾狀態下暫時停用<strong>拖曳排序</strong>，請清空搜尋框後重新啟用拖曳功能。</span>
+        </div>
+        <div id="drag-hint" class="text-xs bg-brand-500/10 text-brand-500 px-3 py-2 rounded-lg border border-brand-500/20 flex items-center gap-2 justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg>
+            <span>提示：使用左側的 <strong>☰ 握把</strong> 可直接上下拖曳。右側提供快捷鍵上下微調、以及直達目標排序欄位。</span>
+          </div>
+          <span class="text-[10px] bg-brand-500/20 px-2 py-0.5 rounded uppercase font-semibold">滑鼠拖曳友善</span>
+        </div>
+      </div>
+
+      <!-- Question Cards Scrollable List Container -->
+      <div class="flex-1 bg-slate-800/50 border border-slate-700 rounded-b-xl overflow-y-auto p-4 space-y-3" id="questions-list-container">
+        <!-- Rendered items here -->
+      </div>
+    </section>
+
+    <!-- Right Panel: Sticky Details, Live Editor, Testing Sandbox & Batch Tools (4 Columns) -->
+    <section class="lg:col-span-5 xl:col-span-4 flex flex-col h-[calc(100vh-140px)] min-h-[500px] overflow-hidden gap-4">
+      
+      <!-- Right Panel Tabs Header -->
+      <div class="bg-slate-800 rounded-xl border border-slate-700 p-1 flex">
+        <button id="tab-editor" class="flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-slate-700 text-white transition-all">
+          📝 編輯與模擬
+        </button>
+        <button id="tab-batch" class="flex-1 text-center py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition-all">
+          ⚙️ 批次與導出
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="flex-1 bg-slate-800/80 rounded-xl border border-slate-700 flex flex-col overflow-y-auto p-5">
+        
+        <!-- Tab 1: Live Editor & Testing Sandbox -->
+        <div id="panel-editor-content" class="space-y-5 flex-1 flex flex-col justify-between">
+          <div class="space-y-5">
+            <!-- Header for current selected item -->
+            <div class="border-b border-slate-700 pb-4">
+              <div class="flex justify-between items-start gap-2">
+                <div>
+                  <span class="text-xs text-brand-500 font-semibold tracking-wider uppercase">當前選擇項目</span>
+                  <h2 class="text-lg font-bold text-white flex items-center gap-2 mt-1">
+                    排序第 <span id="current-rank-num" class="text-brand-500">1</span> 順位
+                    <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full" id="current-orig-id">原 ID: 1</span>
+                  </h2>
+                </div>
+                <div class="flex gap-1.5">
+                  <button id="quick-move-up" class="p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded" title="向上移動 1 順位">▲</button>
+                  <button id="quick-move-down" class="p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded" title="向下移動 1 順位">▼</button>
+                </div>
+              </div>
+
+              <!-- Jump to specific rank helper -->
+              <div class="mt-3 flex items-center gap-2">
+                <label for="jump-rank" class="text-xs text-slate-400">快速移到第</label>
+                <input type="number" id="jump-rank" min="1" max="168" class="w-16 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs text-center focus:outline-none focus:border-brand-500">
+                <label class="text-xs text-slate-400">順位</label>
+                <button id="btn-jump-submit" class="bg-brand-600 hover:bg-brand-500 text-white text-xs px-2.5 py-1 rounded transition-all">送出</button>
+              </div>
+            </div>
+
+            <!-- Editor Fields -->
+            <div class="space-y-4">
+              <!-- Question Description -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1.5">問題內容</label>
+                <textarea id="edit-q" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500 transition-all"></textarea>
+              </div>
+
+              <!-- Code Snippet -->
+              <div>
+                <div class="flex justify-between items-center mb-1.5">
+                  <label class="block text-xs font-semibold text-slate-400 uppercase">程式碼區塊 (選填)</label>
+                  <button id="btn-toggle-code" class="text-[10px] text-indigo-400 hover:text-indigo-300 underline">顯示/隱藏程式碼</button>
+                </div>
+                <textarea id="edit-code" rows="4" placeholder="例如：print('Hello World')" class="w-full font-mono bg-slate-950 border border-slate-800 text-indigo-300 rounded-lg p-2.5 text-xs focus:outline-none focus:border-indigo-500 transition-all leading-relaxed"></textarea>
+              </div>
+
+              <!-- Options -->
+              <div class="space-y-2">
+                <label class="block text-xs font-semibold text-slate-400 uppercase">選項內容 ( 0 - 3 )</label>
+                <div class="grid grid-cols-1 gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500 w-6 text-center">0.</span>
+                    <input type="text" id="edit-o0" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500 w-6 text-center">1.</span>
+                    <input type="text" id="edit-o1" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500 w-6 text-center">2.</span>
+                    <input type="text" id="edit-o2" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500 w-6 text-center">3.</span>
+                    <input type="text" id="edit-o3" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Correct Answer and Explanations -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 uppercase mb-1.5">正確答案索引</label>
+                  <select id="edit-a" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
+                    <option value="0">選項 0</option>
+                    <option value="1">選項 1</option>
+                    <option value="2">選項 2</option>
+                    <option value="3">選項 3</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 uppercase mb-1.5">即時狀態</label>
+                  <div class="w-full py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-center flex items-center justify-center text-emerald-400 gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    已自動存入暫存區
+                  </div>
+                </div>
+              </div>
+
+              <!-- Explanations / Note -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1.5">解析註記 (Note)</label>
+                <textarea id="edit-note" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500 transition-all"></textarea>
+              </div>
+            </div>
+
+            <!-- Live Testing Simulator Sandbox section -->
+            <div class="mt-6 border-t border-slate-700 pt-5 space-y-3">
+              <span class="text-xs text-indigo-400 font-semibold tracking-wider uppercase block">🎓 互動式測驗模擬測試</span>
+              <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-4">
+                <div class="text-sm font-semibold text-white leading-relaxed" id="sandbox-q">讀取中...</div>
+                <div id="sandbox-code-block" class="hidden">
+                  <pre class="bg-black/80 rounded p-2.5 text-xs text-indigo-300 font-mono overflow-x-auto" id="sandbox-code"></pre>
+                </div>
+                <div class="space-y-2" id="sandbox-options-container">
+                  <!-- Generated live testing buttons -->
+                </div>
+                <div id="sandbox-feedback" class="hidden p-3 rounded-lg text-xs space-y-1">
+                  <!-- Feedback Correct/Incorrect -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Batch operations & Import/Export -->
+        <div id="panel-batch-content" class="hidden space-y-6">
+          
+          <!-- Bulk Tools Container -->
+          <div class="space-y-4">
+            <h3 class="text-sm font-bold text-white border-b border-slate-700 pb-2">📦 批次工具箱</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <button id="btn-bulk-shuffle" class="flex flex-col items-center justify-center p-3 bg-slate-700 hover:bg-slate-600 rounded-xl border border-slate-600 hover:border-slate-500 transition-all gap-1 text-center">
+                <span class="text-lg">🔀</span>
+                <span class="text-xs font-bold text-white">隨機亂序</span>
+                <span class="text-[9px] text-slate-400">重新隨機排序全部</span>
+              </button>
+              <button id="btn-bulk-reverse" class="flex flex-col items-center justify-center p-3 bg-slate-700 hover:bg-slate-600 rounded-xl border border-slate-600 hover:border-slate-500 transition-all gap-1 text-center">
+                <span class="text-lg">🔃</span>
+                <span class="text-xs font-bold text-white">完全反轉</span>
+                <span class="text-[9px] text-slate-400">目前數組順序反過來</span>
+              </button>
+              <button id="btn-bulk-sort-id" class="flex flex-col items-center justify-center p-3 bg-slate-700 hover:bg-slate-600 rounded-xl border border-slate-600 hover:border-slate-500 transition-all gap-1 text-center">
+                <span class="text-lg">🔢</span>
+                <span class="text-xs font-bold text-white">依原 ID 排序</span>
+                <span class="text-[9px] text-slate-400">回歸原本 1-168 號</span>
+              </button>
+              
+              <!-- Re-index ID Button -->
+              <button id="btn-bulk-reindex-id" class="flex flex-col items-center justify-center p-3 bg-brand-950/40 hover:bg-brand-900/40 rounded-xl border border-brand-800/30 hover:border-brand-500/40 transition-all gap-1 text-center" title="依據目前調整好的順序，從新編號所有題目的 ID (1-168)">
+                <span class="text-lg">🆔</span>
+                <span class="text-xs font-bold text-brand-400">重編 ID 序號</span>
+                <span class="text-[9px] text-slate-400">依目前順序重新編 1-N 號</span>
+              </button>
+              
+              <button id="btn-bulk-reset" class="col-span-2 flex flex-col items-center justify-center p-3 bg-red-950/40 hover:bg-red-950/60 rounded-xl border border-red-900/30 hover:border-red-500/40 transition-all gap-1 text-center">
+                <span class="text-lg">⚠️</span>
+                <span class="text-xs font-bold text-red-400">恢復出廠預設</span>
+                <span class="text-[9px] text-red-300">拋棄修改回歸最原始</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Data Transfer Container -->
+          <div class="space-y-4">
+            <h3 class="text-sm font-bold text-white border-b border-slate-700 pb-2">💾 資料傳輸與匯出</h3>
+            
+            <div class="space-y-3">
+              <button id="btn-copy-json" class="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg transition-all text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a3 3 0 016 0m-3 0V7m0 6h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                複製目前 JSON 到剪貼簿
+              </button>
+              
+              <button id="btn-download-json" class="w-full flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 px-4 rounded-xl border border-slate-600 transition-all text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                下載排序後 JSON 檔案
+              </button>
+
+              <!-- Upload Custom JSON -->
+              <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+                <span class="text-xs text-slate-400 font-semibold uppercase block">📁 載入其他 JSON 題目檔案</span>
+                <p class="text-[11px] text-slate-400">您可以上傳其他相同格式的 JSON 檔案載入到此工作台進行編輯與重新排序。</p>
+                <div class="relative">
+                  <input type="file" id="upload-file-picker" accept=".json" class="hidden">
+                  <button id="btn-upload-trigger" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold border border-slate-700 transition-all">
+                    選擇並匯入本機 .json 檔案
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview Current JSON (Readonly) -->
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-400 uppercase">當前 JSON 即時預覽 (唯讀)</label>
+            <textarea id="json-preview" rows="8" readonly class="w-full font-mono bg-black/50 text-slate-400 text-[10px] rounded-lg p-2.5 leading-relaxed focus:outline-none"></textarea>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer Info Status -->
+  <footer class="bg-slate-800 border-t border-slate-700 py-3 px-6 text-center text-xs text-slate-400 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+      <span>所有排序和編輯操作均在瀏覽器內記憶體即時運行，點擊下載即可存檔至本地。</span>
+    </div>
+    <div>
+      開發與展示 &copy; 2026 Workstation, 感謝提供完整 Python 題庫.
+    </div>
+  </footer>
+
+  <!-- JavaScript logic block -->
+  <script>
+    // Primary data is loaded asynchronously from external questions.json.
+    let questions = [];
+    // State management
+    let selectedIndex = 0; // Current loaded index in editor
+    let editedCountSet = new Set(); // Track unique IDs of edited questions
+    let searchQuery = "";
+    let activeFilter = "all"; // all, code, nocode
+
+    // DOM Cache
+    const elQuestionsList = document.getElementById("questions-list-container");
+    const elSearchInput = document.getElementById("search-input");
+    const elSearchWarning = document.getElementById("search-warning");
+    const elDragHint = document.getElementById("drag-hint");
+    
+    // Editor inputs
+    const elRankNum = document.getElementById("current-rank-num");
+    const elOrigId = document.getElementById("current-orig-id");
+    const elEditQ = document.getElementById("edit-q");
+    const elEditCode = document.getElementById("edit-code");
+    const elEditO0 = document.getElementById("edit-o0");
+    const elEditO1 = document.getElementById("edit-o1");
+    const elEditO2 = document.getElementById("edit-o2");
+    const elEditO3 = document.getElementById("edit-o3");
+    const elEditA = document.getElementById("edit-a");
+    const elEditNote = document.getElementById("edit-note");
+
+    // Simulator DOM
+    const elSandboxQ = document.getElementById("sandbox-q");
+    const elSandboxCodeBlock = document.getElementById("sandbox-code-block");
+    const elSandboxCode = document.getElementById("sandbox-code");
+    const elSandboxOptions = document.getElementById("sandbox-options-container");
+    const elSandboxFeedback = document.getElementById("sandbox-feedback");
+
+    // Stat counters
+    const elStatTotal = document.getElementById("stat-total");
+    const elStatCode = document.getElementById("stat-code");
+    const elStatEdited = document.getElementById("stat-edited");
+    const elLoadOverlay = document.getElementById("load-overlay");
+    const elLoadStatusText = document.getElementById("load-status-text");
+    const elManualImportBanner = document.getElementById("manual-import-banner");
+
+    // Drag tracking variables
+    let draggedIndex = null;
+    let dragOverElement = null;
+
+    // Custom Confirmation Modal Callback
+    let activeConfirmCallback = null;
+
+    // Toast Alerts
+    function showToast(title, body, isSuccess = true) {
+      const toast = document.getElementById("toast");
+      const tTitle = document.getElementById("toast-title");
+      const tBody = document.getElementById("toast-body");
+      const tIcon = document.getElementById("toast-icon");
+
+      tTitle.innerText = title;
+      tBody.innerText = body;
+      
+      if (isSuccess) {
+        tIcon.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+        toast.className = "fixed top-6 right-6 z-[120] transform translate-y-0 opacity-100 transition-all duration-300 pointer-events-auto";
+      } else {
+        tIcon.innerHTML = `<svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
+        toast.className = "fixed top-6 right-6 z-[120] transform translate-y-0 opacity-100 transition-all duration-300 pointer-events-auto border-amber-500";
+      }
+
+      setTimeout(() => {
+        toast.className = "fixed top-6 right-6 z-[120] transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-none";
+      }, 3500);
+    }
+
+    // Custom confirm dialog trigger (Safe for Sandboxed Iframe)
+    function showCustomConfirm(title, text, isDangerous = false, callback) {
+      const modal = document.getElementById("confirm-modal");
+      const modalBox = document.getElementById("confirm-modal-box");
+      const mTitle = document.getElementById("confirm-modal-title");
+      const mText = document.getElementById("confirm-modal-text");
+      const mSubmit = document.getElementById("confirm-modal-submit");
+      const mIcon = document.getElementById("confirm-modal-icon");
+      
+      mTitle.innerText = title;
+      mText.innerText = text;
+      
+      if (isDangerous) {
+        mSubmit.className = "px-4 py-2 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-500 text-white transition-all";
+        mIcon.className = "p-2 bg-red-500/10 rounded-lg border border-red-500/20 text-red-500";
+        mIcon.innerHTML = `
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        `;
+      } else {
+        mSubmit.className = "px-4 py-2 text-xs font-semibold rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition-all";
+        mIcon.className = "p-2 bg-brand-500/10 rounded-lg border border-brand-500/20 text-brand-500";
+        mIcon.innerHTML = `
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        `;
+      }
+      
+      activeConfirmCallback = callback;
+      
+      modal.classList.remove("hidden");
+      setTimeout(() => {
+        modalBox.classList.remove("scale-95");
+        modalBox.classList.add("scale-100");
+      }, 10);
+    }
+    
+    function closeCustomConfirm() {
+      const modal = document.getElementById("confirm-modal");
+      const modalBox = document.getElementById("confirm-modal-box");
+      modalBox.classList.remove("scale-100");
+      modalBox.classList.add("scale-95");
+      setTimeout(() => {
+        modal.classList.add("hidden");
+      }, 150);
+      activeConfirmCallback = null;
+    }
+
+    function showLoadOverlay(message) {
+      if (elLoadStatusText) {
+        elLoadStatusText.innerText = message;
+      }
+      if (elLoadOverlay) {
+        elLoadOverlay.classList.remove("hidden");
+      }
+    }
+
+    function hideLoadOverlay() {
+      if (elLoadOverlay) {
+        elLoadOverlay.classList.add("hidden");
+      }
+    }
+
+    function showManualImportHint(error) {
+      if (elManualImportBanner) {
+        elManualImportBanner.classList.remove("hidden");
+      }
+      if (error) {
+        console.warn("questions.json load failed:", error);
+      }
+    }
+
+    async function fetchQuestionData() {
+      showLoadOverlay("正在透過 fetch 讀取 questions.json，請稍候…");
+
+      try {
+        const response = await fetch("questions.json", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const parsed = await response.json();
+        if (!Array.isArray(parsed)) {
+          throw new Error("questions.json 根物件不是陣列");
+        }
+
+        questions = parsed;
+        showToast("題庫載入完成", `已成功讀取 ${parsed.length} 筆題目`, true);
+        return true;
+      } catch (error) {
+        showToast("自動載入失敗", "無法直接讀取本地 questions.json，請使用手動匯入功能。", false);
+        showManualImportHint(error);
+
+        questions = [];
+        return false;
+      } finally {
+        hideLoadOverlay();
+      }
+    }
+
+    async function initApp() {
+      await fetchQuestionData();
+      selectedIndex = 0;
+      updateStats();
+      renderQuestionsList();
+      setupEventListeners();
+      loadQuestionToEditor(0);
+      updateJsonPreview();
+    }
+
+    // Core Init
+    window.onload = initApp;
+
+    // Calculate count stats
+    function updateStats() {
+      elStatTotal.innerText = questions.length;
+      const codeCount = questions.filter(item => item.code && item.code.trim().length > 0).length;
+      elStatCode.innerText = codeCount;
+      elStatEdited.innerText = editedCountSet.size;
+    }
+
+    // Render left scrollable list
+    function renderQuestionsList() {
+      elQuestionsList.innerHTML = "";
+      
+      const filtered = getFilteredQuestions();
+
+      if (filtered.length === 0) {
+        elQuestionsList.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-12 text-slate-500">
+            <svg class="w-12 h-12 mb-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <p class="text-sm font-semibold">找不到符合關鍵字的題目</p>
+            <p class="text-xs mt-1">請嘗試修改搜尋詞彙或切換分類標籤</p>
+          </div>
+        `;
+        return;
+      }
+
+      const isSearchActive = searchQuery.trim().length > 0;
+      if (isSearchActive || activeFilter !== "all") {
+        elSearchWarning.classList.remove("hidden");
+        elDragHint.classList.add("hidden");
+      } else {
+        elSearchWarning.classList.add("hidden");
+        elDragHint.classList.remove("hidden");
+      }
+
+      filtered.forEach((item, index) => {
+        // Find actual index in primary array
+        const realIndex = questions.findIndex(q => q.id === item.id);
+        const isSelected = realIndex === selectedIndex;
+        
+        const card = document.createElement("div");
+        card.setAttribute("data-index", realIndex);
+        
+        // Drag events enabled only when not searching or filtering
+        if (!isSearchActive && activeFilter === "all") {
+          card.setAttribute("draggable", "true");
+        }
+        
+        card.className = `group bg-slate-800 rounded-xl border p-4 flex gap-3 items-start transition-all duration-150 select-none cursor-pointer ${
+          isSelected 
+            ? "border-brand-500 ring-1 ring-brand-500/50 bg-slate-750" 
+            : "border-slate-700 hover:border-slate-600 hover:bg-slate-750"
+        }`;
+
+        // Build HTML template
+        const hasCodeBadge = item.code && item.code.trim().length > 0 
+          ? `<span class="bg-indigo-500/20 text-indigo-400 text-[10px] px-1.5 py-0.5 rounded font-mono border border-indigo-500/30">CODE</span>` 
+          : "";
+
+        const isEditedBadge = editedCountSet.has(item.id)
+          ? `<span class="bg-amber-500/20 text-amber-400 text-[10px] px-1.5 py-0.5 rounded border border-amber-500/30">已編輯</span>`
+          : "";
+
+        const dragHandle = (!isSearchActive && activeFilter === "all")
+          ? `<div class="drag-handle text-slate-500 group-hover:text-slate-300 p-1 cursor-grab hover:bg-slate-700 rounded transition-colors" title="按住拖曳順序">
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+             </div>`
+          : `<div class="text-slate-600 p-1 cursor-default">
+               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+             </div>`;
+
+        card.innerHTML = `
+          ${dragHandle}
+          
+          <div class="flex-1 min-w-0" onclick="handleCardClick(${realIndex})">
+            <div class="flex items-center gap-2 flex-wrap mb-1">
+              <span class="text-xs bg-slate-900 px-2 py-0.5 rounded font-mono font-bold text-brand-500">
+                順位 ${realIndex + 1}
+              </span>
+              <span class="text-slate-500 text-xs">原 ID: ${item.id}</span>
+              ${hasCodeBadge}
+              ${isEditedBadge}
+            </div>
+            
+            <p class="text-sm font-medium text-white line-clamp-2 leading-relaxed mb-2 group-hover:text-brand-50">
+              ${escapeHtml(item.q)}
+            </p>
+
+            <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-400 mt-1">
+              <div class="truncate ${item.a === 0 ? 'text-emerald-400 font-semibold' : ''}">0. ${escapeHtml(item.o[0])}</div>
+              <div class="truncate ${item.a === 1 ? 'text-emerald-400 font-semibold' : ''}">1. ${escapeHtml(item.o[1])}</div>
+              <div class="truncate ${item.a === 2 ? 'text-emerald-400 font-semibold' : ''}">2. ${escapeHtml(item.o[2])}</div>
+              <div class="truncate ${item.a === 3 ? 'text-emerald-400 font-semibold' : ''}">3. ${escapeHtml(item.o[3])}</div>
+            </div>
+          </div>
+
+          <!-- Quick Move Controls -->
+          <div class="flex flex-col gap-1 self-center">
+            <button onclick="event.stopPropagation(); movePosition(${realIndex}, ${realIndex - 1})" class="p-1 text-slate-500 hover:text-white hover:bg-slate-700 rounded text-xs" title="往上移一格">▲</button>
+            <button onclick="event.stopPropagation(); movePosition(${realIndex}, ${realIndex + 1})" class="p-1 text-slate-500 hover:text-white hover:bg-slate-700 rounded text-xs" title="往下移一格">▼</button>
+          </div>
+        `;
+
+        // Register drag events to card if supported
+        if (!isSearchActive && activeFilter === "all") {
+          setupCardDragEvents(card, realIndex);
+        }
+
+        elQuestionsList.appendChild(card);
+      });
+    }
+
+    // Filter array based on Search query & category button
+    function getFilteredQuestions() {
+      return questions.filter(item => {
+        // Category Filter
+        if (activeFilter === "code" && (!item.code || item.code.trim().length === 0)) {
+          return false;
+        }
+        if (activeFilter === "nocode" && (item.code && item.code.trim().length > 0)) {
+          return false;
+        }
+
+        // Search Filter
+        if (searchQuery.trim() !== "") {
+          const query = searchQuery.toLowerCase().trim();
+          const matchesId = item.id.toString() === query;
+          const matchesText = item.q.toLowerCase().includes(query);
+          const matchesNote = item.note && item.note.toLowerCase().includes(query);
+          const matchesOptions = item.o.some(option => option.toLowerCase().includes(query));
+          return matchesId || matchesText || matchesNote || matchesOptions;
+        }
+
+        return true;
+      });
+    }
+
+    // Set dragging listeners on elements
+    function setupCardDragEvents(card, index) {
+      card.addEventListener("dragstart", (e) => {
+        // Ensure standard desktop drag looks correct
+        draggedIndex = index;
+        card.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", index);
+      });
+
+      card.addEventListener("dragend", () => {
+        card.classList.remove("dragging");
+        // Clear remaining drag borders
+        if (dragOverElement) {
+          dragOverElement.classList.remove("drag-over-top", "drag-over-bottom");
+        }
+        draggedIndex = null;
+        dragOverElement = null;
+      });
+
+      card.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        const rect = card.getBoundingClientRect();
+        const relativeY = e.clientY - rect.top;
+        const isTopHalf = relativeY < rect.height / 2;
+
+        card.classList.remove("drag-over-top", "drag-over-bottom");
+        if (isTopHalf) {
+          card.classList.add("drag-over-top");
+        } else {
+          card.classList.add("drag-over-bottom");
+        }
+        dragOverElement = card;
+      });
+
+      card.addEventListener("dragleave", () => {
+        card.classList.remove("drag-over-top", "drag-over-bottom");
+      });
+
+      card.addEventListener("drop", (e) => {
+        e.preventDefault();
+        card.classList.remove("drag-over-top", "drag-over-bottom");
+        
+        const sourceIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+        const targetIndex = index;
+
+        if (sourceIndex === targetIndex) return;
+
+        const rect = card.getBoundingClientRect();
+        const relativeY = e.clientY - rect.top;
+        const isTopHalf = relativeY < rect.height / 2;
+
+        let finalTargetIndex = isTopHalf ? targetIndex : targetIndex + 1;
+        
+        // Correct index if source is before target
+        if (sourceIndex < finalTargetIndex) {
+          finalTargetIndex--;
+        }
+
+        executeReorder(sourceIndex, finalTargetIndex);
+      });
+    }
+
+    // Perform reorder mutation in state
+    function executeReorder(fromIndex, toIndex) {
+      if (toIndex < 0) toIndex = 0;
+      if (toIndex >= questions.length) toIndex = questions.length - 1;
+      
+      const itemToMove = questions.splice(fromIndex, 1)[0];
+      questions.splice(toIndex, 0, itemToMove);
+      
+      // Keep selectedIndex tracked on the correct item
+      if (selectedIndex === fromIndex) {
+        selectedIndex = toIndex;
+      } else if (fromIndex < selectedIndex && toIndex >= selectedIndex) {
+        selectedIndex--;
+      } else if (fromIndex > selectedIndex && toIndex <= selectedIndex) {
+        selectedIndex++;
+      }
+
+      renderQuestionsList();
+      loadQuestionToEditor(selectedIndex);
+      updateJsonPreview();
+      showToast("順序重組成功", `題目已移至第 ${toIndex + 1} 順位`, true);
+    }
+
+    // Direct move relative positions (Button triggered)
+    function movePosition(currentIndex, targetIndex) {
+      if (targetIndex < 0 || targetIndex >= questions.length) return;
+      executeReorder(currentIndex, targetIndex);
+    }
+
+    // Quick jump ranking
+    function jumpToPosition(currentIndex, targetRank) {
+      const targetIndex = targetRank - 1;
+      if (targetIndex < 0 || targetIndex >= questions.length) {
+        showToast("錯誤的順位索引", "請輸入 1 至 168 之間的有效數字", false);
+        return;
+      }
+      executeReorder(currentIndex, targetIndex);
+    }
+
+    // Select and load details into editor
+    function handleCardClick(realIndex) {
+      selectedIndex = realIndex;
+      loadQuestionToEditor(realIndex);
+      renderQuestionsList();
+    }
+
+    // Load question content into editing inputs and sandbox preview
+    function loadQuestionToEditor(index) {
+      const q = questions[index];
+      if (!q) return;
+
+      // Editor values
+      elRankNum.innerText = index + 1;
+      elOrigId.innerText = `原 ID: ${q.id}`;
+      elEditQ.value = q.q || "";
+      elEditCode.value = q.code || "";
+      elEditO0.value = q.o[0] || "";
+      elEditO1.value = q.o[1] || "";
+      elEditO2.value = q.o[2] || "";
+      elEditO3.value = q.o[3] || "";
+      elEditA.value = q.a !== undefined ? q.a : 0;
+      elEditNote.value = q.note || "";
+
+      // Sync Testing Simulator Sandbox
+      renderTestingSandbox(q);
+    }
+
+    // Live Simulator rendering
+    function renderTestingSandbox(q) {
+      elSandboxQ.innerText = q.q;
+      elSandboxFeedback.className = "hidden p-3 rounded-lg text-xs space-y-1";
+      elSandboxFeedback.innerHTML = "";
+
+      if (q.code && q.code.trim().length > 0) {
+        elSandboxCodeBlock.classList.remove("hidden");
+        elSandboxCode.innerText = q.code;
+      } else {
+        elSandboxCodeBlock.classList.add("hidden");
+      }
+
+      elSandboxOptions.innerHTML = "";
+      q.o.forEach((option, idx) => {
+        const optBtn = document.createElement("button");
+        optBtn.className = "w-full text-left bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-slate-600 px-4 py-2 rounded-lg text-xs font-medium text-slate-200 transition-all flex justify-between items-center";
+        optBtn.innerHTML = `
+          <span>${idx}. ${escapeHtml(option)}</span>
+          <span class="text-slate-500 font-mono text-[10px] group-hover:text-slate-300">選擇</span>
+        `;
+        optBtn.onclick = () => checkSandboxAnswer(idx, q.a, q.note);
+        elSandboxOptions.appendChild(optBtn);
+      });
+    }
+
+    // Check Answer in simulator
+    function checkSandboxAnswer(chosenIdx, correctIdx, note) {
+      elSandboxFeedback.classList.remove("hidden");
+      
+      const isCorrect = chosenIdx === correctIdx;
+      
+      if (isCorrect) {
+        elSandboxFeedback.className = "p-3 rounded-lg text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 space-y-1 animate-bounce";
+        elSandboxFeedback.innerHTML = `
+          <div class="font-bold flex items-center gap-1.5 text-sm">
+            <span>🎉 答對了！</span>
+          </div>
+          <p class="text-slate-300 mt-1 leading-relaxed"><strong class="text-emerald-400">說明解析：</strong>${note || "此題無特別說明，答得好！"}</p>
+        `;
+      } else {
+        elSandboxFeedback.className = "p-3 rounded-lg text-xs bg-rose-500/10 text-rose-400 border border-rose-500/30 space-y-1";
+        elSandboxFeedback.innerHTML = `
+          <div class="font-bold flex items-center gap-1.5 text-sm">
+            <span>❌ 答錯囉！</span>
+          </div>
+          <p class="text-slate-300">您選擇了選項 ${chosenIdx}，正確答案應為 <strong class="text-emerald-400">選項 ${correctIdx}</strong>。</p>
+          <p class="text-slate-300 mt-1 leading-relaxed"><strong class="text-rose-400">說明解析：</strong>${note || "這是一門核心的 Python 特性觀念，請多加留意說明。"}</p>
+        `;
+      }
+    }
+
+    // Listeners setup
+    function setupEventListeners() {
+      // Live search input
+      elSearchInput.addEventListener("input", (e) => {
+        searchQuery = e.target.value;
+        renderQuestionsList();
+      });
+
+      // Filter Toggle triggers
+      document.getElementById("btn-filter-all").addEventListener("click", function() {
+        toggleFilterState("all", this);
+      });
+      document.getElementById("btn-filter-code").addEventListener("click", function() {
+        toggleFilterState("code", this);
+      });
+      document.getElementById("btn-filter-nocode").addEventListener("click", function() {
+        toggleFilterState("nocode", this);
+      });
+
+      // Tab switcher triggers
+      const tabEditor = document.getElementById("tab-editor");
+      const tabBatch = document.getElementById("tab-batch");
+      const panelEditor = document.getElementById("panel-editor-content");
+      const panelBatch = document.getElementById("panel-batch-content");
+
+      tabEditor.addEventListener("click", () => {
+        tabEditor.className = "flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-slate-700 text-white transition-all";
+        tabBatch.className = "flex-1 text-center py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
+        panelEditor.classList.remove("hidden");
+        panelBatch.classList.add("hidden");
+      });
+
+      tabBatch.addEventListener("click", () => {
+        tabBatch.className = "flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-slate-700 text-white transition-all";
+        tabEditor.className = "flex-1 text-center py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
+        panelBatch.classList.remove("hidden");
+        panelEditor.className = "hidden";
+        updateJsonPreview();
+      });
+
+      // Theme toggle trigger
+      const themeToggle = document.getElementById("theme-toggle");
+      themeToggle.addEventListener("click", () => {
+        document.documentElement.classList.toggle("dark");
+        showToast("主題切換成功", "已成功變更工作台色彩模式", true);
+      });
+
+      // Instant Auto-saving mutation on inputs change
+      const syncInputToState = () => {
+        const q = questions[selectedIndex];
+        if (!q) return;
+
+        q.q = elEditQ.value;
+        q.code = elEditCode.value;
+        q.o[0] = elEditO0.value;
+        q.o[1] = elEditO1.value;
+        q.o[2] = elEditO2.value;
+        q.o[3] = elEditO3.value;
+        q.a = parseInt(elEditA.value, 10);
+        q.note = elEditNote.value;
+
+        // Mark edited tracking Set
+        editedCountSet.add(q.id);
+
+        updateStats();
+        renderQuestionsList();
+        renderTestingSandbox(q);
+        updateJsonPreview();
+      };
+
+      elEditQ.addEventListener("input", syncInputToState);
+      elEditCode.addEventListener("input", syncInputToState);
+      elEditO0.addEventListener("input", syncInputToState);
+      elEditO1.addEventListener("input", syncInputToState);
+      elEditO2.addEventListener("input", syncInputToState);
+      elEditO3.addEventListener("input", syncInputToState);
+      elEditA.addEventListener("change", syncInputToState);
+      elEditNote.addEventListener("input", syncInputToState);
+
+      // Sibling Quick Move listeners
+      document.getElementById("quick-move-up").addEventListener("click", () => {
+        if (selectedIndex > 0) {
+          movePosition(selectedIndex, selectedIndex - 1);
+        }
+      });
+      document.getElementById("quick-move-down").addEventListener("click", () => {
+        if (selectedIndex < questions.length - 1) {
+          movePosition(selectedIndex, selectedIndex + 1);
+        }
+      });
+
+      // Jump Position button submit
+      document.getElementById("btn-jump-submit").addEventListener("click", () => {
+        const targetRankVal = parseInt(document.getElementById("jump-rank").value, 10);
+        jumpToPosition(selectedIndex, targetRankVal);
+      });
+
+      // Optional code area toggler
+      document.getElementById("btn-toggle-code").addEventListener("click", () => {
+        const isHidden = elEditCode.classList.contains("hidden");
+        if (isHidden) {
+          elEditCode.classList.remove("hidden");
+        } else {
+          elEditCode.classList.add("hidden");
+        }
+      });
+
+      // Modal action confirmation handlers
+      document.getElementById("confirm-modal-cancel").addEventListener("click", closeCustomConfirm);
+      document.getElementById("confirm-modal-submit").addEventListener("click", () => {
+        if (activeConfirmCallback) {
+          activeConfirmCallback();
+        }
+        closeCustomConfirm();
+      });
+
+      // Bulk: Shuffle using Custom Confirm Modal (Iframe safe)
+      document.getElementById("btn-bulk-shuffle").addEventListener("click", () => {
+        showCustomConfirm(
+          "隨機打亂題庫？",
+          "確定要將目前的 168 題題目隨機打亂排序嗎？這將會直接變更記憶體中的順序列表。",
+          false,
+          () => {
+            shuffleArray(questions);
+            selectedIndex = 0;
+            renderQuestionsList();
+            loadQuestionToEditor(selectedIndex);
+            updateJsonPreview();
+            showToast("全部亂序成功", "168 題已完全打亂重排序", true);
+          }
+        );
+      });
+
+      // Bulk: Reverse (Instantly reversed)
+      document.getElementById("btn-bulk-reverse").addEventListener("click", () => {
+        questions.reverse();
+        selectedIndex = questions.length - 1 - selectedIndex;
+        renderQuestionsList();
+        loadQuestionToEditor(selectedIndex);
+        updateJsonPreview();
+        showToast("完全反轉成功", "目前資料順序已完全顛倒", true);
+      });
+
+      // Bulk: Sort Original ID
+      document.getElementById("btn-bulk-sort-id").addEventListener("click", () => {
+        questions.sort((a, b) => a.id - b.id);
+        selectedIndex = 0;
+        renderQuestionsList();
+        loadQuestionToEditor(selectedIndex);
+        updateJsonPreview();
+        showToast("重置為原 ID 順序", "已成功恢復為 1 - 168 原序號序列", true);
+      });
+
+      // Bulk: Re-index IDs (NEW FEATURE - Safe Custom Confirm)
+      document.getElementById("btn-bulk-reindex-id").addEventListener("click", () => {
+        showCustomConfirm(
+          "確認重編 ID 序號？",
+          "確定要依照目前的排序，重新將所有題目由 1 開始編碼 ID 嗎？這將會直接覆蓋原本資料中的 id 欄位，此操作會使原題庫 ID 改寫，請在匯出下載前執行。",
+          false,
+          () => {
+            questions.forEach((q, idx) => {
+              q.id = idx + 1;
+            });
+            // Reset edited tracking set as IDs changed to avoid mismatch key states
+            editedCountSet.clear();
+            loadQuestionToEditor(selectedIndex);
+            renderQuestionsList();
+            updateStats();
+            updateJsonPreview();
+            showToast("重編 ID 序號成功", "所有題目的 ID 已依據目前順序重新指派為 1 ~ " + questions.length, true);
+          }
+        );
+      });
+
+      // Bulk: Factory Reset using Custom Confirm Modal (Iframe safe)
+      document.getElementById("btn-bulk-reset").addEventListener("click", () => {
+        showCustomConfirm(
+          "恢復出廠預設狀態？",
+          "這將會完全拋棄您剛才進行的所有自訂排序、拖曳、以及所有的題目與解析編輯修改，重新還原回最初最原始的 168 題資料。此操作無法撤銷！",
+          true,
+          () => {
+            fetchQuestionData().then(() => {
+              selectedIndex = 0;
+              editedCountSet.clear();
+              renderQuestionsList();
+              loadQuestionToEditor(selectedIndex);
+              updateStats();
+              updateJsonPreview();
+              showToast("恢復預設狀態", "已嘗試重新載入外部 questions.json 題庫資料", true);
+            });
+          }
+        );
+      });
+
+      // Copy JSON fallback safe for iFrame sandbox environment
+      document.getElementById("btn-copy-json").addEventListener("click", () => {
+        const jsonString = JSON.stringify(questions, null, 2);
+        
+        // Fallback clipboard copying routine
+        const tempTextArea = document.createElement("textarea");
+        tempTextArea.value = jsonString;
+        tempTextArea.style.position = "fixed";  // Avoid scrolling to bottom
+        document.body.appendChild(tempTextArea);
+        tempTextArea.focus();
+        tempTextArea.select();
+
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            showToast("複製成功", "最新的 JSON 資料已存入您的剪貼簿", true);
+          } else {
+            showToast("複製失敗", "瀏覽器可能有限制，請手動複製下方預覽區內容", false);
+          }
+        } catch (err) {
+          showToast("複製失敗", "環境限制剪貼簿寫入，請手動複製唯讀區", false);
+        }
+
+        document.body.removeChild(tempTextArea);
+      });
+
+      // Download JSON Blob File
+      document.getElementById("btn-download-json").addEventListener("click", () => {
+        try {
+          const jsonString = JSON.stringify(questions, null, 2);
+          const blob = new Blob([jsonString], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "questions_reordered.json";
+          document.body.appendChild(a);
+          a.click();
+          
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast("下載啟動", "檔案 questions_reordered.json 已儲存至本地", true);
+        } catch (e) {
+          showToast("下載失敗", "生成 Blob 檔案錯誤，請手動複製 JSON 文字", false);
+        }
+      });
+
+      // Upload triggers
+      const filePicker = document.getElementById("upload-file-picker");
+      const btnUploadTrigger = document.getElementById("btn-upload-trigger");
+
+      btnUploadTrigger.addEventListener("click", () => {
+        filePicker.click();
+      });
+
+      filePicker.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          try {
+            const parsed = JSON.parse(event.target.result);
+            if (Array.isArray(parsed)) {
+              questions = parsed;
+              selectedIndex = 0;
+              editedCountSet.clear();
+              elManualImportBanner?.classList.add("hidden");
+              updateStats();
+              renderQuestionsList();
+              loadQuestionToEditor(0);
+              updateJsonPreview();
+              showToast("外部 JSON 載入成功", `成功匯入了 ${parsed.length} 個題目項目`, true);
+            } else {
+              showToast("匯入格式錯誤", "請確保上傳的 JSON 根部是一個陣列結構", false);
+            }
+          } catch (err) {
+            showToast("解析失敗", "讀取 JSON 時發生格式語法錯誤，請檢查檔案內容", false);
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      const manualImportButton = document.getElementById("manual-import-button");
+      if (manualImportButton) {
+        manualImportButton.addEventListener("click", () => {
+          filePicker.click();
+        });
+      }
+    }
+
+    // Toggle filter selection state
+    function toggleFilterState(filterType, buttonEl) {
+      activeFilter = filterType;
+      
+      const buttons = ["btn-filter-all", "btn-filter-code", "btn-filter-nocode"];
+      buttons.forEach(btnId => {
+        const el = document.getElementById(btnId);
+        if (el === buttonEl) {
+          el.className = "px-3 py-2 text-xs font-semibold rounded-lg bg-brand-600 text-white transition-all";
+        } else {
+          el.className = "px-3 py-2 text-xs font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all";
+        }
+      });
+
+      renderQuestionsList();
+    }
+
+    // Quick Knuth-Fisher-Yates Shuffle array algorithm
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    // Refresh JSON view text box
+    function updateJsonPreview() {
+      const previewEl = document.getElementById("json-preview");
+      if (previewEl) {
+        previewEl.value = JSON.stringify(questions, null, 2);
+      }
+    }
+
+    // HTML escape helper to prevent UI breakages
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
