@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSAT English Mock Test - Unit 11</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full flex flex-col transition-colors duration-300">
+
+    <!-- Top Header -->
+    <header class="bg-white dark:bg-slate-800 shadow-md border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-brand-500 to-sky-400 text-white p-2.5 rounded-xl shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-lg sm:text-xl tracking-tight bg-gradient-to-r from-brand-600 to-sky-500 dark:from-brand-400 dark:to-sky-300 bg-clip-text text-transparent">GSAT English Mock Test</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1">
+                        Unit 11 Comprehensive Assessment 
+                        <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400">
+                            Difficulty <i class="fa-solid fa-star ml-0.5 text-[8px]"></i><i class="fa-solid fa-star text-[8px]"></i><i class="fa-solid fa-star text-[8px]"></i><i class="fa-regular fa-star text-[8px]"></i><i class="fa-regular fa-star text-[8px]"></i>
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Settings / Stats -->
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <!-- Theme Toggle -->
+                <button id="themeToggle" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 transition-all" title="Toggle Theme">
+                    <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-lg hidden dark:block"></i>
+                </button>
+                
+                <!-- Audio Toggle -->
+                <button id="audioToggle" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 transition-all" title="Sound FX Settings">
+                    <i id="audioIcon" class="fa-solid fa-volume-high text-lg"></i>
+                </button>
+
+                <!-- Mode Indicator / Toggle -->
+                <div class="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl text-xs font-bold">
+                    <button id="modeStudy" class="px-3 py-1.5 rounded-lg transition-all text-brand-600 dark:text-brand-400 bg-white dark:bg-slate-600 shadow-sm" onclick="setMode('study')">
+                        <i class="fa-solid fa-book-open mr-1"></i>Study
+                    </button>
+                    <button id="modeQuiz" class="px-3 py-1.5 rounded-lg transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700" onclick="setMode('quiz')">
+                        <i class="fa-solid fa-stopwatch mr-1"></i>Quiz
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col lg:flex-row gap-6">
+        
+        <!-- Left Sidebar: Controls & Navigation -->
+        <aside class="w-full lg:w-64 shrink-0 flex flex-col gap-4">
+            <!-- Timer & Overall Progress Card -->
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-bold text-slate-500 dark:text-slate-400">Status</span>
+                    <span id="currentModeBadge" class="px-2 py-0.5 rounded text-xs font-extrabold bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">Study Mode</span>
+                </div>
+
+                <!-- Timer -->
+                <div id="timerContainer" class="hidden p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-regular fa-clock text-rose-500 text-lg animate-pulse"></i>
+                        <span class="text-sm font-bold text-slate-600 dark:text-slate-300">Time Left</span>
+                    </div>
+                    <span id="timerDisplay" class="font-mono text-lg font-black text-rose-600 dark:text-rose-400">40:00</span>
+                </div>
+
+                <!-- Global Progress Bar -->
+                <div>
+                    <div class="flex justify-between text-xs font-bold mb-1.5">
+                        <span class="text-slate-500 dark:text-slate-400">Progress</span>
+                        <span id="progressPercent" class="text-brand-600 dark:text-brand-400">0% (0/24)</span>
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                        <div id="progressBar" class="bg-gradient-to-r from-brand-500 to-sky-400 h-full rounded-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col gap-2 mt-2">
+                    <button id="btnSubmitTest" class="w-full py-3 px-4 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-xl shadow-lg shadow-brand-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2" onclick="promptSubmitFullTest()">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Test
+                    </button>
+                    <button id="btnResetTest" class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm" onclick="promptResetFullTest()">
+                        <i class="fa-solid fa-arrow-rotate-left"></i> Reset Answers
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz Sections Navigation (All English Names) -->
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col gap-1.5">
+                <span class="text-xs font-extrabold text-slate-400 dark:text-slate-500 px-2 mb-1 uppercase tracking-wider">Test Units</span>
+                
+                <button onclick="switchTab('tab1')" id="nav-tab1" class="tab-nav flex items-center justify-between p-3 rounded-xl font-bold text-sm text-left transition-all bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400 border-l-4 border-brand-500">
+                    <span class="truncate"><span class="opacity-60 mr-1">Part 1</span> Cloze Test: Postcards</span>
+                    <span id="badge-tab1" class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">0/5</span>
+                </button>
+
+                <button onclick="switchTab('tab2')" id="nav-tab2" class="tab-nav flex items-center justify-between p-3 rounded-xl font-bold text-sm text-left transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                    <span class="truncate"><span class="opacity-60 mr-1">Part 2</span> Cloze Test: Water Cremation</span>
+                    <span id="badge-tab2" class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">0/5</span>
+                </button>
+
+                <button onclick="switchTab('tab3')" id="nav-tab3" class="tab-nav flex items-center justify-between p-3 rounded-xl font-bold text-sm text-left transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                    <span class="truncate"><span class="opacity-60 mr-1">Part 3</span> Contextual Fill-in: Child Labor</span>
+                    <span id="badge-tab3" class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">0/10</span>
+                </button>
+
+                <button onclick="switchTab('tab4')" id="nav-tab4" class="tab-nav flex items-center justify-between p-3 rounded-xl font-bold text-sm text-left transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                    <span class="truncate"><span class="opacity-60 mr-1">Part 4</span> Discourse Structure: Sharenting</span>
+                    <span id="badge-tab4" class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">0/4</span>
+                </button>
+            </div>
+            
+            <!-- Quick Helper Info -->
+            <div class="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-800 dark:text-amber-300">
+                <p class="font-bold mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-circle-info"></i> Hints
+                </p>
+                <ul class="list-disc list-inside space-y-1 opacity-90">
+                    <li><b>Cloze Test</b>: Click the dropdown menus directly in the passage to select answers.</li>
+                    <li><b>Contextual Fill-in</b>: Click a word below, then click a blank in the text to fill it.</li>
+                    <li><b>Discourse Structure</b>: Click a sentence card below, then click a slot in the text to insert.</li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Right Main: Content Area -->
+        <main class="flex-1 flex flex-col min-w-0">
+
+            <!-- Tab 1: Cloze Test 1 (Postcards) -->
+            <section id="tab1" class="tab-content block bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-all">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-6 border-b border-slate-100 dark:border-slate-700">
+                    <div>
+                        <span class="text-xs font-bold text-brand-600 dark:text-brand-400 tracking-wider uppercase">Part 1: Cloze Test (I)</span>
+                        <h2 class="text-xl font-black mt-0.5">The Warmth of Postcards & Postcrossing</h2>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs px-2.5 py-1 rounded-full font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">5 Questions</span>
+                    </div>
+                </div>
+
+                <!-- Reading Passage -->
+                <div class="prose dark:prose-invert max-w-none text-base sm:text-lg leading-relaxed text-justify mb-8 text-slate-700 dark:text-slate-200">
+                    In a world where text messages, selfies, and Instagram photos are everywhere, it’s hard to imagine people using an outdated way to communicate — sending postcards. For such 
+                    <!-- Blank 1 -->
+                    <span class="inline-block px-1 select-inline-container" data-q-id="1">
+                        <select id="q-1" onchange="answerSelected(1, this.value)" class="quiz-select inline-flex max-w-[150px] bg-slate-50 dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-900 rounded-lg px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-brand-500 text-sm transition-all cursor-pointer shadow-sm">
+                            <option value="">(1) Select</option>
+                        </select>
+                    </span> 
+                    people, there are things about postcards that can’t be replaced by digital tools — the way the message is written, the intention, the time the person put in to writing the message. It was the invaluable human touch 
+                    <!-- Blank 2 -->
+                    <span class="inline-block px-1 select-inline-container" data-q-id="2">
+                        <select id="q-2" onchange="answerSelected(2, this.value)" class="quiz-select inline-flex max-w-[150px] bg-slate-50 dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-900 rounded-lg px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-brand-500 text-sm transition-all cursor-pointer shadow-sm">
+                            <option value="">(2) Select</option>
+                        </select>
+                    </span> 
+                    Paulo Magalhães to create a website called Postcrossing.
+                    <br><br>
+                    <!-- Blank 3 -->
+                    <span class="inline-block px-1 select-inline-container" data-q-id="3">
+                        <select id="q-3" onchange="answerSelected(3, this.value)" class="quiz-select inline-flex max-w-[150px] bg-slate-50 dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-900 rounded-lg px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-brand-500 text-sm transition-all cursor-pointer shadow-sm">
+                            <option value="">(3) Select</option>
+                        </select>
+                    </span>, Paulo, then a student in Portugal, came up with an idea to gather other mail lovers. His idea was embodied in 2005 by the creation of Postcrossing, an online platform aimed at connecting people across the world through postcards. If you send a hand-written postcard through Postcrossing to someone you don’t know in another country, you will get at least one card from somewhere else in the world. It started to 
+                    <!-- Blank 4 -->
+                    <span class="inline-block px-1 select-inline-container" data-q-id="4">
+                        <select id="q-4" onchange="answerSelected(4, this.value)" class="quiz-select inline-flex max-w-[150px] bg-slate-50 dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-900 rounded-lg px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-brand-500 text-sm transition-all cursor-pointer shadow-sm">
+                            <option value="">(4) Select</option>
+                        </select>
+                    </span> 
+                    as many people from other countries registered on the website and made requests to send postcards. In fact, Postcrossing has 
+                    <!-- Blank 5 -->
+                    <span class="inline-block px-1 select-inline-container" data-q-id="5">
+                        <select id="q-5" onchange="answerSelected(5, this.value)" class="quiz-select inline-flex max-w-[150px] bg-slate-50 dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-900 rounded-lg px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-brand-500 text-sm transition-all cursor-pointer shadow-sm">
+                            <option value="">(5) Select</option>
+                        </select>
+                    </span> 
+                    gained in popularity. As of 2021, it has over 800,000 members spread across 209 countries. With one postcard at a time, Postcrossing is successfully bringing the world closer together at “a snail’s pace”!
+                </div>
+
+                <!-- Toggle Study Resources -->
+                <div class="study-resources mt-6 hidden">
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-6 space-y-6">
+                        <button onclick="toggleSection('trans-1')" class="flex items-center justify-between w-full py-2 text-slate-700 dark:text-slate-300 font-bold hover:text-brand-500 transition-colors">
+                            <span><i class="fa-solid fa-language mr-2"></i> 全文翻譯與解析 (Chinese Translation)</span>
+                            <i id="trans-1-icon" class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div id="trans-1-content" class="hidden text-sm leading-relaxed text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl text-justify space-y-2">
+                            <p>在一個簡訊、自拍和 Instagram 照片無處不在的世界裡，很難想像人們會使用一種過時的溝通方式——寄送明信片。對於這樣<strong>懷舊的 (nostalgic)</strong> 人來說，明信片有些特質是數位工具無法取代的：訊息書寫的方式、心意，以及寫信者所投入的時間。正是那珍貴的人情溫度，<strong>促使 (that urged)</strong> Paulo Magalhães 建立了一個名為 Postcrossing 的網站。</p>
+                            <p><strong>喜愛傳統信件 (Fond of snail mail)</strong> 的 Paulo，當時是葡萄牙的一名學生，他有了一個聚集其他信件愛好者的想法。他的點子在 2005 年隨著 Postcrossing 的創立而實現。這是一個旨在透過明信片連結世界各地人們的線上平台。如果你透過 Postcrossing 寄一張手寫明信片給另一個國家你不認識的人，你將會收到至少一張來自世界上其他地方的明信片。隨著來自其他國家的許多人註冊該網站並提出寄送明信片的請求，這個活動開始<strong>流行起來 (catch on)</strong>。事實上，自那之後 (since) Postcrossing 逐漸受到歡迎。截至 2021 年，它已擁有遍布 209 個國家的 80 多萬名會員。藉由一次一張明信片，Postcrossing 成功地以「蝸牛般的速度」讓世界緊密相連！</p>
+                        </div>
+
+                        <!-- Question Explanations -->
+                        <div class="space-y-4">
+                            <h3 class="font-extrabold text-sm text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-circle-question mr-1"></i> 單題詳解 (Answer Explanations)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="explanations-1">
+                                <!-- Dynamic JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 2: Cloze Test 2 (Water Cremation) -->
+            <section id="tab2" class="tab-content hidden bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-all">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-6 border-b border-slate-100 dark:border-slate-700">
+                    <div>
+                        <span class="text-xs font-bold text-brand-600 dark:text-brand-400 tracking-wider uppercase">Part 2: Cloze Test (II)</span>
+                        <h2 class="text-xl font-black mt-0.5">A Green Funeral Alternative: Water Cremation</h2>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs px-2.5 py-1 rounded-full font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">5 Questions</span>
+                    </div>
+                </div>
+
+                <!-- Reading Passage -->
+                <div class="prose dark:prose-invert max-w-none text-base sm:text-lg leading-relaxed text-justify mb-8 text-slate-700 dark:text-slate-200">
+                    When someone dies, there are two common ways to dispose of the dead body. One is cremation, which means burning the body. The other is burying the body. 
+                    <!-- Blank 6 -->
+                    <span class="inline-block px-1 select-inline-container" data-q-id="6">
+                        <select id="q-6" onchange="answerSelected(6, this.value)" class="quiz-select inline-flex max-w-[150px] bg-slate-50 dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-900 rounded-lg px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-brand-500 text-sm transition-all cursor-pointer shadow-sm">
+                            <option value="">(1) Select</option>
+                        </select>
+                    </span> 
+                    way is good for the environment. Cremation creates greenhouse gas emissions, while ground burial takes up lots of space. A US company, Natural Funeral has a 
+                    <!-- Blank 7 -->
+                    <span class="inline-block px-1 select-inline-container" data-q-id="7">
+                        <select id="q-7" onchange="answerSelected(7, this.value)" class="quiz-select inline-flex max-w-[150px] bg-slate-50 dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-900 rounded-lg px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-brand-500 text-sm transition-all cursor-pointer shadow-sm">
+                            <option value="">(2) Select</option>
+                        </select>
+                    </span> 
+                    alternative to offer — water cremation.
+                    <br><br>
+                    Water cremation is 
+                    <!-- Blank 8 -->
+                    <span class="inline-block px-1 select-inline-container" data-q-id="8">
+                        <select id="q-8" onchange="answerSelected(8, this.value)" class="quiz-select inline-flex max-w-[150px] bg-slate-50 dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-900 rounded-lg px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-brand-500 text-sm transition-all cursor-pointer shadow-sm">
+                            <option value="">(3) Select</option>
+                        </select>
+                    </span> 
+                    composting. A deceased body is placed inside a container, laid on top of straw, and some ingredients are added to help with the composting. Then the body composts as it would naturally do inside the earth. When the process is done, a so-called essence that contains every single ingredient for an organic fertilizer 
+                    <!-- Blank 9 -->
+                    <span class="inline-block px-1 select-inline-container" data-q-id="9">
+                        <select id="q-9" onchange="answerSelected(9, this.value)" class="quiz-select inline-flex max-w-[150px] bg-slate-50 dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-900 rounded-lg px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-brand-500 text-sm transition-all cursor-pointer shadow-sm">
+                            <option value="">(4) Select</option>
+                        </select>
+                    </span>. The method is environmentally friendly because it reduces greenhouse gas emissions from cremation and does not take up any space. 
+                    <!-- Blank 10 -->
+                    <span class="inline-block px-1 select-inline-container" data-q-id="10">
+                        <select id="q-10" onchange="answerSelected(10, this.value)" class="quiz-select inline-flex max-w-[150px] bg-slate-50 dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-900 rounded-lg px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-brand-500 text-sm transition-all cursor-pointer shadow-sm">
+                            <option value="">(5) Select</option>
+                        </select>
+                    </span>, all the parts that are left in the body return to nature and help create new life. Though water cremation is legal in only three US states now, Natural Funeral is assured that, with the rise of environmental awareness, it will be widely adopted and implemented in the near future.
+                </div>
+
+                <!-- Toggle Study Resources -->
+                <div class="study-resources mt-6 hidden">
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-6 space-y-6">
+                        <button onclick="toggleSection('trans-2')" class="flex items-center justify-between w-full py-2 text-slate-700 dark:text-slate-300 font-bold hover:text-brand-500 transition-colors">
+                            <span><i class="fa-solid fa-language mr-2"></i> 全文翻譯與解析 (Chinese Translation)</span>
+                            <i id="trans-2-icon" class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div id="trans-2-content" class="hidden text-sm leading-relaxed text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl text-justify space-y-2">
+                            <p>當有人去世時，有兩種常見的處理遺體方式。一種是火葬，即焚燒遺體。另一種是埋葬。<strong>這兩種方式都不 (Neither)</strong> 環保。火葬排放溫室氣體，而土葬則佔用大量空間。一家美國公司 Natural Funeral 提供了另一種<strong>環保的 (green)</strong> 選擇——水葬。</p>
+                            <p>水葬<strong>類似於 (similar to)</strong> 堆肥。逝者的遺體被放置在一個容器中，鋪在稻草上，並加入一些成分來幫助堆肥。然後遺體就會像在土地裡自然發酵一樣進行分解。當這個過程完成時，一種含有有機肥料所有成分、所謂的精華液<strong>被留下 (is left)</strong>。這種方法非常環保，因為它減少了火葬產生的溫室氣體排放，而且不占用任何空間。<strong>更好的是 (Better yet)</strong>，身體中留下的所有部分都會回歸自然，幫助創造新生命。雖然目前美國只有三個州水葬是合法的，但 Natural Funeral 確信，隨著環保意識的提高，在不久的將來水葬將會被廣泛採用和實施。</p>
+                        </div>
+
+                        <!-- Question Explanations -->
+                        <div class="space-y-4">
+                            <h3 class="font-extrabold text-sm text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-circle-question mr-1"></i> 單題詳解 (Answer Explanations)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="explanations-2">
+                                <!-- Dynamic JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 3: Contextual Fill-in-the-blank (Child labor) -->
+            <section id="tab3" class="tab-content hidden bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-all">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-6 border-b border-slate-100 dark:border-slate-700">
+                    <div>
+                        <span class="text-xs font-bold text-brand-600 dark:text-brand-400 tracking-wider uppercase">Part 3: Contextual Fill-in</span>
+                        <h2 class="text-xl font-black mt-0.5">The Child Labor Crisis in Ethiopia</h2>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs px-2.5 py-1 rounded-full font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">10 Questions</span>
+                    </div>
+                </div>
+
+                <!-- Reading Passage -->
+                <div class="prose dark:prose-invert max-w-none text-base sm:text-lg leading-relaxed text-justify mb-8 text-slate-700 dark:text-slate-200">
+                    Child labor is common in Ethiopia. The issue has long 
+                    <!-- Blank 11 -->
+                    <span class="inline-block px-1 align-middle">
+                        <button id="blank-11" onclick="focusBlank(11)" class="blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900">1</button>
+                    </span>
+                    experts there and in other countries. When the coronavirus pandemic closed schools a few years ago, many students were 
+                    <!-- Blank 12 -->
+                    <span class="inline-block px-1 align-middle">
+                        <button id="blank-12" onclick="focusBlank(12)" class="blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900">2</button>
+                    </span>
+                    of the benefits of education. Worse, in places like Ethiopia, they were put at greater risk of forced labor.
+                    <br><br>
+                    Even before the health crisis, child labor was a 
+                    <!-- Blank 13 -->
+                    <span class="inline-block px-1 align-middle">
+                        <button id="blank-13" onclick="focusBlank(13)" class="blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900">3</button>
+                    </span>
+                    problem. According to a survey conducted in 2018, up to 16 million children aged between 5 and 17 were 
+                    <!-- Blank 14 -->
+                    <span class="inline-block px-1 align-middle">
+                        <button id="blank-14" onclick="focusBlank(14)" class="blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900">4</button>
+                    </span>
+                    to forced labor practices. Many children were working as child laborers to lessen the 
+                    <!-- Blank 15 -->
+                    <span class="inline-block px-1 align-middle">
+                        <button id="blank-15" onclick="focusBlank(15)" class="blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900">5</button>
+                    </span>
+                    on their families. Research has also shown that, without the protection of schools, children become more vulnerable to 
+                    <!-- Blank 16 -->
+                    <span class="inline-block px-1 align-middle">
+                        <button id="blank-16" onclick="focusBlank(16)" class="blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900">6</button>
+                    </span>, including violence and hunger.
+                    <br><br>
+                    Despite the bad situation in Ethiopia, efforts to end child labor and get children back into education have been made. For example, a charity called Save the Children launched mobile camel libraries. These have helped many children gain 
+                    <!-- Blank 17 -->
+                    <span class="inline-block px-1 align-middle">
+                        <button id="blank-17" onclick="focusBlank(17)" class="blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900">7</button>
+                    </span>
+                    to education of a kind. Volunteers travel around villages with camels carrying boxes of books. They set up 
+                    <!-- Blank 18 -->
+                    <span class="inline-block px-1 align-middle">
+                        <button id="blank-18" onclick="focusBlank(18)" class="blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900">8</button>
+                    </span>
+                    libraries, staying for two or three days in each village before moving on.
+                    <br><br>
+                    During the pandemic, the charity had to make 
+                    <!-- Blank 19 -->
+                    <span class="inline-block px-1 align-middle">
+                        <button id="blank-19" onclick="focusBlank(19)" class="blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900">9</button>
+                    </span>. It allowed children to take the books home and return them on the next visit. That was because people at that time had to 
+                    <!-- Blank 20 -->
+                    <span class="inline-block px-1 align-middle">
+                        <button id="blank-20" onclick="focusBlank(20)" class="blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900">10</button>
+                    </span>
+                    close contact with each other. Despite the difficulties, thousands of Ethiopian children were able to continue their education.
+                </div>
+
+                <!-- Word Bank Selection -->
+                <div class="bg-slate-100 dark:bg-slate-900/80 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <span class="text-xs font-black tracking-wider uppercase text-slate-400 block mb-3">Word Bank (Click a word below, then click a slot above)</span>
+                    <div id="wordBank" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                        <!-- Dynamic Word Bank Items -->
+                    </div>
+                </div>
+
+                <!-- Toggle Study Resources -->
+                <div class="study-resources mt-6 hidden">
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-6 space-y-6">
+                        <button onclick="toggleSection('trans-3')" class="flex items-center justify-between w-full py-2 text-slate-700 dark:text-slate-300 font-bold hover:text-brand-500 transition-colors">
+                            <span><i class="fa-solid fa-language mr-2"></i> 全文翻譯與解析 (Chinese Translation)</span>
+                            <i id="trans-3-icon" class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div id="trans-3-content" class="hidden text-sm leading-relaxed text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl text-justify space-y-2">
+                            <p>童工在衣索比亞很常見。長期以來，這個問題一直<strong>使專家感到憂慮 (concerned)</strong>。幾年前冠狀病毒大流行關閉學校時，許多學生<strong>被剝奪了 (deprived)</strong> 接受教育的益處。更糟糕的是，在衣索比亞這樣的地方，他們面臨更大的強迫勞動風險。</p>
+                            <p>甚至在健康危機之前，童工就是一個<strong>棘手的 (sticky)</strong> 問題。根據 2018 年進行的一項調查，多達 1600 萬名 5 至 17 歲的兒童<strong>被迫接受 (subject to)</strong> 強迫勞動作法。許多兒童作為童工工作，以減輕家庭的<strong>負擔 (burden)</strong>。研究還表明，在沒有學校保護的情況下，兒童更容易遭受<strong>虐待 (abuse)</strong>，包括暴力與飢餓。</p>
+                            <p>儘管衣索比亞的處境糟糕，但人們已在努力結束童工現象並讓兒童重返校園。例如，一個名為「救助兒童會（Save the Children）」的慈善機構推出了移動駱駝圖書館。這些幫助了許多孩子獲得某種形式受教育的<strong>管道 (access)</strong>。志願者們用馱著一箱箱書的駱駝在村莊間旅行。他們建立起<strong>臨時的 (temporary)</strong> 圖書館，在每個村莊停留兩三天，然後繼續前行。</p>
+                            <p>在大流行期間，該慈善機構不得不做出<strong>調整 (adjustments)</strong>。它允許孩子們把書帶回家，並在下次訪問時歸還。這是因為當時的人們必須<strong>避免 (avoid)</strong> 彼此之間的密切接觸。儘管困難重重，成千上萬的衣索比亞兒童仍得以繼續學業。</p>
+                        </div>
+
+                        <!-- Vocabulary Hints Table -->
+                        <div class="space-y-4">
+                            <h3 class="font-extrabold text-sm text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-spell-check mr-1"></i> 單字學習卡 (Vocabulary Flashcards)</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="vocabCardGrid">
+                                <!-- Dynamic JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 4: Discourse Structure (Sharenting) -->
+            <section id="tab4" class="tab-content hidden bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-all">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-6 border-b border-slate-100 dark:border-slate-700">
+                    <div>
+                        <span class="text-xs font-bold text-brand-600 dark:text-brand-400 tracking-wider uppercase">Part 4: Discourse Structure</span>
+                        <h2 class="text-xl font-black mt-0.5">The Hidden Concerns of "Sharenting" on Social Media</h2>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs px-2.5 py-1 rounded-full font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">4 Questions</span>
+                    </div>
+                </div>
+
+                <!-- Reading Passage -->
+                <div class="prose dark:prose-invert max-w-none text-base sm:text-lg leading-relaxed text-justify mb-8 text-slate-700 dark:text-slate-200">
+                    While the term “sharenting” was coined as recently as 2010, it has become a worldwide phenomenon. According to the Collins Dictionary, sharenting is “the habitual use of social media to share news, images, and other private data about one’s children.”
+                    <!-- Blank 21 -->
+                    <div class="my-3">
+                        <button id="blank-21" onclick="focusSentenceBlank(21)" class="sentence-blank-btn w-full p-4 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-xl text-sm font-extrabold text-brand-600 dark:text-brand-400 text-center transition-all bg-slate-50 dark:bg-slate-900/55 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-plus opacity-50"></i> Click to Insert Sentence (1)
+                        </button>
+                    </div>
+
+                    Sharenting may start from the ultrasound images of a baby to the mom’s life during pregnancy and continue after the child is born. Information on children, such as gender, time and place of birth, photographs, and other digital information is put on social media and shared by parents and relatives.
+                    <!-- Blank 22 -->
+                    <div class="my-3">
+                        <button id="blank-22" onclick="focusSentenceBlank(22)" class="sentence-blank-btn w-full p-4 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-xl text-sm font-extrabold text-brand-600 dark:text-brand-400 text-center transition-all bg-slate-50 dark:bg-slate-900/55 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-plus opacity-50"></i> Click to Insert Sentence (2)
+                        </button>
+                    </div>
+                    However, the simple act of parents sharing their children’s photos and activities has put them in danger.
+
+                    <br><br>
+                    The most obvious peril of sharenting is crime against children. Revealing an excessive amount of information, especially identification information, may lead to digital kidnapping when users of social media steal a picture or video and repost it as their own child’s. Also, it can harm a child’s future financial security and make them a future target of scams.
+                    <!-- Blank 23 -->
+                    <div class="my-3">
+                        <button id="blank-23" onclick="focusSentenceBlank(23)" class="sentence-blank-btn w-full p-4 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-xl text-sm font-extrabold text-brand-600 dark:text-brand-400 text-center transition-all bg-slate-50 dark:bg-slate-900/55 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-plus opacity-50"></i> Click to Insert Sentence (3)
+                        </button>
+                    </div>
+
+                    The other concern is the psychological effect. Many children report feeling ashamed the first time they go online, usually as tweens or teenagers, to see their entire life online.
+                    <!-- Blank 24 -->
+                    <div class="my-3">
+                        <button id="blank-24" onclick="focusSentenceBlank(24)" class="sentence-blank-btn w-full p-4 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-xl text-sm font-extrabold text-brand-600 dark:text-brand-400 text-center transition-all bg-slate-50 dark:bg-slate-900/55 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-plus opacity-50"></i> Click to Insert Sentence (4)
+                        </button>
+                    </div>
+                    In extreme cases, cyberbullying caused by sharenting can take its toll on a child’s mental health. So, can parents still have the joy of sharenting? The answer is yes, as long as parents can “share with care.”
+                </div>
+
+                <!-- Sentence Options Bank -->
+                <div class="bg-slate-100 dark:bg-slate-900/80 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                    <span class="text-xs font-black tracking-wider uppercase text-slate-400 block mb-1">Sentence Options (Click a card below, then click a slot in the text above)</span>
+                    <div id="sentenceBank" class="space-y-2.5">
+                        <!-- Dynamic Sentence Cards -->
+                    </div>
+                </div>
+
+                <!-- Toggle Study Resources -->
+                <div class="study-resources mt-6 hidden">
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-6 space-y-6">
+                        <button onclick="toggleSection('trans-4')" class="flex items-center justify-between w-full py-2 text-slate-700 dark:text-slate-300 font-bold hover:text-brand-500 transition-colors">
+                            <span><i class="fa-solid fa-language mr-2"></i> 全文翻譯與解析 (Chinese Translation)</span>
+                            <i id="trans-4-icon" class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div id="trans-4-content" class="hidden text-sm leading-relaxed text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl text-justify space-y-3">
+                            <p>雖然「曬娃（sharenting）」這個詞早在 2010 年才被創造出來，但它已經成為一種全球性的現象。根據柯林斯詞典，曬娃是「習慣性地使用社群媒體來分享有關自己孩子的消息、影像和其他私人數據」。<strong>(C) 當對兒童幸福負有責任的成年人（例如家長或教師）透過數位管道傳輸有關兒童的私人細節時，就會發生這種情況。</strong></p>
+                            <p>曬娃可能始於嬰兒的超音波照片，一直到母親懷孕期間的生活，並在孩子出生後繼續進行。關於孩子的性別、出生時間和地點、照片等數位資訊都被放到社群媒體上，由父母 and 親屬分享。<strong>(B) 平均而言，家長在孩子滿五歲時，會在網路上發布將近1500張孩子照片。</strong>然而，家長分享孩子照片和活動的簡單行為已經讓他們身陷危險之中。</p>
+                            <p>曬娃最顯而易見的危害就是針對兒童的犯罪。當社群媒體用戶竊取照片或影片，並將其重新發布為自己的孩子時，洩露過多資訊（尤其是身份識別資訊）可能會導致「數位綁架（digital kidnapping）」。此外，這還可能損害孩子未來的財務安全，使他們成為未來詐騙的目標。<strong>(E) 據估計，到 2030 年，年輕一代面臨的身分欺詐案件中，將有三分之二與「曬娃」有關。</strong></p>
+                            <p>另一個擔憂是心理影響。許多兒童表示，當他們第一次上網時（通常是青少年時期），看到自己的一生都在網路上，會感到很羞愧。<strong>(D) 他們要麼覺得自己的隱私權受到了侵犯，要麼覺得自己被父母的曬娃行為背叛了。</strong>在極端情況下，曬娃引起的網路霸凌會對孩子的心理健康造成嚴重傷害。那麼，家長還能享受曬娃的樂趣嗎？答案是肯定的，只要家長能「謹慎分享（share with care）」。</p>
+                        </div>
+
+                        <!-- Question Explanations -->
+                        <div class="space-y-4">
+                            <h3 class="font-extrabold text-sm text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-circle-question mr-1"></i> 篇章結構與邏輯推演 (Logic & Explanation)</h3>
+                            <div class="grid grid-cols-1 gap-4" id="explanations-4">
+                                <!-- Dynamic JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Message -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 flex items-center space-x-2 text-sm font-bold">
+        <span id="toastIcon"><i class="fa-solid fa-check-circle text-emerald-500"></i></span>
+        <span id="toastMsg">Answers Auto-saved</span>
+    </div>
+
+    <!-- Custom Dialog Modal (Replaces native confirm/alert) -->
+    <div id="customDialog" class="fixed inset-0 z-[100] overflow-y-auto hidden" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Overlay -->
+            <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity"></div>
+            <!-- Center alignment helper -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <!-- Dialog Box -->
+            <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border border-slate-100 dark:border-slate-700">
+                <div class="p-6">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div id="dialogIconBg" class="bg-amber-100 dark:bg-amber-950/40 p-2.5 rounded-lg text-amber-600 dark:text-amber-400">
+                            <i id="dialogIcon" class="fa-solid fa-triangle-exclamation text-lg"></i>
+                        </div>
+                        <h3 id="dialogTitle" class="text-lg font-black text-slate-800 dark:text-white">Confirm Action</h3>
+                    </div>
+                    <p id="dialogMessage" class="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">Are you sure you want to proceed?</p>
+                    <div class="flex justify-end space-x-3">
+                        <button id="dialogBtnCancel" onclick="closeCustomDialog()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-sm transition-all">
+                            Cancel
+                        </button>
+                        <button id="dialogBtnConfirm" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-sm shadow-md transition-all">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal (Quiz Submit summary) -->
+    <div id="resultModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closeResultModal()"></div>
+
+            <!-- Modal Panel -->
+            <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full border border-slate-100 dark:border-slate-700">
+                <div class="p-6 sm:p-8 flex flex-col items-center">
+                    <!-- Score Badge Ring -->
+                    <div class="relative flex items-center justify-center mb-6">
+                        <svg class="w-32 h-32 transform -rotate-90">
+                            <circle cx="64" cy="64" r="56" stroke="currentColor" class="text-slate-100 dark:text-slate-700" stroke-width="8" fill="transparent" />
+                            <circle cx="64" cy="64" r="56" stroke="currentColor" id="modalProgressCircle" class="text-brand-500" stroke-width="8" fill="transparent" stroke-dasharray="351.85" stroke-dashoffset="351.85" stroke-linecap="round" />
+                        </svg>
+                        <div class="absolute text-center">
+                            <span id="modalScore" class="text-3xl font-black text-slate-800 dark:text-white">0</span>
+                            <span class="text-sm font-bold text-slate-400 block">/ 100</span>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-black mb-2" id="modalTitle">Test Submitted!</h3>
+                    <p id="modalFeedback" class="text-sm text-slate-500 dark:text-slate-400 text-center px-4 mb-6">Great job! You have successfully completed Unit 11 assessment. Let's review the step-by-step explanations below.</p>
+
+                    <!-- Breakdown Table -->
+                    <div class="w-full bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 mb-6 space-y-2.5">
+                        <div class="flex justify-between text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+                            <span>Test Units</span>
+                            <span>Correct / Total</span>
+                        </div>
+                        <div class="flex justify-between text-sm font-bold border-b border-slate-100 dark:border-slate-800 pb-2">
+                            <span>1. Cloze Test (Postcards)</span>
+                            <span id="score-p1">0 / 5</span>
+                        </div>
+                        <div class="flex justify-between text-sm font-bold border-b border-slate-100 dark:border-slate-800 pb-2">
+                            <span>2. Cloze Test (Water Cremation)</span>
+                            <span id="score-p2">0 / 5</span>
+                        </div>
+                        <div class="flex justify-between text-sm font-bold border-b border-slate-100 dark:border-slate-800 pb-2">
+                            <span>3. Contextual Fill-in (Child Labor)</span>
+                            <span id="score-p3">0 / 10</span>
+                        </div>
+                        <div class="flex justify-between text-sm font-bold">
+                            <span>4. Discourse Structure (Sharenting)</span>
+                            <span id="score-p4">0 / 4</span>
+                        </div>
+                    </div>
+
+                    <!-- Footer buttons -->
+                    <div class="flex gap-3 w-full">
+                        <button onclick="closeResultModal()" class="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white font-extrabold rounded-2xl shadow-lg shadow-brand-500/20 active:scale-[0.98] transition-all">
+                            Review Explanations & Translations
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Web Audio Synthesizer Sound Effects -->
+    <script>
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playCorrect() {
+                if (!this.enabled) return;
+                this.init();
+                try {
+                    let now = this.ctx.currentTime;
+                    let osc1 = this.ctx.createOscillator();
+                    let osc2 = this.ctx.createOscillator();
+                    let gain = this.ctx.createGain();
+
+                    osc1.type = 'sine';
+                    osc1.frequency.setValueAtTime(523.25, now); // C5
+                    osc1.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    osc1.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    osc1.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+
+                    osc2.type = 'triangle';
+                    osc2.frequency.setValueAtTime(261.63, now); // C4
+                    osc2.frequency.setValueAtTime(329.63, now + 0.1); // E4
+                    
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+                    osc1.connect(gain);
+                    osc2.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc1.start(now);
+                    osc2.start(now);
+                    osc1.stop(now + 0.52);
+                    osc2.stop(now + 0.52);
+                } catch(e){}
+            }
+            playIncorrect() {
+                if (!this.enabled) return;
+                this.init();
+                try {
+                    let now = this.ctx.currentTime;
+                    let osc = this.ctx.createOscillator();
+                    let gain = this.ctx.createGain();
+
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(100, now + 0.35);
+
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.36);
+                } catch(e){}
+            }
+            playClick() {
+                if (!this.enabled) return;
+                this.init();
+                try {
+                    let now = this.ctx.currentTime;
+                    let osc = this.ctx.createOscillator();
+                    let gain = this.ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.setValueAtTime(800, now + 0.05);
+
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } catch(e){}
+            }
+        }
+        const sfx = new SoundFX();
+    </script>
+
+    <!-- Quiz Engine and Data -->
+    <script>
+        // Global State
+        let currentMode = 'study'; // 'study' or 'quiz'
+        let currentTab = 'tab1';
+        let timerInterval = null;
+        let timeRemaining = 40 * 60; // 40 minutes in seconds
+        let isSubmitted = false;
+
+        // User Answers State: keys mapped from 1 to 24
+        // P1: 1-5, P2: 6-10, P3: 11-20, P4: 21-24
+        const userAnswers = {};
+        for(let i=1; i<=24; i++) {
+            userAnswers[i] = "";
+        }
+
+        // Selected option state for Word Bank and Sentence Bank interaction
+        let activeBankWord = null; // e.g. 'A'
+        let activeBankSentence = null; // e.g. 'A'
+
+        // Core Answers Key & Explanations & Translations
+        const quizDatabase = {
+            1: { ans: "B", part: 1 },
+            2: { ans: "B", part: 1 },
+            3: { ans: "D", part: 1 },
+            4: { ans: "C", part: 1 },
+            5: { ans: "A", part: 1 },
+            6: { ans: "A", part: 2 },
+            7: { ans: "A", part: 2 },
+            8: { ans: "D", part: 2 },
+            9: { ans: "B", part: 2 },
+            10: { ans: "C", part: 2 },
+            11: { ans: "F", part: 3 },
+            12: { ans: "G", part: 3 },
+            13: { ans: "I", part: 3 },
+            14: { ans: "H", part: 3 },
+            15: { ans: "E", part: 3 },
+            16: { ans: "A", part: 3 },
+            17: { ans: "B", part: 3 },
+            18: { ans: "J", part: 3 },
+            19: { ans: "C", part: 3 },
+            20: { ans: "D", part: 3 },
+            21: { ans: "C", part: 4 },
+            22: { ans: "B", part: 4 },
+            23: { ans: "E", part: 4 },
+            24: { ans: "D", part: 4 },
+        };
+
+        // Detailed translation and context for Cloze Options (Questions 1 to 10)
+        const clozeOptions = {
+            1: [
+                { val: "A", en: "powerful", zh: "強大的" },
+                { val: "B", en: "nostalgic", zh: "懷舊的" },
+                { val: "C", en: "sensible", zh: "理智的" },
+                { val: "D", en: "attractive", zh: "有吸引力的" }
+            ],
+            2: [
+                { val: "A", en: "urging", zh: "催促 (分詞)" },
+                { val: "B", en: "that urged", zh: "促使 (強調句)" },
+                { val: "C", en: "to urge", zh: "去催促" },
+                { val: "D", en: "so that it urged", zh: "以便它催促" }
+            ],
+            3: [
+                { val: "A", en: "Disappointed at mail delivery", zh: "對郵局失望" },
+                { val: "B", en: "Expert in handwriting", zh: "筆跡專家" },
+                { val: "C", en: "Eager to achieve fame", zh: "渴望成名" },
+                { val: "D", en: "Fond of snail mail", zh: "喜愛傳統信件" }
+            ],
+            4: [
+                { val: "A", en: "sum up", zh: "總結" },
+                { val: "B", en: "fade away", zh: "消逝" },
+                { val: "C", en: "catch on", zh: "流行起來" },
+                { val: "D", en: "take over", zh: "接管" }
+            ],
+            5: [
+                { val: "A", en: "since", zh: "自那時起" },
+                { val: "B", en: "thus", zh: "因此" },
+                { val: "C", en: "otherwise", zh: "否則" },
+                { val: "D", en: "instead", zh: "反而" }
+            ],
+            6: [
+                { val: "A", en: "Neither", zh: "兩者皆非" },
+                { val: "B", en: "Either", zh: "兩者之一" },
+                { val: "C", en: "Another", zh: "另一個" },
+                { val: "D", en: "Which", zh: "哪一個" }
+            ],
+            7: [
+                { val: "A", en: "green", zh: "綠色環保的" },
+                { val: "B", en: "typical", zh: "典型的" },
+                { val: "C", en: "complex", zh: "複雜的" },
+                { val: "D", en: "precise", zh: "精準的" }
+            ],
+            8: [
+                { val: "A", en: "intended for", zh: "專為...設計的" },
+                { val: "B", en: "free from", zh: "免於..." },
+                { val: "C", en: "composed of", zh: "由...組成的" },
+                { val: "D", en: "similar to", zh: "與...相似的" }
+            ],
+            9: [
+                { val: "A", en: "left", zh: "遺留的 (分詞)" },
+                { val: "B", en: "is left", zh: "被留下 (動詞)" },
+                { val: "C", en: "to be left", zh: "將被留下" },
+                { val: "D", en: "which leaves", zh: "這留下了" }
+            ],
+            10: [
+                { val: "A", en: "After all", zh: "畢竟" },
+                { val: "B", en: "What's worse", zh: "更糟的是" },
+                { val: "C", en: "Better yet", zh: "更好的是" },
+                { val: "D", en: "On the contrary", zh: "相反地" }
+            ]
+        };
+
+        const explanations = {
+            1: { title: "Question 1", body: "<b>(B) nostalgic (懷舊的)</b><br>前文提到「使用過時的溝通方式——寄明信片」，說明這些是偏好古老通訊方式的「懷舊的人」。<br>• (A) powerful 強大的<br>• (C) sensible 明智的<br>• (D) attractive 吸引人的" },
+            2: { title: "Question 2", body: "<b>(B) that urged (促使...)</b><br>本句為<b>分裂強調句型</b>：`It was + 被強調者 (human touch) + that + 剩餘句子`。語意：正是這珍貴的人文溫度促使 Paulo Magalhães 創立了網站。<br>• (A) urging 為分詞修飾不合語法" },
+            3: { title: "Question 3", body: "<b>(D) Fond of snail mail (喜愛傳統信件)</b><br>承接後文「Paulo 當時是一名葡萄牙學生，提出了一個聚集其他郵件愛好者的想法」，因此最符合此處的同位語修飾。<br>• (A) Disappointed at... 對郵政感到失望<br>• (B) Expert... 寫字專家" },
+            4: { title: "Question 4", body: "<b>(C) catch on (流行、受歡迎)</b><br>隨著世界各國的人註冊和發起寄送卡片，「它開始流行起來 (started to catch on)」。<br>• (A) sum up 總結<br>• (B) fade away 漸漸逝去<br>• (D) take over 接管、接手" },
+            5: { title: "Question 5", body: "<b>(A) since (自那時以來)</b><br>「Postcrossing has since gained in popularity.」since 在此處做副詞，指「自那之後（即2005年起）」，該平台在受歡迎程度上大幅增長。" },
+            
+            6: { title: "Question 1", body: "<b>(A) Neither (兩者皆非)</b><br>前文提到火葬會排放溫室氣體，而土葬則極占空間，可知「這兩種方式（Neither way）」都不環保。修飾單數名詞 way。" },
+            7: { title: "Question 2", body: "<b>(A) green (環保的)</b><br>水葬被提出作為對環境較好的「綠色/環保替代方案 (green alternative)」。<br>• (B) typical 典型的<br>• (C) complex 複雜的<br>• (D) precise 精準的" },
+            8: { title: "Question 3", body: "<b>(D) similar to (相似於)</b><br>水葬的運作原理與「堆肥」很相似 (similar to)，下文描述了身體被放在稻草上並像在泥土中一樣發酵。" },
+            9: { title: "Question 4", body: "<b>(B) is left (被留下)</b><br>當分解過程結束後，一種富含有機肥成分的「所謂的精華液」被留下。主詞為 essence (單數)，故用 is left 被動語態。" },
+            10: { title: "Question 5", body: "<b>(C) Better yet (更好的是)</b><br>前句提及水葬不占空間、不排放氣體。此處「更好的是 (Better yet)」用作語氣遞進，補充其回歸自然的超環保優點。" },
+
+            11: { title: "Blank 1", body: "<b>(F) concerned (使...關切、憂慮)</b><br>動詞。此處為現在完成式，has long concerned experts (長期以來一直使專家們感到關切/憂心)。" },
+            12: { title: "Blank 2", body: "<b>(G) deprived (被剝奪)</b><br>過去分詞，be deprived of... 為固定片語，表示「被剝奪了...的益處/權利」。" },
+            13: { title: "Blank 3", body: "<b>(I) sticky (棘手的)</b><br>形容詞修飾 problem。a sticky problem 表示「一個棘手/難以處理的問題」。" },
+            14: { title: "Blank 4", body: "<b>(H) subject (易遭受、受制於)</b><br>形容詞/分詞，be subject to... 為固定用法，指「面臨、易遭受強迫勞動的實踐」。" },
+            15: { title: "Blank 5", body: "<b>(E) burden (負擔)</b><br>名詞。lessen the burden on their families (減輕家庭的負擔)。" },
+            16: { title: "Blank 6", body: "<b>(A) abuse (虐待、侵害)</b><br>名詞。vulnerable to abuse (易遭受侵害/虐待)，後面包括 violence and hunger (暴力與飢餓) 作為同位語舉例。" },
+            17: { title: "Blank 7", body: "<b>(B) access (獲取、管道)</b><br>名詞，gain access to... (獲得受教育的管道)。" },
+            18: { title: "Blank 8", body: "<b>(J) temporary (臨時的)</b><br>形容詞修飾 libraries。移動圖書館只在每個村莊停留2-3天，因此是「臨時圖書館 (temporary libraries)」。" },
+            19: { title: "Blank 9", body: "<b>(C) adjustments (調整)</b><br>名詞。make adjustments (做出調整/改變)，指允許學生將書帶回家。" },
+            20: { title: "Blank 10", body: "<b>(D) avoid (避免)</b><br>動詞。had to avoid close contact (不得不避免密切接觸)。" },
+
+            21: { title: "Blank 1", body: "<b>(C) It occurs when an adult who is responsible...</b><br>承接前文「曬娃 (sharenting)」的定義，此句用「It occurs...」進一步細緻化描述曬娃的發生情境，即成人透過數位管道分享私人細節的行為。" },
+            22: { title: "Blank 2", body: "<b>(B) On average, parents post nearly 1,500 photos...</b><br>段落前半描述曬娃從嬰兒超音波照一直到出生後的各種照片分享，此句提供具體數據「五歲前分享1500張照片」強化這個大量分享的論點，緊接著以 However 轉折安全隱憂。" },
+            23: { title: "Blank 3", body: "<b>(E) It is estimated that by 2030, two-thirds of identity fraud...</b><br>此段探討曬娃所引起的「犯罪與安全危機」（如數位綁架與詐騙目標）。此句用 2030 年身份欺詐案件將有三分之二與曬娃相關的數據，完美總結了犯罪/身分盜用的實質危害。" },
+            24: { title: "Blank 4", body: "<b>(D) They either feel their right to privacy has been violated...</b><br>前一句提到「當青少年在網路上看到自己的一生被公開時，會感到很羞愧（ashamed）」。此句「覺得隱私權被侵犯、被父母背叛」直接解釋了造成羞愧與背叛感心理影響的原因。" }
+        };
+
+        const wordBankData = {
+            "A": { word: "abuse", typeEn: "noun", typeZh: "n. 虐待/侵害" },
+            "B": { word: "access", typeEn: "noun", typeZh: "n. 途徑/使用權" },
+            "C": { word: "adjustments", typeEn: "noun", typeZh: "n. 調整/適應" },
+            "D": { word: "avoid", typeEn: "verb", typeZh: "v. 避免" },
+            "E": { word: "burden", typeEn: "noun", typeZh: "n. 負擔" },
+            "F": { word: "concerned", typeEn: "verb", typeZh: "v. 使關心/擔憂" },
+            "G": { word: "deprived", typeEn: "verb/adj", typeZh: "v. 被剝奪的" },
+            "H": { word: "subject", typeEn: "adj", typeZh: "adj. 易遭受/受...支配" },
+            "I": { word: "sticky", typeEn: "adj", typeZh: "adj. 棘手的" },
+            "J": { word: "temporary", typeEn: "adj", typeZh: "adj. 臨時的" }
+        };
+
+        const sentenceBankData = {
+            "A": {
+                en: "Adults often ignore the fact that information they upload to the Internet can easily be stolen, and they make themselves innocent victims.",
+                zh: "成人常忽略上傳網路的資訊極易被竊，使自己成為無辜受害者。"
+            },
+            "B": {
+                en: "On average, parents post nearly 1,500 photos of their child online by the time the child turns five.",
+                zh: "平均而言，家長在孩子滿五歲時，會在網路上發布將近 1500 張孩子照片。"
+            },
+            "C": {
+                en: "It occurs when an adult who is responsible for the well-being of a child, such as a parent or a teacher, transmits private details about a child via digital channels.",
+                zh: "當對兒童幸福負有責任的成年人（如家長或教師）透過數位管道傳輸私人細節時，就會發生。"
+            },
+            "D": {
+                en: "They either feel their right to privacy has been violated or they have been betrayed by their parents' sharenting activity.",
+                zh: "他們要麼覺得隱私權受到侵犯，要麼覺得被父母的曬娃行為背叛了。"
+            },
+            "E": {
+                en: "It is estimated that by 2030, two-thirds of identity fraud cases the young generation faces will be associated with \"sharenting.\"",
+                zh: "據估計，到 2030 年，年輕一代面臨的身分欺詐案件中，將有三分之二與曬娃相關。"
+            }
+        };
+
+        // Initialize application on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initApp();
+        });
+
+        function initApp() {
+            // Theme Setup
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+
+            document.getElementById('themeToggle').addEventListener('click', () => {
+                sfx.playClick();
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.theme = 'light';
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.theme = 'dark';
+                }
+            });
+
+            document.getElementById('audioToggle').addEventListener('click', () => {
+                sfx.enabled = !sfx.enabled;
+                const icon = document.getElementById('audioIcon');
+                if (sfx.enabled) {
+                    icon.className = "fa-solid fa-volume-high text-lg";
+                    sfx.playClick();
+                } else {
+                    icon.className = "fa-solid fa-volume-xmark text-lg text-rose-500";
+                }
+            });
+
+            // Set default Tab
+            switchTab('tab1');
+
+            // Render interactive structures based on default mode
+            updateDropdowns();
+            renderWordBank();
+            renderSentenceBank();
+            renderExplanations();
+            updateProgress();
+        }
+
+        // Custom Dialog Modal Utilities
+        function openCustomDialog(title, message, isWarning, onConfirm) {
+            sfx.playClick();
+            const dialog = document.getElementById('customDialog');
+            const dTitle = document.getElementById('dialogTitle');
+            const dMsg = document.getElementById('dialogMessage');
+            const dIcon = document.getElementById('dialogIcon');
+            const dIconBg = document.getElementById('dialogIconBg');
+            const dConfirmBtn = document.getElementById('dialogBtnConfirm');
+
+            dTitle.textContent = title;
+            dMsg.innerHTML = message;
+
+            if (isWarning) {
+                dIcon.className = "fa-solid fa-triangle-exclamation text-lg";
+                dIconBg.className = "bg-amber-100 dark:bg-amber-950/40 p-2.5 rounded-lg text-amber-600 dark:text-amber-400";
+            } else {
+                dIcon.className = "fa-solid fa-circle-info text-lg";
+                dIconBg.className = "bg-indigo-100 dark:bg-indigo-950/40 p-2.5 rounded-lg text-indigo-600 dark:text-indigo-400";
+            }
+
+            // Bind click handler
+            dConfirmBtn.onclick = () => {
+                sfx.playClick();
+                closeCustomDialog();
+                if (onConfirm) onConfirm();
+            };
+
+            dialog.classList.remove('hidden');
+        }
+
+        function closeCustomDialog() {
+            sfx.playClick();
+            document.getElementById('customDialog').classList.add('hidden');
+        }
+
+        // Section navigation
+        function switchTab(tabId) {
+            sfx.playClick();
+            currentTab = tabId;
+
+            // Update Nav Active States
+            document.querySelectorAll('.tab-nav').forEach(btn => {
+                btn.className = "tab-nav flex items-center justify-between p-3 rounded-xl font-bold text-sm text-left transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700";
+            });
+
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-nav flex items-center justify-between p-3 rounded-xl font-bold text-sm text-left transition-all bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400 border-l-4 border-brand-500";
+            }
+
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(section => {
+                section.classList.add('hidden');
+                section.classList.remove('block');
+            });
+
+            // Show active tab
+            const activeSection = document.getElementById(tabId);
+            if (activeSection) {
+                activeSection.classList.remove('hidden');
+                activeSection.classList.add('block');
+            }
+        }
+
+        // Mode Switching (Study vs Quiz)
+        function setMode(mode) {
+            sfx.playClick();
+            if (mode === currentMode) return;
+            currentMode = mode;
+
+            const modeStudy = document.getElementById('modeStudy');
+            const modeQuiz = document.getElementById('modeQuiz');
+            const timerContainer = document.getElementById('timerContainer');
+            const currentModeBadge = document.getElementById('currentModeBadge');
+
+            if (mode === 'study') {
+                modeStudy.className = "px-3 py-1.5 rounded-lg transition-all text-brand-600 dark:text-brand-400 bg-white dark:bg-slate-600 shadow-sm";
+                modeQuiz.className = "px-3 py-1.5 rounded-lg transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700";
+                timerContainer.classList.add('hidden');
+                currentModeBadge.textContent = "Study Mode";
+                currentModeBadge.className = "px-2 py-0.5 rounded text-xs font-extrabold bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400";
+                clearInterval(timerInterval);
+                
+                // Show explanations if previously submitted
+                document.querySelectorAll('.study-resources').forEach(el => el.classList.remove('hidden'));
+                
+                // Dynamic Options: Show translations
+                updateDropdowns();
+                renderWordBank();
+                renderSentenceBank();
+                
+                applyInstantFeedbackUI();
+            } else {
+                modeQuiz.className = "px-3 py-1.5 rounded-lg transition-all text-brand-600 dark:text-brand-400 bg-white dark:bg-slate-600 shadow-sm";
+                modeStudy.className = "px-3 py-1.5 rounded-lg transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700";
+                timerContainer.classList.remove('hidden');
+                currentModeBadge.textContent = "Quiz Mode";
+                currentModeBadge.className = "px-2 py-0.5 rounded text-xs font-extrabold bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400";
+                
+                // Hide explanation cards during mock exam
+                if (!isSubmitted) {
+                    document.querySelectorAll('.study-resources').forEach(el => el.classList.add('hidden'));
+                }
+                
+                // Dynamic Options: Remove Chinese meanings
+                updateDropdowns();
+                renderWordBank();
+                renderSentenceBank();
+
+                startTimer();
+                removeFeedbackUI();
+            }
+        }
+
+        // Timer Logic
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeRemaining = 40 * 60; // 40 minutes
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "00:00";
+                    showToast("Time's up! Submitting test automatically.", "alert");
+                    submitFullTest(true);
+                } else {
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const display = document.getElementById('timerDisplay');
+            const mins = Math.floor(timeRemaining / 60);
+            const secs = timeRemaining % 60;
+            display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Dynamic Dropdowns based on Mode (No Chinese meanings in dropdown choices for Part 1 & 2)
+        function updateDropdowns() {
+            for (let i = 1; i <= 10; i++) {
+                const select = document.getElementById(`q-${i}`);
+                if (!select) continue;
+                const savedValue = userAnswers[i]; // keep selected state if any
+                
+                select.innerHTML = `<option value="">(${i}) Select</option>`;
+                const opts = clozeOptions[i];
+                opts.forEach(o => {
+                    const label = `(${o.val}) ${o.en}`;
+                    const option = document.createElement('option');
+                    option.value = o.val;
+                    option.textContent = label;
+                    select.appendChild(option);
+                });
+                
+                // Restore selection value (either letter "A" / "B" or match option val)
+                select.value = savedValue;
+            }
+        }
+
+        // Interactive rendering: Part 3 Word Bank (Dynamic translation display)
+        function renderWordBank() {
+            const container = document.getElementById('wordBank');
+            container.innerHTML = "";
+
+            Object.entries(wordBankData).forEach(([letter, data]) => {
+                const isUsed = Object.values(userAnswers).includes(letter);
+                
+                const btn = document.createElement('button');
+                btn.id = `wb-${letter}`;
+                btn.className = `p-3 rounded-xl font-bold text-sm text-left border transition-all flex flex-col justify-between ${
+                    isUsed 
+                    ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 border-slate-300 dark:border-slate-700 cursor-not-allowed' 
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:shadow-sm active:scale-[0.98]'
+                }`;
+                btn.onclick = () => {
+                    if (!isUsed) selectWord(letter);
+                };
+
+                const partOfSpeechDisplay = currentMode === 'study' ? data.typeZh : data.typeEn;
+
+                btn.innerHTML = `
+                    <span class="text-xs text-brand-500 dark:text-brand-400 font-extrabold">(${letter})</span>
+                    <span class="text-base font-black truncate">${data.word}</span>
+                    <span class="text-[10px] text-slate-400 dark:text-slate-500 truncate">${partOfSpeechDisplay}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function selectWord(letter) {
+            sfx.playClick();
+            if (activeBankWord) {
+                const prev = document.getElementById(`wb-${activeBankWord}`);
+                if (prev) prev.classList.remove('ring-4', 'ring-brand-500/50', 'border-brand-500');
+            }
+
+            if (activeBankWord === letter) {
+                activeBankWord = null;
+                return;
+            }
+
+            activeBankWord = letter;
+            const current = document.getElementById(`wb-${letter}`);
+            if (current) {
+                current.classList.add('ring-4', 'ring-brand-500/50', 'border-brand-500');
+            }
+        }
+
+        function focusBlank(blankId) {
+            sfx.playClick();
+            const btn = document.getElementById(`blank-${blankId}`);
+
+            if (activeBankWord) {
+                userAnswers[blankId] = activeBankWord;
+                
+                const prevActive = document.getElementById(`wb-${activeBankWord}`);
+                if (prevActive) prevActive.classList.remove('ring-4', 'ring-brand-500/50', 'border-brand-500');
+                
+                activeBankWord = null;
+                
+                renderWordBank();
+                updateBlankUI(blankId);
+                updateProgress();
+
+                if (currentMode === 'study') {
+                    checkInstantAnswer(blankId);
+                }
+                showToast("Word filled successfully!");
+            } else {
+                if (userAnswers[blankId] !== "") {
+                    userAnswers[blankId] = "";
+                    renderWordBank();
+                    updateBlankUI(blankId);
+                    updateProgress();
+                    
+                    if (currentMode === 'study') {
+                        btn.className = "blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900";
+                    }
+                    showToast("Blank cleared.");
+                } else {
+                    showToast("Please click a word card first, then click a slot!", "alert");
+                }
+            }
+        }
+
+        function updateBlankUI(blankId) {
+            const btn = document.getElementById(`blank-${blankId}`);
+            const val = userAnswers[blankId];
+            if (val !== "") {
+                btn.className = "blank-btn inline-flex items-center justify-center min-w-[80px] px-3 py-1 border-2 border-brand-500 rounded-lg text-sm font-black bg-brand-50 dark:bg-brand-950/20 text-brand-600 dark:text-brand-400 transition-all shadow-sm";
+                btn.innerHTML = `<span class="text-xs opacity-60 mr-1">(${val})</span> ${wordBankData[val].word}`;
+            } else {
+                btn.className = "blank-btn inline-flex items-center justify-center min-w-[70px] px-2 py-0.5 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-sm font-extrabold text-brand-600 dark:text-brand-400 transition-all bg-slate-50 dark:bg-slate-900";
+                btn.textContent = (blankId - 10).toString();
+            }
+        }
+
+        // Interactive rendering: Part 4 Sentence Structure (Dynamic translation display)
+        function renderSentenceBank() {
+            const container = document.getElementById('sentenceBank');
+            container.innerHTML = "";
+
+            Object.entries(sentenceBankData).forEach(([letter, data]) => {
+                const isUsed = Object.values(userAnswers).includes(letter);
+
+                const btn = document.createElement('button');
+                btn.id = `sb-${letter}`;
+                btn.className = `w-full p-4 rounded-xl text-left border transition-all flex items-start gap-3 ${
+                    isUsed 
+                    ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 border-slate-300 dark:border-slate-700 cursor-not-allowed opacity-50' 
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:shadow-md active:scale-[0.99]'
+                }`;
+                btn.onclick = () => {
+                    if (!isUsed) selectSentence(letter);
+                };
+
+                const sentenceText = currentMode === 'study' 
+                    ? `<span>${data.en}</span><br><span class="text-xs text-slate-400 font-medium block mt-1">(${data.zh})</span>` 
+                    : `<span>${data.en}</span>`;
+
+                btn.innerHTML = `
+                    <span class="inline-flex items-center justify-center shrink-0 w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-extrabold text-sm">(${letter})</span>
+                    <span class="text-sm font-bold leading-relaxed">${sentenceText}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function selectSentence(letter) {
+            sfx.playClick();
+            if (activeBankSentence) {
+                const prev = document.getElementById(`sb-${activeBankSentence}`);
+                if (prev) prev.classList.remove('ring-4', 'ring-brand-500/50', 'border-brand-500');
+            }
+
+            if (activeBankSentence === letter) {
+                activeBankSentence = null;
+                return;
+            }
+
+            activeBankSentence = letter;
+            const current = document.getElementById(`sb-${letter}`);
+            if (current) {
+                current.classList.add('ring-4', 'ring-brand-500/50', 'border-brand-500');
+            }
+        }
+
+        function focusSentenceBlank(blankId) {
+            sfx.playClick();
+            const btn = document.getElementById(`blank-${blankId}`);
+
+            if (activeBankSentence) {
+                userAnswers[blankId] = activeBankSentence;
+
+                const prevActive = document.getElementById(`sb-${activeBankSentence}`);
+                if (prevActive) prevActive.classList.remove('ring-4', 'ring-brand-500/50', 'border-brand-500');
+
+                activeBankSentence = null;
+
+                renderSentenceBank();
+                updateSentenceBlankUI(blankId);
+                updateProgress();
+
+                if (currentMode === 'study') {
+                    checkInstantAnswer(blankId);
+                }
+                showToast("Sentence inserted successfully!");
+            } else {
+                if (userAnswers[blankId] !== "") {
+                    userAnswers[blankId] = "";
+                    renderSentenceBank();
+                    updateSentenceBlankUI(blankId);
+                    updateProgress();
+
+                    if (currentMode === 'study') {
+                        btn.className = "sentence-blank-btn w-full p-4 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-xl text-sm font-extrabold text-brand-600 dark:text-brand-400 text-center transition-all bg-slate-50 dark:bg-slate-900/55 flex items-center justify-center gap-2";
+                    }
+                    showToast("Sentence removed.");
+                } else {
+                    showToast("Please click a sentence card first, then click a slot in the text above!", "alert");
+                }
+            }
+        }
+
+        function updateSentenceBlankUI(blankId) {
+            const btn = document.getElementById(`blank-${blankId}`);
+            const val = userAnswers[blankId];
+            if (val !== "") {
+                btn.className = "sentence-blank-btn w-full p-4 border-2 border-brand-500 rounded-xl text-sm font-black bg-brand-50/50 dark:bg-brand-950/10 text-brand-600 dark:text-brand-400 text-left transition-all shadow-sm flex items-start gap-3 relative overflow-hidden group";
+                btn.innerHTML = `
+                    <span class="inline-flex items-center justify-center shrink-0 w-7 h-7 rounded-lg bg-brand-100 dark:bg-brand-950/70 text-brand-700 dark:text-brand-300 font-extrabold">(${val})</span>
+                    <span class="text-sm font-extrabold leading-relaxed text-slate-700 dark:text-slate-300 flex-1">${sentenceBankData[val].en.split(". (")[0]}...</span>
+                    <span class="text-xs text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 top-4 font-bold flex items-center gap-1"><i class="fa-solid fa-trash-can"></i> Remove</span>
+                `;
+            } else {
+                const subIndex = blankId - 20;
+                btn.className = "sentence-blank-btn w-full p-4 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-xl text-sm font-extrabold text-brand-600 dark:text-brand-400 text-center transition-all bg-slate-50 dark:bg-slate-900/55 flex items-center justify-center gap-2";
+                btn.innerHTML = `<i class="fa-solid fa-circle-plus opacity-50"></i> Click to Insert Sentence (${subIndex})`;
+            }
+        }
+
+        // Droplist answering logic for P1 & P2
+        function answerSelected(qId, val) {
+            // Strip option letters if returned with parenthesis
+            const optionLetter = val ? (val.length === 1 ? val : val.charAt(1)) : "";
+            userAnswers[qId] = optionLetter;
+            
+            updateProgress();
+
+            if (currentMode === 'study') {
+                checkInstantAnswer(qId);
+            } else {
+                showToast("Option recorded!");
+            }
+        }
+
+        // Progress Tracking
+        function updateProgress() {
+            let total = 24;
+            let answered = 0;
+            let counts = { tab1: 0, tab2: 0, tab3: 0, tab4: 0 };
+
+            for (let i = 1; i <= 24; i++) {
+                if (userAnswers[i] !== "") {
+                    answered++;
+                    if (i <= 5) counts.tab1++;
+                    else if (i <= 10) counts.tab2++;
+                    else if (i <= 20) counts.tab3++;
+                    else counts.tab4++;
+                }
+            }
+
+            const pct = Math.round((answered / total) * 100);
+            document.getElementById('progressBar').style.width = `${pct}%`;
+            document.getElementById('progressPercent').textContent = `${pct}% (${answered}/${total})`;
+
+            document.getElementById('badge-tab1').textContent = `${counts.tab1}/5`;
+            document.getElementById('badge-tab2').textContent = `${counts.tab2}/5`;
+            document.getElementById('badge-tab3').textContent = `${counts.tab3}/10`;
+            document.getElementById('badge-tab4').textContent = `${counts.tab4}/4`;
+        }
+
+        // Show/Hide Translation & Detail blocks
+        function toggleSection(id) {
+            sfx.playClick();
+            const panel = document.getElementById(`${id}-content`);
+            const icon = document.getElementById(`${id}-icon`);
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                icon.className = "fa-solid fa-chevron-up";
+            } else {
+                panel.classList.add('hidden');
+                icon.className = "fa-solid fa-chevron-down";
+            }
+        }
+
+        // Instant Feedback: Used in study mode
+        function checkInstantAnswer(qId) {
+            const isCorrect = userAnswers[qId] === quizDatabase[qId].ans;
+            
+            if (qId <= 10) {
+                const select = document.getElementById(`q-${qId}`);
+                if (isCorrect) {
+                    sfx.playCorrect();
+                    select.className = "quiz-select inline-flex max-w-[150px] bg-emerald-50 dark:bg-emerald-950/20 border-2 border-emerald-500 rounded-lg px-2 py-0.5 font-bold text-emerald-600 dark:text-emerald-400 focus:outline-none focus:border-emerald-500 text-sm transition-all cursor-pointer shadow-sm";
+                } else {
+                    sfx.playIncorrect();
+                    select.className = "quiz-select inline-flex max-w-[150px] bg-rose-50 dark:bg-rose-950/20 border-2 border-rose-500 rounded-lg px-2 py-0.5 font-bold text-rose-600 dark:text-rose-400 focus:outline-none focus:border-rose-500 text-sm transition-all cursor-pointer shadow-sm";
+                }
+            } else if (qId <= 20) {
+                const btn = document.getElementById(`blank-${qId}`);
+                if (isCorrect) {
+                    sfx.playCorrect();
+                    btn.className = "blank-btn inline-flex items-center justify-center min-w-[80px] px-3 py-1 border-2 border-emerald-500 rounded-lg text-sm font-black bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 transition-all shadow-sm";
+                } else {
+                    sfx.playIncorrect();
+                    btn.className = "blank-btn inline-flex items-center justify-center min-w-[80px] px-3 py-1 border-2 border-rose-500 rounded-lg text-sm font-black bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 transition-all shadow-sm";
+                }
+            } else {
+                const btn = document.getElementById(`blank-${qId}`);
+                if (isCorrect) {
+                    sfx.playCorrect();
+                    btn.className = "sentence-blank-btn w-full p-4 border-2 border-emerald-500 rounded-xl text-sm font-black bg-emerald-50/50 dark:bg-emerald-950/10 text-emerald-600 dark:text-emerald-400 text-left transition-all shadow-sm flex items-start gap-3 relative overflow-hidden";
+                } else {
+                    sfx.playIncorrect();
+                    btn.className = "sentence-blank-btn w-full p-4 border-2 border-rose-500 rounded-xl text-sm font-black bg-rose-50/50 dark:bg-rose-950/10 text-rose-600 dark:text-rose-400 text-left transition-all shadow-sm flex items-start gap-3 relative overflow-hidden";
+                }
+            }
+
+            document.querySelectorAll('.study-resources').forEach(el => el.classList.remove('hidden'));
+        }
+
+        // Reset Instant Feedback UI
+        function removeFeedbackUI() {
+            for (let qId = 1; qId <= 24; qId++) {
+                if (qId <= 10) {
+                    const select = document.getElementById(`q-${qId}`);
+                    if (select) {
+                        select.className = "quiz-select inline-flex max-w-[150px] bg-slate-50 dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-900 rounded-lg px-2 py-0.5 font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-brand-500 text-sm transition-all cursor-pointer shadow-sm";
+                    }
+                } else if (qId <= 20) {
+                    updateBlankUI(qId);
+                } else {
+                    updateSentenceBlankUI(qId);
+                }
+            }
+        }
+
+        function applyInstantFeedbackUI() {
+            for (let i = 1; i <= 24; i++) {
+                if (userAnswers[i] !== "") {
+                    checkInstantAnswer(i);
+                }
+            }
+        }
+
+        // Explanations Generation
+        function renderExplanations() {
+            const exp1 = document.getElementById('explanations-1');
+            const exp2 = document.getElementById('explanations-2');
+            const exp4 = document.getElementById('explanations-4');
+            const vocabGrid = document.getElementById('vocabCardGrid');
+
+            exp1.innerHTML = "";
+            exp2.innerHTML = "";
+            exp4.innerHTML = "";
+            vocabGrid.innerHTML = "";
+
+            // Part 1
+            for (let i = 1; i <= 5; i++) {
+                exp1.appendChild(createExplCard(i));
+            }
+            // Part 2
+            for (let i = 6; i <= 10; i++) {
+                exp2.appendChild(createExplCard(i));
+            }
+            // Part 4
+            for (let i = 21; i <= 24; i++) {
+                exp4.appendChild(createExplCard(i));
+            }
+
+            // Part 3 Vocabulary card mapping
+            for (let i = 11; i <= 20; i++) {
+                const letter = quizDatabase[i].ans;
+                const data = wordBankData[letter];
+                const card = document.createElement('div');
+                card.className = "p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl text-left";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-black text-brand-500">(${letter})</span>
+                        <span class="text-xs font-bold text-slate-400">Blank ${i - 10}</span>
+                    </div>
+                    <h4 class="text-lg font-black tracking-tight text-slate-800 dark:text-white">${data.word}</h4>
+                    <span class="text-xs font-extrabold text-slate-500 dark:text-slate-400 block mb-2">${data.typeZh}</span>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-150 dark:border-slate-800 pt-2">${explanations[i].body}</p>
+                `;
+                vocabGrid.appendChild(card);
+            }
+        }
+
+        function createExplCard(qId) {
+            const data = explanations[qId];
+            const card = document.createElement('div');
+            card.className = "bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-150 dark:border-slate-800 text-sm text-left";
+            card.innerHTML = `
+                <div class="flex justify-between items-center mb-1.5 pb-1 border-b border-slate-100 dark:border-slate-800">
+                    <span class="font-extrabold text-slate-500 dark:text-slate-400">${data.title}</span>
+                    <span class="text-xs font-black px-2 py-0.5 rounded bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400">
+                        Answer: ${quizDatabase[qId].ans}
+                    </span>
+                </div>
+                <div class="text-slate-600 dark:text-slate-300 leading-relaxed text-justify">${data.body}</div>
+            `;
+            return card;
+        }
+
+        // Prompt dialog handlers (replaces standard confirm/alert)
+        function promptSubmitFullTest() {
+            const completedCount = Object.values(userAnswers).filter(a => a !== "").length;
+            if (completedCount < 24) {
+                openCustomDialog(
+                    "Submit Early?",
+                    `You have completed <b>${completedCount}</b> out of <b>24</b> questions. Are you sure you want to submit the test now?`,
+                    true,
+                    () => { submitFullTest(); }
+                );
+            } else {
+                openCustomDialog(
+                    "Submit Test?",
+                    "You have answered all questions. Ready to submit and view your results?",
+                    false,
+                    () => { submitFullTest(); }
+                );
+            }
+        }
+
+        function promptResetFullTest() {
+            openCustomDialog(
+                "Reset Answers?",
+                "Are you sure you want to clear all your current answers? This action cannot be undone.",
+                true,
+                () => { resetFullTest(); }
+            );
+        }
+
+        // Global Test Actions
+        function submitFullTest() {
+            // Calculation
+            let scores = { p1: 0, p2: 0, p3: 0, p4: 0 };
+            let totalCorrect = 0;
+
+            for (let i = 1; i <= 24; i++) {
+                const correct = userAnswers[i] === quizDatabase[i].ans;
+                if (correct) {
+                    totalCorrect++;
+                    if (i <= 5) scores.p1++;
+                    else if (i <= 10) scores.p2++;
+                    else if (i <= 20) scores.p3++;
+                    else scores.p4++;
+                }
+            }
+
+            // Scale conversion
+            const finalScore = Math.round((totalCorrect / 24) * 100);
+
+            // Populate Modal
+            document.getElementById('modalScore').textContent = finalScore;
+            document.getElementById('score-p1').textContent = `${scores.p1} / 5`;
+            document.getElementById('score-p2').textContent = `${scores.p2} / 5`;
+            document.getElementById('score-p3').textContent = `${scores.p3} / 10`;
+            document.getElementById('score-p4').textContent = `${scores.p4} / 4`;
+
+            // Circular progress fill
+            const circle = document.getElementById('modalProgressCircle');
+            const circumference = 351.85;
+            const offset = circumference - (finalScore / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+
+            // Feedback messages
+            const feedbackText = document.getElementById('modalFeedback');
+            if (finalScore >= 90) {
+                feedbackText.innerHTML = "Incredible! 👑 Your English level is exceptional. High GSAT scores are within your reach!";
+                sfx.playCorrect();
+            } else if (finalScore >= 70) {
+                feedbackText.innerHTML = "Very good! 👍 You've got a strong grasp of core grammar and sentence structures. Keep it up!";
+                sfx.playCorrect();
+            } else if (finalScore >= 50) {
+                feedbackText.innerHTML = "Good effort! 📚 You understood the general context, but some tricky grammatical points need review.";
+            } else {
+                feedbackText.innerHTML = "Need more practice! 🧐 We recommend reviewing the translations and explanations in study mode.";
+            }
+
+            // Stop timer & change view mode to study
+            clearInterval(timerInterval);
+            isSubmitted = true;
+            document.getElementById('resultModal').classList.remove('hidden');
+
+            setMode('study');
+            applyInstantFeedbackUI();
+        }
+
+        function closeResultModal() {
+            sfx.playClick();
+            document.getElementById('resultModal').classList.add('hidden');
+        }
+
+        function resetFullTest() {
+            for (let i = 1; i <= 24; i++) {
+                userAnswers[i] = "";
+                const select = document.getElementById(`q-${i}`);
+                if (select) select.value = "";
+            }
+
+            activeBankWord = null;
+            activeBankSentence = null;
+            isSubmitted = false;
+
+            renderWordBank();
+            renderSentenceBank();
+            updateDropdowns();
+            removeFeedbackUI();
+            updateProgress();
+            
+            if (currentMode === 'quiz') {
+                startTimer();
+            } else {
+                document.querySelectorAll('.study-resources').forEach(el => el.classList.add('hidden'));
+            }
+
+            showToast("All answers have been reset.");
+        }
+
+        // Custom feedback Toast
+        function showToast(msg, type = "success") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const text = document.getElementById('toastMsg');
+
+            if (type === "success") {
+                icon.innerHTML = `<i class="fa-solid fa-check-circle text-emerald-500"></i>`;
+            } else {
+                icon.innerHTML = `<i class="fa-solid fa-circle-exclamation text-amber-500"></i>`;
+            }
+            text.textContent = msg;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
