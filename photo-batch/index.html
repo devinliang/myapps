@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <title>極簡圖片格式轉換器 (HEIC/AVIF/WEBP 轉 PNG/JPG)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- heic2any for HEIC support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js" xintegrity="sha512-Y3U7f0iS4R7G6PbaA7m3A53n0W96AbaN4fU2A81aUshN3uAIsZ6kX9bS9vP8pDq1W/G+OQ9u6Z6UeA1O7aD0Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- JSZip for Batch Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" xintegrity="sha512-XG9XCH5EpfG84b+fL6f9o7nJpSg1A7I9aFmB7D9E0h1NfI9D8T2k9aG3g0dGv0d9Ff6Y9m5N8f9E7gD7G2I1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                    <i data-lucide="image-play" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900">圖片格式轉換器</h1>
+                    <p class="text-xs text-slate-500">100% 本機安全轉換，無任何檔案上傳至伺服器</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 text-sm text-slate-500">
+                <span class="inline-block w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
+                <span>本機離線安全模式</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl w-full mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-6">
+        
+        <!-- Quick Intro Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center space-x-3">
+                <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-900">隱私安全第一</h3>
+                    <p class="text-xs text-slate-500">所有處理皆在您的瀏覽器內完成</p>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center space-x-3">
+                <div class="p-2.5 bg-purple-50 text-purple-600 rounded-lg">
+                    <i data-lucide="zap" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-900">多格式支援</h3>
+                    <p class="text-xs text-slate-500">支援 HEIC, AVIF, WEBP, PNG, JPG</p>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center space-x-3">
+                <div class="p-2.5 bg-orange-50 text-orange-600 rounded-lg">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-900">批次高速轉換</h3>
+                    <p class="text-xs text-slate-500">可一次上傳多張圖片並打包下載</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversion Settings & Drag-Drop Area -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div class="mb-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="sliders" class="w-5 h-5 text-indigo-600"></i>
+                    1. 設定輸出格式
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <!-- Format Choose -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">轉換為：</label>
+                        <div class="flex gap-4">
+                            <label class="flex-1 flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-500 transition-all">
+                                <span class="flex items-center gap-2">
+                                    <span class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center" id="png-radio-box">
+                                        <span class="w-2 h-2 rounded-full bg-indigo-600 hidden" id="png-radio-dot"></span>
+                                    </span>
+                                    <span class="font-medium text-slate-900">PNG</span>
+                                </span>
+                                <span class="text-xs text-slate-400">不失真 / 支援透明</span>
+                                <input type="radio" name="output-format" value="png" class="sr-only" checked onclick="toggleFormat('png')">
+                            </label>
+                            
+                            <label class="flex-1 flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-500 transition-all">
+                                <span class="flex items-center gap-2">
+                                    <span class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center" id="jpg-radio-box">
+                                        <span class="w-2 h-2 rounded-full bg-indigo-600 hidden" id="jpg-radio-dot"></span>
+                                    </span>
+                                    <span class="font-medium text-slate-900">JPEG / JPG</span>
+                                </span>
+                                <span class="text-xs text-slate-400">高壓縮 / 適合照片</span>
+                                <input type="radio" name="output-format" value="jpeg" class="sr-only" onclick="toggleFormat('jpeg')">
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- JPG Quality Option -->
+                    <div id="quality-container" class="opacity-40 pointer-events-none transition-opacity duration-200">
+                        <div class="flex justify-between mb-2">
+                            <label class="text-sm font-medium text-slate-700 flex items-center gap-1">
+                                JPG 品質: <span id="quality-val" class="text-indigo-600 font-bold">85</span>%
+                            </label>
+                            <span class="text-xs text-slate-400">數值越高畫質越好但檔案越大</span>
+                        </div>
+                        <input type="range" id="quality-range" min="10" max="100" value="85" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" oninput="updateQuality(this.value)" disabled>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Area -->
+            <div>
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="upload-cloud" class="w-5 h-5 text-indigo-600"></i>
+                    2. 上傳要轉換的圖片
+                </h2>
+                
+                <div id="drop-zone" class="border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl p-8 text-center bg-slate-50/50 hover:bg-slate-50 transition-all cursor-pointer group">
+                    <input type="file" id="file-input" multiple accept="image/*,.heic,.heif,.avif,.webp" class="hidden">
+                    <div class="max-w-md mx-auto flex flex-col items-center">
+                        <div class="w-16 h-16 bg-white rounded-full shadow-md flex items-center justify-center mb-4 text-slate-400 group-hover:text-indigo-600 group-hover:scale-110 transition-all duration-300">
+                            <i data-lucide="image" class="w-8 h-8"></i>
+                        </div>
+                        <p class="text-slate-700 font-medium mb-1">拖曳圖片到此處，或 <span class="text-indigo-600 group-hover:underline">點擊瀏覽電腦檔案</span></p>
+                        <p class="text-xs text-slate-400 mt-2">支援 HEIC, AVIF, WEBP, PNG, JPEG, BMP, GIF 等格式</p>
+                        <p class="text-xs text-slate-400 mt-0.5">可同時選取多張圖片進行批次處理</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview & Progress Area (Hidden by default) -->
+        <div id="results-section" class="hidden flex flex-col gap-6">
+            <!-- Batch Action Bar -->
+            <div class="bg-white rounded-xl border border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm">
+                <div class="flex items-center gap-2">
+                    <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full" id="file-count-badge">0 個檔案</span>
+                    <span class="text-sm text-slate-500" id="conversion-summary">準備進行轉換...</span>
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="clearAll()" class="flex-1 sm:flex-initial px-4 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition text-sm font-medium flex items-center justify-center gap-1.5">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> 清除全部
+                    </button>
+                    <button id="convert-all-btn" onclick="startAllConversion()" class="flex-grow sm:flex-initial px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition text-sm font-medium shadow-md shadow-indigo-100 flex items-center justify-center gap-1.5">
+                        <i data-lucide="play" class="w-4 h-4"></i> 開始全部轉換
+                    </button>
+                    <button id="download-all-btn" onclick="downloadAllAsZip()" class="hidden flex-grow sm:flex-initial px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition text-sm font-medium shadow-md shadow-emerald-100 flex items-center justify-center gap-1.5 animate-bounce">
+                        <i data-lucide="download-cloud" class="w-4 h-4"></i> 下載全部 (ZIP)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Image List Grid -->
+            <div id="image-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Template for image item will be dynamically generated -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Error/Alert Modal Container (No native alert) -->
+    <div id="alert-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl max-w-sm w-full mx-4 p-6 shadow-xl transform scale-95 transition-transform duration-300" id="alert-card">
+            <div class="flex items-center gap-3 text-red-600 mb-4">
+                <div class="p-2 bg-red-50 rounded-full">
+                    <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold" id="alert-title">發生錯誤</h3>
+            </div>
+            <p class="text-sm text-slate-600 mb-6" id="alert-message">錯誤說明內容...</p>
+            <div class="flex justify-end">
+                <button onclick="closeAlert()" class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition">
+                    我知道了
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400">
+        <div class="max-w-6xl mx-auto px-4">
+            <p class="mb-1">所有轉檔運算均藉由 HTML5 Canvas 與 WebAssembly 技術於本機端執行。</p>
+            <p>不會向任何外端伺服器發送您的圖片資料，請安心使用。</p>
+        </div>
+    </footer>
+
+    <!-- Script Logic -->
+    <script>
+        // State Management
+        let selectedFiles = [];
+        let outputFormat = 'png'; // default
+        let jpegQuality = 0.85;
+
+        // Initialize UI Elements
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateFormatRadioUI();
+            
+            // Drag and Drop Event Listeners
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+
+            dropZone.addEventListener('click', () => fileInput.click());
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-indigo-500', 'bg-indigo-50/30');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/30');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/30');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFiles(e.target.files);
+                }
+            });
+        });
+
+        // Format toggle helper
+        function toggleFormat(format) {
+            outputFormat = format;
+            updateFormatRadioUI();
+            
+            const qualityContainer = document.getElementById('quality-container');
+            const qualityRange = document.getElementById('quality-range');
+            
+            if (format === 'jpeg') {
+                qualityContainer.classList.remove('opacity-40', 'pointer-events-none');
+                qualityRange.removeAttribute('disabled');
+            } else {
+                qualityContainer.classList.add('opacity-40', 'pointer-events-none');
+                qualityRange.setAttribute('disabled', 'true');
+            }
+
+            // If there are already files loaded, update the "Convert All" and summary state
+            updateSummaryText();
+        }
+
+        function updateFormatRadioUI() {
+            const pngDot = document.getElementById('png-radio-dot');
+            const pngBox = document.getElementById('png-radio-box');
+            const jpgDot = document.getElementById('jpg-radio-dot');
+            const jpgBox = document.getElementById('jpg-radio-box');
+
+            if (outputFormat === 'png') {
+                pngDot.classList.remove('hidden');
+                pngBox.classList.add('border-indigo-600');
+                jpgDot.classList.add('hidden');
+                jpgBox.classList.remove('border-indigo-600');
+            } else {
+                jpgDot.classList.remove('hidden');
+                jpgBox.classList.add('border-indigo-600');
+                pngDot.classList.add('hidden');
+                pngBox.classList.remove('border-indigo-600');
+            }
+        }
+
+        function updateQuality(val) {
+            document.getElementById('quality-val').textContent = val;
+            jpegQuality = parseFloat(val) / 100;
+        }
+
+        // Custom Modal Alert instead of window.alert
+        function showAlert(title, message) {
+            const modal = document.getElementById('alert-modal');
+            const card = document.getElementById('alert-card');
+            document.getElementById('alert-title').textContent = title;
+            document.getElementById('alert-message').textContent = message;
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                card.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeAlert() {
+            const modal = document.getElementById('alert-modal');
+            const card = document.getElementById('alert-card');
+            modal.classList.add('opacity-0');
+            card.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // File Handler
+        function handleFiles(files) {
+            const resultsSection = document.getElementById('results-section');
+            resultsSection.classList.remove('hidden');
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                // Check if file is already added
+                if (selectedFiles.some(f => f.file.name === file.name && f.file.size === file.size)) {
+                    continue; 
+                }
+
+                const fileId = 'img-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                const fileObj = {
+                    id: fileId,
+                    file: file,
+                    status: 'pending', // pending, converting, completed, failed
+                    progress: 0,
+                    convertedUrl: null,
+                    convertedName: null,
+                    errorMsg: null
+                };
+
+                selectedFiles.push(fileObj);
+                createFileRowUI(fileObj);
+                generatePreview(fileObj);
+            }
+
+            updateSummaryText();
+        }
+
+        // Create DOM elements for each file
+        function createFileRowUI(fileObj) {
+            const imageList = document.getElementById('image-list');
+            const card = document.createElement('div');
+            card.id = fileObj.id;
+            card.className = "bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3 shadow-sm transition-all hover:shadow-md";
+            
+            const formattedSize = (fileObj.file.size / (1024 * 1024)).toFixed(2) + ' MB';
+            const extension = fileObj.file.name.split('.').pop().toUpperCase();
+
+            card.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <!-- Thumbnail Preview Box -->
+                    <div class="w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+                        <div id="preview-loader-${fileObj.id}" class="absolute inset-0 flex items-center justify-center bg-white/80">
+                            <span class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></span>
+                        </div>
+                        <img id="img-preview-${fileObj.id}" class="w-full h-full object-cover hidden" alt="預覽圖">
+                        <div id="fallback-icon-${fileObj.id}" class="text-slate-400 hidden">
+                            <i data-lucide="file-image" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Meta info -->
+                    <div class="flex-grow min-w-0">
+                        <h4 class="font-semibold text-slate-800 text-sm truncate" title="${fileObj.file.name}">${fileObj.file.name}</h4>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded">${extension}</span>
+                            <span class="text-xs text-slate-400">${formattedSize}</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Area -->
+                    <button onclick="removeFile('${fileObj.id}')" class="text-slate-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-slate-50 transition" title="移除">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Convert Progress Bar -->
+                <div id="progress-bar-container-${fileObj.id}" class="hidden w-full">
+                    <div class="flex justify-between text-xs text-slate-500 mb-1">
+                        <span id="status-text-${fileObj.id}">轉換中...</span>
+                        <span id="progress-percent-${fileObj.id}">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div id="progress-bar-${fileObj.id}" class="bg-indigo-600 h-1.5 w-0 transition-all duration-150"></div>
+                    </div>
+                </div>
+
+                <!-- Results & Options -->
+                <div id="result-actions-${fileObj.id}" class="flex items-center justify-between border-t border-slate-100 pt-3 mt-1">
+                    <span class="text-xs text-slate-400" id="result-info-${fileObj.id}">等待轉換...</span>
+                    <div class="flex gap-2">
+                        <button id="convert-btn-${fileObj.id}" onclick="convertSingle('${fileObj.id}')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> 開始轉換
+                        </button>
+                        <a id="download-btn-${fileObj.id}" href="#" download class="hidden px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i> 下載
+                        </a>
+                    </div>
+                </div>
+            `;
+
+            imageList.appendChild(card);
+            lucide.createIcons();
+        }
+
+        // Generate Instant Preview (handles HEIC / standard files)
+        async function generatePreview(fileObj) {
+            const imgEl = document.getElementById(`img-preview-${fileObj.id}`);
+            const loader = document.getElementById(`preview-loader-${fileObj.id}`);
+            const fallback = document.getElementById(`fallback-icon-${fileObj.id}`);
+
+            const ext = fileObj.file.name.split('.').pop().toLowerCase();
+
+            try {
+                if (ext === 'heic' || ext === 'heif') {
+                    // For HEIC, we use heic2any to generate a temporary preview blob
+                    // Limited size for preview to speed up
+                    const previewBlob = await heic2any({
+                        blob: fileObj.file,
+                        toType: "image/jpeg",
+                        quality: 0.3
+                    });
+                    
+                    const url = URL.createObjectURL(Array.isArray(previewBlob) ? previewBlob[0] : previewBlob);
+                    imgEl.src = url;
+                    imgEl.classList.remove('hidden');
+                    loader.classList.add('hidden');
+                } else {
+                    // Standard files
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imgEl.src = e.target.result;
+                        imgEl.classList.remove('hidden');
+                        loader.classList.add('hidden');
+                    };
+                    reader.onerror = function() {
+                        throw new Error("無法讀取檔案預覽");
+                    }
+                    reader.readAsDataURL(fileObj.file);
+                }
+            } catch (err) {
+                console.warn("預覽載入失敗:", err);
+                loader.classList.add('hidden');
+                fallback.classList.remove('hidden');
+            }
+        }
+
+        // Start conversion process for a single file
+        async function convertSingle(id) {
+            const fileObj = selectedFiles.find(f => f.id === id);
+            if (!fileObj) return;
+
+            const progressBarContainer = document.getElementById(`progress-bar-container-${id}`);
+            const progressBar = document.getElementById(`progress-bar-${id}`);
+            const progressPercent = document.getElementById(`progress-percent-${id}`);
+            const statusText = document.getElementById(`status-text-${id}`);
+            const convertBtn = document.getElementById(`convert-btn-${id}`);
+            const downloadBtn = document.getElementById(`download-btn-${id}`);
+            const resultInfo = document.getElementById(`result-info-${id}`);
+
+            // Update UI State
+            fileObj.status = 'converting';
+            progressBarContainer.classList.remove('hidden');
+            convertBtn.setAttribute('disabled', 'true');
+            convertBtn.classList.add('opacity-50', 'pointer-events-none');
+            
+            updateProgress(0);
+
+            try {
+                const ext = fileObj.file.name.split('.').pop().toLowerCase();
+                let sourceBlob = fileObj.file;
+
+                // Step 1: Decode special formats (like HEIC) if needed
+                if (ext === 'heic' || ext === 'heif') {
+                    statusText.textContent = "解碼 HEIC 格式中...";
+                    updateProgress(20);
+                    
+                    // heic2any converts HEIC to standard JPEG blob first
+                    const jpegResult = await heic2any({
+                        blob: fileObj.file,
+                        toType: "image/jpeg",
+                        quality: 0.95
+                    });
+                    sourceBlob = Array.isArray(jpegResult) ? jpegResult[0] : jpegResult;
+                    
+                    updateProgress(50);
+                }
+
+                statusText.textContent = "轉譯與最佳化畫質...";
+                updateProgress(60);
+
+                // Step 2: Convert to Canvas & Export
+                const img = new Image();
+                const objectUrl = URL.createObjectURL(sourceBlob);
+                
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Draw image on canvas
+                    ctx.drawImage(img, 0, 0);
+                    
+                    updateProgress(80);
+                    statusText.textContent = "輸出至指定格式...";
+
+                    // Get Target Mime Type
+                    const targetMime = outputFormat === 'png' ? 'image/png' : 'image/jpeg';
+                    const targetExt = outputFormat === 'png' ? 'png' : 'jpg';
+
+                    canvas.toBlob(function(resultBlob) {
+                        if (!resultBlob) {
+                            handleFailure(new Error("Canvas 轉換失敗"));
+                            return;
+                        }
+
+                        const outputUrl = URL.createObjectURL(resultBlob);
+                        const originalNameWithoutExt = fileObj.file.name.substring(0, fileObj.file.name.lastIndexOf('.')) || fileObj.file.name;
+                        const finalFileName = `${originalNameWithoutExt}_converted.${targetExt}`;
+
+                        // Keep state
+                        fileObj.status = 'completed';
+                        fileObj.convertedUrl = outputUrl;
+                        fileObj.convertedName = finalFileName;
+                        fileObj.progress = 100;
+
+                        // UI Success Update
+                        progressBarContainer.classList.add('hidden');
+                        convertBtn.classList.add('hidden');
+                        
+                        downloadBtn.href = outputUrl;
+                        downloadBtn.download = finalFileName;
+                        downloadBtn.classList.remove('hidden');
+
+                        const targetSizeKB = (resultBlob.size / 1024).toFixed(0);
+                        resultInfo.innerHTML = `<span class="text-emerald-600 font-bold">轉換成功</span> (${targetSizeKB} KB)`;
+                        resultInfo.classList.remove('text-slate-400');
+
+                        // Clean up
+                        URL.revokeObjectURL(objectUrl);
+                        checkZipButtonVisibility();
+                        updateSummaryText();
+
+                    }, targetMime, outputFormat === 'jpeg' ? jpegQuality : undefined);
+                };
+
+                img.onerror = function() {
+                    handleFailure(new Error("圖片載入解碼失敗，可能檔案已毀損或瀏覽器不支援此格式。"));
+                };
+
+                img.src = objectUrl;
+
+            } catch (err) {
+                handleFailure(err);
+            }
+
+            function updateProgress(val) {
+                fileObj.progress = val;
+                progressBar.style.width = `${val}%`;
+                progressPercent.textContent = `${val}%`;
+            }
+
+            function handleFailure(err) {
+                console.error(err);
+                fileObj.status = 'failed';
+                fileObj.errorMsg = err.message || "未知錯誤";
+                
+                progressBarContainer.classList.add('hidden');
+                convertBtn.removeAttribute('disabled');
+                convertBtn.classList.remove('opacity-50', 'pointer-events-none');
+                
+                resultInfo.innerHTML = `<span class="text-red-500 font-medium">轉換失敗</span>`;
+                statusText.textContent = "錯誤";
+                
+                showAlert("轉檔失敗", `檔案 "${fileObj.file.name}" 轉檔過程中發生錯誤：\n${fileObj.errorMsg}`);
+                updateSummaryText();
+            }
+        }
+
+        // Start Conversion for All Pending Files
+        async function startAllConversion() {
+            const pendingFiles = selectedFiles.filter(f => f.status === 'pending' || f.status === 'failed');
+            if (pendingFiles.length === 0) {
+                showAlert("提示", "目前沒有等待轉換的檔案！請上傳新檔案或清除已轉換檔案。");
+                return;
+            }
+
+            document.getElementById('convert-all-btn').setAttribute('disabled', 'true');
+            document.getElementById('convert-all-btn').classList.add('opacity-50', 'pointer-events-none');
+
+            // Concurrent execution
+            const promises = pendingFiles.map(fileObj => convertSingle(fileObj.id));
+            await Promise.all(promises);
+
+            document.getElementById('convert-all-btn').removeAttribute('disabled');
+            document.getElementById('convert-all-btn').classList.remove('opacity-50', 'pointer-events-none');
+        }
+
+        // Download all successfully converted files as a ZIP archive
+        async function downloadAllAsZip() {
+            const completedFiles = selectedFiles.filter(f => f.status === 'completed');
+            if (completedFiles.length === 0) return;
+
+            const downloadAllBtn = document.getElementById('download-all-btn');
+            const originalContent = downloadAllBtn.innerHTML;
+            
+            downloadAllBtn.setAttribute('disabled', 'true');
+            downloadAllBtn.innerHTML = `<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-1"></span> 正在打包...`;
+
+            try {
+                const zip = new JSZip();
+                
+                for (const fileObj of completedFiles) {
+                    // Fetch blob from the created object URL
+                    const response = await fetch(fileObj.convertedUrl);
+                    const blob = await response.blob();
+                    zip.file(fileObj.convertedName, blob);
+                }
+
+                const content = await zip.generateAsync({type: "blob"});
+                const zipUrl = URL.createObjectURL(content);
+                
+                const link = document.createElement('a');
+                link.href = zipUrl;
+                link.download = `images_converted_${Date.now()}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Revoke URL after a delay
+                setTimeout(() => URL.revokeObjectURL(zipUrl), 60000);
+
+            } catch (err) {
+                console.error("ZIP 打包失敗:", err);
+                showAlert("打包失敗", "無法將轉檔結果打包為 ZIP 檔案，請點選單張圖片進行個別下載。");
+            } finally {
+                downloadAllBtn.removeAttribute('disabled');
+                downloadAllBtn.innerHTML = originalContent;
+            }
+        }
+
+        // Check if ZIP batch download button should be shown
+        function checkZipButtonVisibility() {
+            const completedCount = selectedFiles.filter(f => f.status === 'completed').length;
+            const downloadAllBtn = document.getElementById('download-all-btn');
+            const convertAllBtn = document.getElementById('convert-all-btn');
+
+            if (completedCount >= 2) {
+                downloadAllBtn.classList.remove('hidden');
+                convertAllBtn.classList.add('hidden'); // Prioritize download
+            } else {
+                downloadAllBtn.classList.add('hidden');
+                convertAllBtn.classList.remove('hidden');
+            }
+        }
+
+        // Update top action bar text summary
+        function updateSummaryText() {
+            const fileCountBadge = document.getElementById('file-count-badge');
+            const conversionSummary = document.getElementById('conversion-summary');
+
+            fileCountBadge.textContent = `${selectedFiles.length} 個檔案`;
+
+            if (selectedFiles.length === 0) {
+                document.getElementById('results-section').classList.add('hidden');
+                return;
+            }
+
+            const completedCount = selectedFiles.filter(f => f.status === 'completed').length;
+            const convertingCount = selectedFiles.filter(f => f.status === 'converting').length;
+            const targetFormatName = outputFormat.toUpperCase();
+
+            if (convertingCount > 0) {
+                conversionSummary.textContent = `正在轉換中 (${completedCount}/${selectedFiles.length})...`;
+            } else if (completedCount === selectedFiles.length) {
+                conversionSummary.textContent = `全部轉換完畢！輸出格式：${targetFormatName}`;
+            } else {
+                conversionSummary.textContent = `等待轉換為 ${targetFormatName}...`;
+            }
+
+            checkZipButtonVisibility();
+        }
+
+        // Remove Single File Card
+        function removeFile(id) {
+            const card = document.getElementById(id);
+            if (card) {
+                card.remove();
+            }
+
+            const fileObj = selectedFiles.find(f => f.id === id);
+            if (fileObj && fileObj.convertedUrl) {
+                URL.revokeObjectURL(fileObj.convertedUrl);
+            }
+
+            selectedFiles = selectedFiles.filter(f => f.id !== id);
+            updateSummaryText();
+        }
+
+        // Clear All
+        function clearAll() {
+            selectedFiles.forEach(f => {
+                if (f.convertedUrl) URL.revokeObjectURL(f.convertedUrl);
+            });
+            selectedFiles = [];
+            
+            document.getElementById('image-list').innerHTML = '';
+            document.getElementById('file-input').value = '';
+            updateSummaryText();
+        }
+    </script>
+</body>
+</html>

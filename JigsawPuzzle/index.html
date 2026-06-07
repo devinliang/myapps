@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <title>精緻拼圖工坊 - Jigsaw Puzzle Master</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wood: {
+                            800: '#3e2723',
+                            900: '#1b0000',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* 隱藏滾動條但保持功能 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.5);
+        }
+        
+        /* 桌面背景格線效果 */
+        .desk-grid {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(circle at center, #1e293b 0%, #0f172a 100%),
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col overflow-hidden select-none font-sans">
+
+    <!-- 頂部導航欄 / 狀態列 -->
+    <header class="bg-slate-900/90 border-b border-slate-800/80 px-6 py-3 flex flex-wrap items-center justify-between gap-4 z-40 backdrop-blur-md">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">🧩</span>
+            <div>
+                <h1 class="text-lg font-bold bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">精緻拼圖工坊</h1>
+                <p id="current-puzzle-title" class="text-xs text-slate-400">正在加載：哈爾斯塔特仙境</p>
+            </div>
+        </div>
+
+        <!-- 遊戲計時器與統計 -->
+        <div class="flex items-center gap-6 text-sm bg-slate-950/80 px-4 py-2 rounded-xl border border-slate-800">
+            <div class="flex items-center gap-2">
+                <i data-lucide="timer" class="w-4 h-4 text-emerald-400"></i>
+                <span class="font-mono text-base text-emerald-400" id="game-timer">00:00</span>
+            </div>
+            <div class="h-4 w-px bg-slate-800"></div>
+            <div class="flex items-center gap-2">
+                <i data-lucide="refresh-cw" class="w-4 h-4 text-purple-400"></i>
+                <span class="font-mono text-base text-purple-400" id="move-counter">0</span> 次移動
+            </div>
+            <div class="h-4 w-px bg-slate-800"></div>
+            <div class="flex items-center gap-2">
+                <i data-lucide="check-circle" class="w-4 h-4 text-pink-400"></i>
+                <span class="font-mono text-base text-pink-400" id="progress-percentage">0%</span>
+                <span class="text-xs text-slate-500" id="progress-ratio">(0/0)</span>
+            </div>
+        </div>
+
+        <!-- 工具欄按鈕 -->
+        <div class="flex items-center gap-2">
+            <button onclick="toggleSettingsModal()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 active:scale-95 transition rounded-xl text-sm font-semibold border border-slate-700/50">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+                設定與新挑戰
+            </button>
+        </div>
+    </header>
+
+    <!-- 主遊戲工作區 -->
+    <main class="flex-1 relative overflow-hidden desk-grid" id="workspace-container">
+        <!-- 視角提示、提示小視窗 -->
+        <div class="absolute top-4 left-4 z-20 flex flex-col gap-2">
+            <div class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-sm">
+                <div class="text-xs text-slate-400">
+                    <p class="font-bold text-slate-300">🎮 操控說明：</p>
+                    <p>• 拖曳拼圖即可拼接至中央</p>
+                    <p>• 點擊滑鼠右鍵或雙擊拼圖以旋轉</p>
+                    <p>• 拖曳背景空白處可平移視角</p>
+                    <p>• 滑鼠滾輪 / 觸控手勢可縮放畫面</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右下角懸浮原圖對照縮圖 -->
+        <div id="reference-card" class="absolute bottom-4 right-4 z-20 bg-slate-900/90 border border-slate-800 p-2 rounded-xl shadow-2xl backdrop-blur-sm transition-all duration-300 w-48 hover:w-80 group">
+            <div class="flex justify-between items-center mb-1 px-1">
+                <span class="text-xs font-bold text-slate-300 flex items-center gap-1">
+                    <i data-lucide="image" class="w-3.5 h-3.5"></i> 原圖對照
+                </span>
+                <button onclick="toggleReferenceCard()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="eye-off" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+            <div class="relative overflow-hidden rounded-lg border border-slate-700 aspect-[3/2]">
+                <img id="ref-image-view" src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80" alt="Reference" class="w-full h-full object-cover">
+            </div>
+        </div>
+
+        <!-- 3D 虛擬桌面 (可拖曳與縮放) -->
+        <div id="workspace-inner" class="absolute top-0 left-0 w-[2000px] h-[1200px] origin-top-left transition-transform duration-75 select-none">
+            <!-- 桌面拖曳偵測背景 -->
+            <div id="workspace-desk-bg" class="absolute inset-0 z-0 cursor-grab active:cursor-grabbing"></div>
+
+            <!-- 中央拼圖定位底框 (放置板) -->
+            <div id="puzzle-board" class="absolute border-2 border-dashed border-yellow-500/30 rounded-xl bg-slate-900/40 shadow-inner z-10 overflow-visible transition-all duration-300" style="left: 600px; top: 350px; width: 750px; height: 500px;">
+                <!-- 半透明預覽提示圖 -->
+                <img id="hint-image" src="" alt="Hint" class="absolute inset-0 w-full h-full object-cover rounded-xl opacity-0 pointer-events-none transition-opacity duration-300">
+                
+                <!-- 空置格框網格提示線 -->
+                <div id="board-grid-overlay" class="absolute inset-0 pointer-events-none rounded-xl"></div>
+                
+                <!-- 精美框邊裝飾 -->
+                <div class="absolute -inset-1 border border-yellow-500/10 pointer-events-none rounded-xl"></div>
+            </div>
+            
+            <!-- 拼圖碎片將動態生成在此並利用絕對定位在 z-index: 20 -> 30 拖曳 -->
+        </div>
+
+        <!-- 底部快捷控制列 -->
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 bg-slate-900/90 border border-slate-800 px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-4">
+            <button onclick="toggleHint()" id="btn-hint" class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-yellow-400 transition rounded-xl hover:bg-slate-800/50">
+                <i data-lucide="eye" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">背景預覽</span>
+            </button>
+            <div class="w-px h-8 bg-slate-800"></div>
+            
+            <button onclick="arrangePieces()" class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-purple-400 transition rounded-xl hover:bg-slate-800/50">
+                <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">整理碎片</span>
+            </button>
+            <div class="w-px h-8 bg-slate-800"></div>
+
+            <button onclick="toggleBorderOnly()" id="btn-border" class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-pink-400 transition rounded-xl hover:bg-slate-800/50">
+                <i data-lucide="frame" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">邊緣碎片</span>
+            </button>
+            <div class="w-px h-8 bg-slate-800"></div>
+
+            <button onclick="resetWorkspaceView()" class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-indigo-400 transition rounded-xl hover:bg-slate-800/50">
+                <i data-lucide="maximize" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">置中桌面</span>
+            </button>
+            <div class="w-px h-8 bg-slate-800"></div>
+
+            <!-- 音效開關 -->
+            <button onclick="toggleMute()" id="btn-mute" class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-emerald-400 transition rounded-xl hover:bg-slate-800/50">
+                <i data-lucide="volume-2" class="w-5 h-5" id="mute-icon"></i>
+                <span class="text-[10px] font-bold">音效開關</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- 設定與新遊戲 Modal 面板 -->
+    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md hidden transition-opacity duration-300 opacity-0">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8 relative flex flex-col gap-6">
+            <button onclick="toggleSettingsModal()" class="absolute top-6 right-6 p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div>
+                <h2 class="text-2xl font-bold bg-gradient-to-r from-pink-400 to-indigo-400 bg-clip-text text-transparent">新遊戲設定</h2>
+                <p class="text-sm text-slate-400 mt-1">選擇你喜愛的風景與難度，開啟一場愜意的拼圖之旅吧！</p>
+            </div>
+
+            <!-- 1. 選擇內建精彩主題圖片 -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-pink-500"></span> 選擇拼圖主題
+                </label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="presets-container">
+                    <!-- 動態載入主題縮圖 -->
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 自訂圖片與上傳 -->
+                <div class="bg-slate-950/50 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                            <i data-lucide="upload-cloud" class="w-4 h-4 text-purple-400"></i> 自訂你的專屬拼圖
+                        </h3>
+                        <p class="text-xs text-slate-400 mb-4">您可以上傳本機電腦的任何相片，或是直接貼入網路圖片 URL，拼圖引擎會為您進行完美切割！</p>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <label class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] transition rounded-xl text-xs font-semibold cursor-pointer border border-slate-700">
+                            <i data-lucide="image" class="w-4 h-4 text-purple-400"></i>
+                            <span>上傳本機照片 (JPG/PNG)</span>
+                            <input type="file" id="local-image-input" accept="image/*" class="hidden" onchange="handleLocalFileUpload(event)">
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="url-image-input" placeholder="貼上網路圖片 URL" class="flex-1 px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-purple-500 transition">
+                            <button onclick="handleUrlImageLoad()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-bold transition">載入</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 選擇難度與模式 -->
+                <div class="bg-slate-950/50 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between gap-4">
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                            <i data-lucide="sliders" class="w-4 h-4 text-pink-400"></i> 設定拼圖片數與挑戰模式
+                        </h3>
+                        
+                        <!-- 片數選擇 -->
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <button onclick="setDifficulty(3,3,'體驗 (9片)')" class="diff-btn px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold transition hover:bg-pink-600/20" data-rows="3" data-cols="3">
+                                體驗 (9片)
+                            </button>
+                            <button onclick="setDifficulty(6,4,'輕鬆 (24片)')" class="diff-btn px-3 py-2 bg-pink-600/20 border border-pink-500 rounded-xl text-xs font-bold transition" data-rows="6" data-cols="4">
+                                輕鬆 (24片)
+                            </button>
+                            <button onclick="setDifficulty(8,6,'挑戰 (48片)')" class="diff-btn px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold transition hover:bg-pink-600/20" data-rows="8" data-cols="6">
+                                挑戰 (48片)
+                            </button>
+                            <button onclick="setDifficulty(10,8,'專家 (80片)')" class="diff-btn px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold transition hover:bg-pink-600/20" data-rows="10" data-cols="8">
+                                專家 (80片)
+                            </button>
+                            <button onclick="setDifficulty(12,10,'宗師 (120片)')" class="diff-btn px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold transition hover:bg-pink-600/20" data-rows="12" data-cols="10">
+                                宗師 (120片)
+                            </button>
+                        </div>
+
+                        <!-- 旋轉模式 Switch -->
+                        <div class="flex items-center justify-between p-3 bg-slate-900 border border-slate-800 rounded-xl">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-semibold text-slate-200">啟用旋轉模式</span>
+                                <span class="text-[10px] text-slate-500">拼圖將隨機旋轉，需點選旋轉歸位才可磁吸。</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="rotation-toggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button onclick="startNewGame()" class="w-full py-4 bg-gradient-to-r from-pink-500 to-indigo-600 hover:from-pink-400 hover:to-indigo-500 active:scale-[0.98] transition rounded-xl font-bold text-center text-sm shadow-lg shadow-indigo-500/20">
+                        ✨ 開始挑戰
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通關成功 Modal 證書 -->
+    <div id="victory-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden transition-opacity duration-300 opacity-0">
+        <div class="bg-slate-900 border border-yellow-500/40 rounded-3xl shadow-2xl max-w-md w-full p-8 text-center relative flex flex-col gap-6 transform scale-95 transition-transform duration-300">
+            <!-- 閃亮亮勳章 -->
+            <div class="w-24 h-24 bg-gradient-to-tr from-yellow-400 to-amber-600 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-yellow-500/30">
+                <i data-lucide="award" class="w-12 h-12 text-slate-950"></i>
+            </div>
+
+            <div>
+                <h2 class="text-2xl font-bold bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent">恭喜通關！拼圖宗師</h2>
+                <p class="text-slate-400 text-sm mt-1">您以絕佳的專注與智慧，拼湊出了完美的畫面！</p>
+            </div>
+
+            <!-- 成果數據卡 -->
+            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2 font-mono text-sm">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 text-xs">拼圖主題</span>
+                    <span id="vic-theme" class="text-slate-200">哈爾斯塔特仙境</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 text-xs">完成時間</span>
+                    <span id="vic-time" class="text-emerald-400 text-base font-bold">04:25</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 text-xs">總移動步數</span>
+                    <span id="vic-moves" class="text-purple-400 text-base font-bold">124 次</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 text-xs">難度片數</span>
+                    <span id="vic-diff" class="text-pink-400 font-bold">挑戰 (48片)</span>
+                </div>
+            </div>
+
+            <!-- 操控按鈕 -->
+            <div class="flex gap-3">
+                <button onclick="toggleVictoryModal(false); toggleSettingsModal();" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition rounded-xl text-sm font-bold">
+                    選擇新相片
+                </button>
+                <button onclick="restartGame()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 active:scale-95 transition border border-slate-700 rounded-xl text-sm font-bold">
+                    再挑戰一次
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全螢幕粒子 Canvas 背景（用於碎紙花灑慶祝） -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 hidden"></canvas>
+
+    <!-- 核心 JS 拼圖驅動引擎 -->
+    <script>
+        // --- 1. 全域變數定義 ---
+        let scale = 1.0;
+        let panX = 0;
+        let panY = 0;
+        let maxZIndex = 30;
+        let isMuted = false;
+
+        // 預設遊戲難度 (預設 6x4 = 24片)
+        let gridRows = 6;
+        let gridCols = 4;
+        let diffLabel = "輕鬆 (24片)";
+
+        // 目前載入的拼圖圖片物件與標題
+        let currentImgSrc = "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&h=800";
+        let currentImgTitle = "哈爾斯塔特仙境";
+        let loadedImageObj = null;
+
+        // 拼圖物件儲存陣列
+        let pieces = [];
+
+        // 狀態計數器
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let moveCount = 0;
+        let isHintActive = false;
+        let isBorderOnlyActive = false;
+        let gameActive = false;
+
+        // 經典 8 套高畫質預設風景庫 (Unsplash 快照連結)
+        const presetPhotos = [
+            {
+                title: "哈爾斯塔特仙境",
+                url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&h=800"
+            },
+            {
+                title: "富士山之櫻",
+                url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&h=800"
+            },
+            {
+                title: "挪威極光星空",
+                url: "https://images.unsplash.com/photo-1579033461380-adb47c3eb938?auto=format&fit=crop&w=1200&h=800"
+            },
+            {
+                title: "秋林漫步",
+                url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&h=800"
+            },
+            {
+                title: "粉萌小貓",
+                url: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=1200&h=800"
+            },
+            {
+                title: "東京霓虹街景",
+                url: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&h=800"
+            },
+            {
+                title: "深空宇宙星雲",
+                url: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&h=800"
+            },
+            {
+                title: "梵谷風星空油畫",
+                url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&w=1200&h=800"
+            }
+        ];
+
+        // --- 2. 初始化與載入預設選單 ---
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            buildPresetPhotosMenu();
+            initWorkspaceNavigation();
+            
+            // 初次進入遊戲載入 Hallstatt
+            loadPuzzleImage(currentImgSrc, currentImgTitle);
+            
+            // 自動調整視角置中
+            setTimeout(resetWorkspaceView, 200);
+        });
+
+        // 渲染內建預設圖片面板
+        function buildPresetPhotosMenu() {
+            const container = document.getElementById('presets-container');
+            container.innerHTML = '';
+            
+            presetPhotos.forEach((photo) => {
+                const item = document.createElement('div');
+                item.className = "relative group cursor-pointer overflow-hidden rounded-xl border border-slate-800 hover:border-pink-500 transition aspect-[3/2] select-none shadow-md";
+                item.onclick = () => {
+                    selectPresetPhoto(photo.url, photo.title);
+                };
+                
+                item.innerHTML = `
+                    <img src="${photo.url}" alt="${photo.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-2 text-[10px] font-bold text-slate-200">
+                        ${photo.title}
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // --- 3. 遊戲設定 & 視窗控制 ---
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.add('opacity-100');
+                }, 10);
+            } else {
+                modal.classList.remove('opacity-100');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function toggleVictoryModal(show) {
+            const modal = document.getElementById('victory-modal');
+            if (show) {
+                // 填入通關資訊
+                document.getElementById('vic-theme').innerText = currentImgTitle;
+                document.getElementById('vic-time').innerText = formatTime(secondsElapsed);
+                document.getElementById('vic-moves').innerText = `${moveCount} 次`;
+                document.getElementById('vic-diff').innerText = diffLabel;
+
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.add('opacity-100');
+                    modal.querySelector('div').classList.remove('scale-95');
+                }, 10);
+                startConfetti();
+            } else {
+                modal.classList.remove('opacity-100');
+                modal.querySelector('div').classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+                stopConfetti();
+            }
+        }
+
+        function selectPresetPhoto(url, title) {
+            currentImgSrc = url;
+            currentImgTitle = title;
+            
+            // 更新 UI 上所有的縮圖與標題
+            document.getElementById('current-puzzle-title').innerText = `準備載入：${title}`;
+            
+            // 標示被選中的預設框
+            const presets = document.getElementById('presets-container').children;
+            for (let i = 0; i < presets.length; i++) {
+                if (presetPhotos[i].url === url) {
+                    presets[i].classList.add('border-pink-500', 'ring-1', 'ring-pink-500');
+                } else {
+                    presets[i].classList.remove('border-pink-500', 'ring-1', 'ring-pink-500');
+                }
+            }
+        }
+
+        // 處理玩家自己上傳本機圖片
+        function handleLocalFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                selectPresetPhoto(e.target.result, file.name.split('.')[0] || "自訂圖片");
+                document.getElementById('url-image-input').value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 處理玩家輸入 URL
+        function handleUrlImageLoad() {
+            const urlInput = document.getElementById('url-image-input');
+            const url = urlInput.value.trim();
+            if (url) {
+                selectPresetPhoto(url, "自訂網路相片");
+            }
+        }
+
+        // 變更片數難度
+        function setDifficulty(rows, cols, label) {
+            gridRows = rows;
+            gridCols = cols;
+            diffLabel = label;
+            
+            // 更新難度按鈕的高亮狀態
+            const buttons = document.querySelectorAll('.diff-btn');
+            buttons.forEach(btn => {
+                if (parseInt(btn.dataset.rows) === rows && parseInt(btn.dataset.cols) === cols) {
+                    btn.classList.add('bg-pink-600/20', 'border-pink-500');
+                    btn.classList.remove('bg-slate-800', 'border-slate-700');
+                } else {
+                    btn.classList.remove('bg-pink-600/20', 'border-pink-500');
+                    btn.classList.add('bg-slate-800', 'border-slate-700');
+                }
+            });
+        }
+
+        // --- 4. 拼圖核心引擎載入與切片 ---
+        function loadPuzzleImage(src, title) {
+            // 先清理之前的碎片與定時器
+            cleanupPuzzleGame();
+
+            document.getElementById('current-puzzle-title').innerText = `正在拼：${title}`;
+            document.getElementById('ref-image-view').src = src;
+            document.getElementById('hint-image').src = src;
+
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = function() {
+                loadedImageObj = img;
+                generatePuzzlePieces(img);
+                startTimer();
+                gameActive = true;
+            };
+            img.onerror = function() {
+                // 如果 Unsplash 連接有跨域限制、或者連結出錯，則降級使用畫素 Canvas
+                console.warn("無法加載遠端圖片，退回本地生成的抽象彩帶畫 Canvas 作為備用拼圖");
+                loadedImageObj = createPlaceholderCanvas();
+                generatePuzzlePieces(loadedImageObj);
+                startTimer();
+                gameActive = true;
+            };
+            img.src = src;
+        }
+
+        // 生成抽象彩帶畫（當網路出錯或跨域問題時的自動降級保證）
+        function createPlaceholderCanvas() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1200;
+            canvas.height = 800;
+            const ctx = canvas.getContext('2d');
+            
+            // 繪製迷幻太空漸層
+            const grad = ctx.createRadialGradient(600, 400, 100, 600, 400, 700);
+            grad.addColorStop(0, '#4f46e5');
+            grad.addColorStop(0.5, '#db2777');
+            grad.addColorStop(1, '#0f172a');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 1200, 800);
+            
+            // 繪製大量幾何科技光暈
+            for (let i = 0; i < 20; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * 1200, Math.random() * 800, Math.random() * 150 + 50, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, 255, 0.15)`;
+                ctx.fill();
+            }
+            
+            // 加入一些藝術抽象文字
+            ctx.font = "bold 60px sans-serif";
+            ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+            ctx.fillText("拼圖備用藝術圖塊", 380, 420);
+            return canvas;
+        }
+
+        function cleanupPuzzleGame() {
+            // 清理定時器
+            if (timerInterval) clearInterval(timerInterval);
+            secondsElapsed = 0;
+            moveCount = 0;
+            document.getElementById('game-timer').innerText = "00:00";
+            document.getElementById('move-counter').innerText = "0";
+            document.getElementById('progress-percentage').innerText = "0%";
+            document.getElementById('progress-ratio').innerText = "(0/0)";
+
+            // 移除工作區內舊的 Canvas 碎片
+            const inner = document.getElementById('workspace-inner');
+            const canvases = inner.querySelectorAll('canvas');
+            canvases.forEach(c => c.remove());
+
+            pieces = [];
+            isHintActive = false;
+            document.getElementById('hint-image').style.opacity = '0';
+            document.getElementById('btn-hint').classList.remove('text-yellow-400');
+            
+            isBorderOnlyActive = false;
+            document.getElementById('btn-border').classList.remove('text-pink-400');
+        }
+
+        function startNewGame() {
+            toggleSettingsModal();
+            loadPuzzleImage(currentImgSrc, currentImgTitle);
+        }
+
+        function restartGame() {
+            toggleVictoryModal(false);
+            loadPuzzleImage(currentImgSrc, currentImgTitle);
+        }
+
+        // --- 5. 拼圖貝茲曲線切割演算法 (核心物理與美學部分) ---
+        // 連接相鄰拼圖，使其擁有完美咬合的圓耳（凹槽與凸邊）
+        function generatePuzzlePieces(img) {
+            const wsW = 2000;
+            const wsH = 1200;
+
+            // 固定拼接框大小，寬750高500
+            const boardW = 750;
+            const boardH = 500;
+            const boardX = (wsW - boardW) / 2;
+            const boardY = (wsH - boardH) / 2;
+
+            // 更改實體 Board 框的定位尺寸
+            const boardEl = document.getElementById('puzzle-board');
+            boardEl.style.left = `${boardX}px`;
+            boardEl.style.top = `${boardY}px`;
+            boardEl.style.width = `${boardW}px`;
+            boardEl.style.height = `${boardH}px`;
+
+            // 單一塊拼圖基準尺寸
+            const cellW = boardW / gridCols;
+            const cellH = boardH / gridRows;
+
+            // 耳凸起尺寸基準 (約單格最小邊的 20%)
+            const tabSize = Math.min(cellW, cellH) * 0.22;
+
+            // 建立網格底線
+            renderGridOverlay(cellW, cellH);
+
+            // 1. 生成所有內部邊界的隨機凹凸狀況 (1: 向下/右凸, -1: 向上/左凸)
+            // 水平內部邊界 (有 rows-1 條)
+            const horizEdges = [];
+            for (let r = 0; r < gridRows - 1; r++) {
+                horizEdges[r] = [];
+                for (let c = 0; c < gridCols; c++) {
+                    horizEdges[r][c] = Math.random() < 0.5 ? 1 : -1;
+                }
+            }
+
+            // 垂直內部邊界 (有 cols-1 條)
+            const vertEdges = [];
+            for (let r = 0; r < gridRows; r++) {
+                vertEdges[r] = [];
+                for (let c = 0; c < gridCols - 1; c++) {
+                    vertEdges[r][c] = Math.random() < 0.5 ? 1 : -1;
+                }
+            }
+
+            // 2. 實體切割並繪製每一片
+            const isRotationMode = document.getElementById('rotation-toggle').checked;
+
+            for (let r = 0; r < gridRows; r++) {
+                for (let c = 0; c < gridCols; c++) {
+                    // 取得目前拼圖各邊凹凸屬性
+                    const topTab = r === 0 ? 0 : -horizEdges[r - 1][c];
+                    const bottomTab = r === gridRows - 1 ? 0 : horizEdges[r][c];
+                    const leftTab = c === 0 ? 0 : -vertEdges[r][c - 1];
+                    const rightTab = c === gridCols - 1 ? 0 : vertEdges[r][c];
+
+                    // 定義邊緣拼圖標記
+                    const isBorder = (r === 0 || r === gridRows - 1 || c === 0 || c === gridCols - 1);
+
+                    // 畫布大小：必須增加 3 * tabSize 的緩衝，以便繪製朝外膨脹的凸耳
+                    const canvasW = cellW + 3 * tabSize;
+                    const canvasH = cellH + 3 * tabSize;
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = canvasW;
+                    canvas.height = canvasH;
+                    
+                    // 新增頂級質感的立體浮雕陰影
+                    canvas.className = "absolute cursor-grab active:cursor-grabbing select-none transition-opacity duration-300 pointer-events-auto filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.4)]";
+                    canvas.style.width = `${canvasW}px`;
+                    canvas.style.height = `${canvasH}px`;
+                    canvas.style.zIndex = "20";
+
+                    const ctx = canvas.getContext('2d');
+
+                    // 基準繪製原點
+                    const offsetX = 1.5 * tabSize;
+                    const offsetY = 1.5 * tabSize;
+
+                    // 1) 繪製貝茲曲線遮罩
+                    drawPiecePath(ctx, offsetX, offsetY, cellW, cellH, topTab, rightTab, bottomTab, leftTab, tabSize);
+                    ctx.clip();
+
+                    // 2) 裁剪並縮放繪製圖片
+                    // 計算出此片拼圖在原始圖片中的理想映射區間
+                    ctx.drawImage(
+                        img, 
+                        c * (img.width / gridCols) - (offsetX * (img.width / boardW)), 
+                        r * (img.height / gridRows) - (offsetY * (img.height / boardH)), 
+                        canvasW * (img.width / boardW), 
+                        canvasH * (img.height / boardH),
+                        0, 0, canvasW, canvasH
+                    );
+
+                    // 3) 繪製高擬真 3D 立體亮邊與暗影邊緣線
+                    ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+                    ctx.lineWidth = 0.6;
+                    ctx.stroke();
+
+                    // 3. 初始散落位置 (隨機散落在板子左側或右側，預留中央空地)
+                    let rx, ry;
+                    if (Math.random() < 0.5) {
+                        // 散落在左側
+                        rx = Math.random() * (boardX - canvasW - 80) + 30;
+                        ry = Math.random() * (wsH - canvasH - 120) + 60;
+                    } else {
+                        // 散落在右側
+                        rx = Math.random() * (wsW - (boardX + boardW) - canvasW - 80) + (boardX + boardW) + 50;
+                        ry = Math.random() * (wsH - canvasH - 120) + 60;
+                    }
+
+                    // 隨機旋轉
+                    const rotation = isRotationMode ? [0, 90, 180, 270][Math.floor(Math.random() * 4)] : 0;
+
+                    const pieceObj = {
+                        r, c,
+                        cellW, cellH,
+                        canvasW, canvasH,
+                        offsetX, offsetY,
+                        isBorder,
+                        x: rx,
+                        y: ry,
+                        correctX: boardX + c * cellW - offsetX,
+                        correctY: boardY + r * cellH - offsetY,
+                        rotation,
+                        isSnapped: false,
+                        el: canvas
+                    };
+
+                    // 更新位置函式
+                    pieceObj.updateElementPosition = function(animate = false) {
+                        if (animate) {
+                            this.el.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
+                            setTimeout(() => {
+                                this.el.style.transition = '';
+                            }, 400);
+                        }
+                        this.el.style.transform = `translate3d(${this.x}px, ${this.y}px, 0) rotate(${this.rotation}deg)`;
+                    };
+
+                    pieceObj.updateElementPosition();
+                    
+                    // 加入工作桌並註冊事件
+                    document.getElementById('workspace-inner').appendChild(canvas);
+                    pieces.push(pieceObj);
+                    
+                    bindDragAndRotateEvents(pieceObj);
+                }
+            }
+
+            // 更新計數顯示
+            updateProgress();
+            playShuffleSound();
+        }
+
+        // 渲染格線對照組
+        function renderGridOverlay(cellW, cellH) {
+            const overlay = document.getElementById('board-grid-overlay');
+            overlay.innerHTML = '';
+            
+            // 繪製水平對照虛線
+            for (let r = 1; r < gridRows; r++) {
+                const line = document.createElement('div');
+                line.className = "absolute left-0 w-full border-t border-dashed border-slate-700/40 pointer-events-none";
+                line.style.top = `${r * cellH}px`;
+                overlay.appendChild(line);
+            }
+            // 繪製垂直對照虛線
+            for (let c = 1; c < gridCols; c++) {
+                const line = document.createElement('div');
+                line.className = "absolute top-0 h-full border-l border-dashed border-slate-700/40 pointer-events-none";
+                line.style.left = `${c * cellW}px`;
+                overlay.appendChild(line);
+            }
+        }
+
+        // --- 6. 高級 3D 貝茲曲線演算法實現 ---
+        // 繪製標準凸耳卡扣：透過座標轉換與旋轉，統一使用單一向外/向內延伸公式，100% 杜絕公式出錯風險
+        function drawPiecePath(ctx, x, y, w, h, topTab, rightTab, bottomTab, leftTab, tabSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+
+            // 頂邊
+            drawEdgeOriented(ctx, x, y, x + w, y, topTab, tabSize);
+            // 右邊
+            drawEdgeOriented(ctx, x + w, y, x + w, y + h, rightTab, tabSize);
+            // 底邊
+            drawEdgeOriented(ctx, x + w, y + h, x, y + h, bottomTab, tabSize);
+            // 左邊
+            drawEdgeOriented(ctx, x, y + h, x, y, leftTab, tabSize);
+
+            ctx.closePath();
+        }
+
+        function drawEdgeOriented(ctx, x1, y1, x2, y2, type, tabSize) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx);
+
+            ctx.save();
+            ctx.translate(x1, y1);
+            ctx.rotate(angle);
+
+            if (type === 0) {
+                ctx.lineTo(len, 0);
+            } else {
+                const s = len;
+                // type = 1 為凸出耳 (向負 y 座標偏移), type = -1 為凹槽 (向正 y 座標偏移)
+                const t = -tabSize * type;
+
+                ctx.lineTo(s * 0.38, 0);
+                ctx.bezierCurveTo(s * 0.38, t * 0.1,  s * 0.36, t * 0.7,  s * 0.44, t * 0.85);
+                ctx.bezierCurveTo(s * 0.48, t * 0.95, s * 0.45, t * 1.25, s * 0.50, t * 1.25);
+                ctx.bezierCurveTo(s * 0.55, t * 1.25, s * 0.52, t * 0.95, s * 0.56, t * 0.85);
+                ctx.bezierCurveTo(s * 0.64, t * 0.7,  s * 0.62, t * 0.1,  s * 0.62, 0);
+                ctx.lineTo(s, 0);
+            }
+
+            ctx.restore();
+        }
+
+        // --- 7. 滑鼠與觸控拖曳 (Pointer Events) & 智慧旋轉吸附 ---
+        let draggingPiece = null;
+        let dragPointerStart = { x: 0, y: 0 };
+        let dragCoordsStart = { x: 0, y: 0 };
+
+        function bindDragAndRotateEvents(p) {
+            // Pointer Down
+            p.el.addEventListener('pointerdown', (e) => {
+                if (p.isSnapped || !gameActive) return;
+                e.stopPropagation();
+                
+                // 置頂拖曳拼圖塊
+                maxZIndex++;
+                p.el.style.zIndex = maxZIndex;
+
+                draggingPiece = p;
+                dragPointerStart = { x: e.clientX, y: e.clientY };
+                dragCoordsStart = { x: p.x, y: p.y };
+
+                p.el.setPointerCapture(e.pointerId);
+                p.el.style.cursor = 'grabbing';
+
+                // 拖曳中的物理放大特效
+                p.el.style.transform = `translate3d(${p.x}px, ${p.y}px, 0) rotate(${p.rotation}deg) scale(1.06)`;
+                p.el.style.filter = 'drop-shadow(0 15px 15px rgba(0,0,0,0.6))';
+                
+                // 手勢震動 (如支援)
+                if (navigator.vibrate) navigator.vibrate(10);
+            });
+
+            // Pointer Move
+            p.el.addEventListener('pointermove', (e) => {
+                if (draggingPiece !== p) return;
+                e.stopPropagation();
+
+                // 必須除以縮放比例 scale！保證縮放後的拖曳軌跡與滑鼠 100% 貼合
+                const dx = (e.clientX - dragPointerStart.x) / scale;
+                const dy = (e.clientY - dragPointerStart.y) / scale;
+
+                p.x = dragCoordsStart.x + dx;
+                p.y = dragCoordsStart.y + dy;
+
+                p.el.style.transform = `translate3d(${p.x}px, ${p.y}px, 0) rotate(${p.rotation}deg) scale(1.06)`;
+            });
+
+            // Pointer Up
+            p.el.addEventListener('pointerup', (e) => {
+                if (draggingPiece !== p) return;
+                e.stopPropagation();
+
+                draggingPiece = null;
+                p.el.releasePointerCapture(e.pointerId);
+                p.el.style.cursor = 'grab';
+                p.el.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))';
+
+                // 移動步數累加
+                moveCount++;
+                document.getElementById('move-counter').innerText = moveCount;
+
+                // 檢查是否能夠磁吸歸位 (距離在 20px 內且旋轉角度為 0)
+                const dist = Math.hypot(p.x - p.correctX, p.y - p.correctY);
+                if (dist < 22 && p.rotation % 360 === 0) {
+                    snapPieceToBoard(p);
+                } else {
+                    p.updateElementPosition();
+                }
+            });
+
+            // 右鍵點擊旋轉 (PC)
+            p.el.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (p.isSnapped || !gameActive) return;
+                rotatePiece(p);
+            });
+
+            // 雙擊旋轉 (觸控 / 行動裝置最佳體驗)
+            p.el.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                if (p.isSnapped || !gameActive) return;
+                rotatePiece(p);
+            });
+        }
+
+        // 旋轉拼圖 (順時針 90 度)
+        function rotatePiece(p) {
+            p.rotation = (p.rotation + 90) % 360;
+            p.updateElementPosition(true); // 使用彈性平滑動畫
+            playRotateSound();
+            
+            // 旋轉後檢查是否觸發即時磁吸
+            const dist = Math.hypot(p.x - p.correctX, p.y - p.correctY);
+            if (dist < 22 && p.rotation % 360 === 0) {
+                setTimeout(() => snapPieceToBoard(p), 150);
+            }
+        }
+
+        // 磁吸歸位
+        function snapPieceToBoard(p) {
+            p.x = p.correctX;
+            p.y = p.correctY;
+            p.isSnapped = true;
+            
+            // 重置鎖定層級 (降落至放置板正上方，低於其他拖曳物件)
+            p.el.style.zIndex = "5";
+            p.el.style.cursor = "default";
+            p.el.style.filter = "none";
+            p.updateElementPosition();
+
+            // 播放清脆的木板吸附音效
+            playSnapSound();
+
+            // 產生歡慶粒子火花
+            spawnVisualSparks(p.correctX + p.canvasW/2, p.correctY + p.canvasH/2);
+
+            // 更新數據
+            updateProgress();
+            
+            // 檢查是否完全勝利
+            checkWinCondition();
+        }
+
+        // --- 8. 桌面導航：拖曳背景平移與滑鼠滾輪縮放 (Zoom & Pan) ---
+        function initWorkspaceNavigation() {
+            const container = document.getElementById('workspace-container');
+            const inner = document.getElementById('workspace-inner');
+            const deskBg = document.getElementById('workspace-desk-bg');
+
+            let isPanning = false;
+            let panStartPointer = { x: 0, y: 0 };
+            let panStartOffset = { x: 0, y: 0 };
+
+            // 1. 拖曳桌面背景平移
+            deskBg.addEventListener('pointerdown', (e) => {
+                if (e.button === 0 || e.button === 1 || e.pointerType === 'touch') { // 左鍵或中鍵
+                    isPanning = true;
+                    panStartPointer = { x: e.clientX, y: e.clientY };
+                    panStartOffset = { x: panX, y: panY };
+                    deskBg.setPointerCapture(e.pointerId);
+                    deskBg.style.cursor = 'grabbing';
+                }
+            });
+
+            deskBg.addEventListener('pointermove', (e) => {
+                if (!isPanning) return;
+                const dx = e.clientX - panStartPointer.x;
+                const dy = e.clientY - panStartPointer.y;
+                panX = panStartOffset.x + dx;
+                panY = panStartOffset.y + dy;
+                updateWorkspaceTransform();
+            });
+
+            deskBg.addEventListener('pointerup', (e) => {
+                if (isPanning) {
+                    isPanning = false;
+                    deskBg.releasePointerCapture(e.pointerId);
+                    deskBg.style.cursor = 'grab';
+                }
+            });
+
+            // 2. 滾輪滑鼠智慧縮放
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomFactor = 1.1;
+                const oldScale = scale;
+                
+                if (e.deltaY < 0) {
+                    scale = Math.min(2.0, scale * zoomFactor);
+                } else {
+                    scale = Math.max(0.4, scale / zoomFactor);
+                }
+
+                // 智慧滑鼠定位縮放 (向滑鼠目前所在位置收縮)
+                const rect = container.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                panX = mouseX - (mouseX - panX) * (scale / oldScale);
+                panY = mouseY - (mouseY - panY) * (scale / oldScale);
+
+                updateWorkspaceTransform();
+            }, { passive: false });
+        }
+
+        function updateWorkspaceTransform() {
+            const inner = document.getElementById('workspace-inner');
+            inner.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${scale})`;
+        }
+
+        // 重置視角與置中
+        function resetWorkspaceView() {
+            const container = document.getElementById('workspace-container');
+            const viewW = container.clientWidth;
+            const viewH = container.clientHeight;
+
+            // 我們希望將 2000x1200 空間的中央點 (1000, 600) 定位到目前視區的正中央
+            scale = Math.min(1.0, viewW / 1100, viewH / 750);
+            panX = viewW / 2 - 1000 * scale;
+            panY = viewH / 2 - 600 * scale;
+
+            updateWorkspaceTransform();
+        }
+
+        // --- 9. 輔助面板按鈕工具 ---
+        // 1. 一鍵整理碎片 (把散落的未完成碎片整齊排在左右兩側，預留中央放置區)
+        function arrangePieces() {
+            const unsnapped = pieces.filter(p => !p.isSnapped);
+            if (unsnapped.length === 0) return;
+
+            const wsW = 2000;
+            const wsH = 1200;
+            const boardW = 750;
+            const boardH = 500;
+            const boardX = (wsW - boardW) / 2;
+
+            // 左右側安全堆放區
+            const leftZoneW = boardX - 100;
+            const rightZoneX = boardX + boardW + 100;
+            const rightZoneW = wsW - rightZoneX - 100;
+
+            unsnapped.forEach((p, idx) => {
+                let targetX, targetY;
+                const side = idx % 2 === 0 ? 'left' : 'right';
+                const sideIndex = Math.floor(idx / 2);
+
+                // 動態格網排列尺寸
+                const stepX = p.canvasW * 1.1;
+                const stepY = p.canvasH * 1.1;
+
+                if (side === 'left') {
+                    const cols = Math.max(1, Math.floor(leftZoneW / stepX));
+                    const c = sideIndex % cols;
+                    const r = Math.floor(sideIndex / cols);
+                    targetX = 40 + c * stepX;
+                    targetY = 100 + r * stepY;
+                    if (targetY > wsH - stepY - 100) targetY = 100 + (r % 3) * stepY;
+                } else {
+                    const cols = Math.max(1, Math.floor(rightZoneW / stepX));
+                    const c = sideIndex % cols;
+                    const r = Math.floor(sideIndex / cols);
+                    targetX = rightZoneX + c * stepX;
+                    targetY = 100 + r * stepY;
+                    if (targetY > wsH - stepY - 100) targetY = 100 + (r % 3) * stepY;
+                }
+
+                p.x = targetX;
+                p.y = targetY;
+                p.updateElementPosition(true); // 平滑位移過渡
+            });
+
+            playShuffleSound();
+        }
+
+        // 2. 開啟/關閉半透明背景底圖提示 (Hint)
+        function toggleHint() {
+            isHintActive = !isHintActive;
+            const hintImg = document.getElementById('hint-image');
+            const btn = document.getElementById('btn-hint');
+
+            if (isHintActive) {
+                hintImg.style.opacity = '0.15';
+                btn.classList.add('text-yellow-400', 'bg-slate-800/80');
+            } else {
+                hintImg.style.opacity = '0';
+                btn.classList.remove('text-yellow-400', 'bg-slate-800/80');
+            }
+        }
+
+        // 3. 僅顯示邊緣碎片 (高階功能：將非邊緣碎片的透明度調低且無法點擊)
+        function toggleBorderOnly() {
+            isBorderOnlyActive = !isBorderOnlyActive;
+            const btn = document.getElementById('btn-border');
+
+            if (isBorderOnlyActive) {
+                btn.classList.add('text-pink-400', 'bg-slate-800/80');
+                pieces.forEach(p => {
+                    if (!p.isSnapped && !p.isBorder) {
+                        p.el.style.opacity = '0.15';
+                        p.el.style.pointerEvents = 'none';
+                    }
+                });
+            } else {
+                btn.classList.remove('text-pink-400', 'bg-slate-800/80');
+                pieces.forEach(p => {
+                    if (!p.isSnapped) {
+                        p.el.style.opacity = '1';
+                        p.el.style.pointerEvents = 'auto';
+                    }
+                });
+            }
+        }
+
+        // 4. 原圖對照卡片開啟/關閉
+        function toggleReferenceCard() {
+            const card = document.getElementById('reference-card');
+            card.classList.toggle('hidden');
+        }
+
+        // 5. 音效靜音控制
+        function toggleMute() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('mute-icon');
+            const btn = document.getElementById('btn-mute');
+            if (isMuted) {
+                icon.setAttribute('data-lucide', 'volume-x');
+                btn.classList.add('text-red-400');
+                btn.classList.remove('text-emerald-400');
+            } else {
+                icon.setAttribute('data-lucide', 'volume-2');
+                btn.classList.remove('text-red-400');
+                btn.classList.add('text-emerald-400');
+            }
+            lucide.createIcons();
+        }
+
+        // --- 10. Web Audio API：高品質自製合成音效 (100% 免外部載入) ---
+        function getAudioContext() {
+            return new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        // 清脆木質拼合碰撞音
+        function playSnapSound() {
+            if (isMuted) return;
+            try {
+                const ctx = getAudioContext();
+                
+                // 高頻清脆卡接聲
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(850, ctx.currentTime);
+                osc1.frequency.exponentialRampToValueAtTime(350, ctx.currentTime + 0.04);
+                gain1.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.04);
+                
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start();
+                osc1.stop(ctx.currentTime + 0.04);
+
+                // 低沉木頭敲擊聲
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(160, ctx.currentTime);
+                osc2.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.12);
+                gain2.gain.setValueAtTime(0.35, ctx.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start();
+                osc2.stop(ctx.currentTime + 0.12);
+            } catch (e) {
+                console.log("Audio API not initialized yet.");
+            }
+        }
+
+        // 旋轉卡嗒聲
+        function playRotateSound() {
+            if (isMuted) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.03);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.03);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.03);
+            } catch (e) {}
+        }
+
+        // 洗牌整理聲
+        function playShuffleSound() {
+            if (isMuted) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(100, ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(180, ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.25);
+            } catch (e) {}
+        }
+
+        // 通關大合唱和弦
+        function playVictorySound() {
+            if (isMuted) return;
+            try {
+                const ctx = getAudioContext();
+                const notes = [261.63, 329.63, 392.00, 523.25]; // C大調和弦
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.1);
+                    osc.frequency.exponentialRampToValueAtTime(freq * 1.5, ctx.currentTime + idx * 0.1 + 0.5);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime + idx * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + idx * 0.1 + 1.2);
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + idx * 0.1);
+                    osc.stop(ctx.currentTime + idx * 0.1 + 1.2);
+                });
+            } catch (e) {}
+        }
+
+        // --- 11. 特效：落入時的局部火花粒子爆炸與通關彩色紙屑花灑 ---
+        // 1. 局部粒子爆炸
+        function spawnVisualSparks(x, y) {
+            const container = document.getElementById('workspace-inner');
+            const count = 16;
+            const colors = ['#fb7185', '#60a5fa', '#34d399', '#fbcfe8', '#fef08a', '#c084fc'];
+
+            for (let i = 0; i < count; i++) {
+                const spark = document.createElement('div');
+                spark.className = "absolute rounded-full pointer-events-none z-50 transition-opacity";
+                const size = Math.random() * 6 + 4;
+                spark.style.width = `${size}px`;
+                spark.style.height = `${size}px`;
+                spark.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                spark.style.left = `${x}px`;
+                spark.style.top = `${y}px`;
+                spark.style.boxShadow = '0 0 8px currentColor';
+
+                container.appendChild(spark);
+
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 120 + 60; // 畫素/秒
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+
+                const start = performance.now();
+                function animate(now) {
+                    const elapsed = (now - start) / 1000;
+                    if (elapsed >= 0.6) {
+                        spark.remove();
+                    } else {
+                        const px = x + vx * elapsed;
+                        const py = y + vy * elapsed + 60 * elapsed * elapsed; // 疊加一點微弱重力
+                        const opacity = 1 - elapsed / 0.6;
+                        spark.style.transform = `translate3d(${px - x}px, ${py - y}px, 0) scale(${opacity})`;
+                        spark.style.opacity = opacity;
+                        requestAnimationFrame(animate);
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+        }
+
+        // 2. 通關彩色紙花灑大陣仗
+        let confettiActive = false;
+        let confettiAnimationId = null;
+        function startConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.classList.remove('hidden');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#22c55e', '#eab308', '#f97316'];
+
+            for (let i = 0; i < 150; i++) {
+                pieces.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    speed: Math.random() * 4 + 3,
+                    rotation: Math.random() * Math.PI * 2,
+                    rotSpeed: Math.random() * 0.1 - 0.05
+                });
+            }
+
+            confettiActive = true;
+            window.addEventListener('resize', resizeCanvas);
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            function loop() {
+                if (!confettiActive) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                pieces.forEach(p => {
+                    p.y += p.speed;
+                    p.rotation += p.rotSpeed;
+                    if (p.y > canvas.height) {
+                        p.y = -20;
+                        p.x = Math.random() * canvas.width;
+                    }
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+                    ctx.restore();
+                });
+
+                confettiAnimationId = requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        function stopConfetti() {
+            confettiActive = false;
+            if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.classList.add('hidden');
+        }
+
+        // --- 12. 數據核對與進度控制 ---
+        function updateProgress() {
+            const snappedCount = pieces.filter(p => p.isSnapped).length;
+            const total = pieces.length;
+            const percent = total === 0 ? 0 : Math.round((snappedCount / total) * 100);
+
+            document.getElementById('progress-percentage').innerText = `${percent}%`;
+            document.getElementById('progress-ratio').innerText = `(${snappedCount}/${total})`;
+        }
+
+        function checkWinCondition() {
+            const allSnapped = pieces.every(p => p.isSnapped);
+            if (allSnapped && pieces.length > 0 && gameActive) {
+                gameActive = false;
+                if (timerInterval) clearInterval(timerInterval);
+                playVictorySound();
+                setTimeout(() => {
+                    toggleVictoryModal(true);
+                }, 600);
+            }
+        }
+
+        // --- 13. 時間與計時器管理 ---
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            secondsElapsed = 0;
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                document.getElementById('game-timer').innerText = formatTime(secondsElapsed);
+            }, 1000);
+        }
+
+        function formatTime(secs) {
+            const mm = String(Math.floor(secs / 60)).padStart(2, '0');
+            const ss = String(secs % 60).padStart(2, '0');
+            return `${mm}:${ss}`;
+        }
+    </script>
+</body>
+</html>
