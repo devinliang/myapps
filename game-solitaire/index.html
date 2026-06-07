@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>精緻新接龍 FreeCell</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="game-container">
+    <div class="toolbar">
+      <h1>精緻新接龍</h1>
+      <div class="toolbar-right">
+        <div id="move-count">步數: 0</div>
+        <button id="btn-restart">重新開始</button>
+      </div>
+    </div>
+
+    <div class="top-row">
+      <div class="free-cells">
+        <div class="cell free-cell" data-type="free" data-index="0"></div>
+        <div class="cell free-cell" data-type="free" data-index="1"></div>
+        <div class="cell free-cell" data-type="free" data-index="2"></div>
+        <div class="cell free-cell" data-type="free" data-index="3"></div>
+      </div>
+      
+      <div class="foundations">
+        <div class="cell foundation" data-type="found" data-suit="spade">
+          <span class="foundation-icon">♠</span>
+        </div>
+        <div class="cell foundation" data-type="found" data-suit="heart">
+          <span class="foundation-icon">♥</span>
+        </div>
+        <div class="cell foundation" data-type="found" data-suit="diamond">
+          <span class="foundation-icon">♦</span>
+        </div>
+        <div class="cell foundation" data-type="found" data-suit="club">
+          <span class="foundation-icon">♣</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tableau" id="tableau">
+      <!-- 8 個縱列會由 JS 動態產生 -->
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

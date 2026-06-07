@@ -1,0 +1,101 @@
+:root {
+  --card-width: 80px;
+  --card-height: 120px;
+  --card-gap: 15px;
+}
+
+body {
+  background-color: #1a5e3a; /* 經典賭場綠背景 */
+  font-family: Arial, sans-serif;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+#game-container {
+  width: 850px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.free-cells, .foundations {
+  display: flex;
+  gap: var(--card-gap);
+}
+
+/* 牌槽共同樣式 */
+.cell {
+  width: var(--card-width);
+  height: var(--card-height);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  color: rgba(255, 255, 255, 0.2);
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* 工作區 8 行 */
+.tableau {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--card-gap);
+  min-height: 400px;
+}
+
+.column {
+  position: relative;
+  width: var(--card-width);
+  min-height: 100%;
+}
+
+/* 撲克牌基本樣式 */
+.card {
+  width: var(--card-width);
+  height: var(--card-height);
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px;
+  box-sizing: border-box;
+  font-weight: bold;
+  font-size: 1.2rem;
+  cursor: pointer;
+  user-select: none;
+  position: absolute; /* 用絕對定位來做堆疊 */
+  transition: transform 0.1s;
+}
+
+/* 紅色花色 */
+.card.red { color: #e74c3c; }
+/* 黑色花色 */
+.card.black { color: #2c3e50; }
+
+/* 被選取時的視覺效果 */
+.card.selected {
+  transform: translateY(-15px);
+  box-shadow: 0 10px 15px rgba(0,0,0,0.5);
+  outline: 3px solid #f1c40f;
+}
