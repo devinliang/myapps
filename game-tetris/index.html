@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>霓虹極速俄羅斯方塊 - Neo Tetris Arcade</title>
+    <!-- 引入 Tailwind CSS 與 Google 字型 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <!-- 引入 FontAwesome 圖示 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Rajdhani', 'Microsoft JhengHei', sans-serif;
+            background-color: #030712;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .font-arcade {
+            font-family: 'Press Start 2P', monospace;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        /* 霓虹邊框效果 */
+        .neon-border {
+            box-shadow: 0 0 10px rgba(147, 51, 234, 0.3), inset 0 0 10px rgba(147, 51, 234, 0.3);
+            border: 2px solid rgba(168, 85, 247, 0.8);
+        }
+        .neon-text-pink {
+            text-shadow: 0 0 5px rgba(244, 63, 94, 0.8), 0 0 10px rgba(244, 63, 94, 0.4);
+        }
+        .neon-text-blue {
+            text-shadow: 0 0 5px rgba(59, 130, 246, 0.8), 0 0 10px rgba(59, 130, 246, 0.4);
+        }
+        .neon-text-cyan {
+            text-shadow: 0 0 5px rgba(6, 182, 212, 0.8), 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+        /* 隱藏滾動條 */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        /* 虛擬按鍵長按效果 */
+        .ctrl-btn:active {
+            transform: scale(0.92);
+            background-color: rgba(168, 85, 247, 0.4) !important;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.8);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-white flex flex-col items-center justify-between p-2 md:p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-purple-950 to-slate-950">
+
+    <!-- 頂部導航與標題 -->
+    <header class="w-full max-w-5xl flex justify-between items-center py-2 px-4 mb-2 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+                <span class="font-arcade text-white text-lg">T</span>
+            </div>
+            <div>
+                <h1 class="font-orbitron font-extrabold text-xl md:text-2xl tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-pink-500 to-purple-400">NEO TETRIS</h1>
+                <p class="text-[10px] tracking-widest text-cyan-400 uppercase font-bold">Arcade Edition v2.0</p>
+            </div>
+        </div>
+        
+        <!-- 設定按鈕區 -->
+        <div class="flex gap-2">
+            <button id="soundToggle" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition" title="開關聲音">
+                <i class="fas fa-volume-up text-cyan-400" id="soundIcon"></i>
+            </button>
+            <button id="musicToggle" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition" title="開關背景音樂">
+                <i class="fas fa-music text-pink-400" id="musicIcon"></i>
+            </button>
+            <button id="themeToggleBtn" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition" title="切換主題">
+                <i class="fas fa-palette text-yellow-400"></i>
+            </button>
+            <button id="helpToggle" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition" title="操作說明">
+                <i class="fas fa-question-circle text-purple-400"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 遊戲主體區域 -->
+    <main class="w-full max-w-5xl flex-1 flex flex-col lg:flex-row items-center justify-center gap-4 px-2">
+        
+        <!-- 左側面板：暫存(Hold)、分數、等級 -->
+        <section class="w-full lg:w-48 flex flex-row lg:flex-col justify-between lg:justify-start gap-3 order-2 lg:order-1">
+            <!-- 暫存方塊盒 (Hold Box) -->
+            <div class="flex-1 lg:w-full bg-slate-950/80 border border-purple-500/30 rounded-2xl p-3 flex flex-col items-center justify-center relative backdrop-blur-md">
+                <span class="absolute top-2 left-3 text-xs font-semibold text-purple-400 tracking-wider">HOLD 暫存</span>
+                <div class="w-20 h-20 mt-4 flex items-center justify-center">
+                    <canvas id="holdCanvas" width="80" height="80"></canvas>
+                </div>
+            </div>
+
+            <!-- 分數統計盒 -->
+            <div class="flex-1 lg:w-full bg-slate-950/80 border border-cyan-500/30 rounded-2xl p-3 flex flex-col justify-between gap-2 backdrop-blur-md">
+                <div class="flex justify-between items-center border-b border-white/5 pb-1">
+                    <span class="text-xs text-cyan-400 font-bold">SCORE 分數</span>
+                    <i class="fas fa-trophy text-yellow-400 text-xs"></i>
+                </div>
+                <div id="scoreVal" class="font-orbitron font-black text-xl md:text-2xl text-white neon-text-cyan">000000</div>
+                
+                <div class="flex justify-between items-center border-b border-white/5 pb-1 mt-1">
+                    <span class="text-xs text-pink-400 font-bold">LINES 消除</span>
+                    <i class="fas fa-bolt text-pink-400 text-xs"></i>
+                </div>
+                <div id="linesVal" class="font-orbitron font-black text-xl text-white">0</div>
+                
+                <div class="flex justify-between items-center border-b border-white/5 pb-1 mt-1">
+                    <span class="text-xs text-yellow-400 font-bold">LEVEL 等級</span>
+                    <i class="fas fa-tachometer-alt text-yellow-400 text-xs"></i>
+                </div>
+                <div id="levelVal" class="font-orbitron font-black text-xl text-white">1</div>
+            </div>
+        </section>
+
+        <!-- 中間面板：遊戲主畫面 Canvas -->
+        <section class="relative order-1 lg:order-2 flex justify-center">
+            <div class="relative bg-slate-950 border-4 border-purple-600/80 rounded-3xl p-1.5 shadow-[0_0_30px_rgba(147,51,234,0.3)]">
+                <!-- 遊戲大網格畫布 -->
+                <canvas id="tetrisCanvas" width="300" height="600" class="block bg-slate-950 rounded-2xl"></canvas>
+                
+                <!-- 遊戲狀態覆蓋層 (暫停 / 遊戲結束) -->
+                <div id="overlayScreen" class="absolute inset-0 bg-black/85 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center transition-all duration-300 z-10 hidden">
+                    <div class="text-center p-6 max-w-xs">
+                        <div id="overlayIcon" class="w-16 h-16 mx-auto mb-4 bg-gradient-to-tr from-pink-500 to-purple-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(236,72,153,0.5)]">
+                            <i class="fas fa-play text-white text-xl ml-1" id="overlayIconTag"></i>
+                        </div>
+                        <h2 id="overlayTitle" class="font-arcade text-base tracking-widest text-pink-500 mb-2">PAUSED</h2>
+                        <p id="overlayDesc" class="text-xs text-slate-400 mb-6 leading-relaxed">挑戰自己的高分吧！準備好隨時按下按鈕繼續戰鬥。</p>
+                        <button id="overlayBtn" class="w-full py-3 px-6 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl tracking-wider shadow-lg hover:shadow-cyan-500/50 active:scale-95 transition-all">
+                            繼續遊戲 (START)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 右側面板：下個方塊、最高分、操作說明 -->
+        <section class="w-full lg:w-48 flex flex-row lg:flex-col justify-between lg:justify-start gap-3 order-3">
+            <!-- 下個方塊 (Next Box) -->
+            <div class="flex-1 lg:w-full bg-slate-950/80 border border-pink-500/30 rounded-2xl p-3 flex flex-col items-center justify-center relative backdrop-blur-md">
+                <span class="absolute top-2 left-3 text-xs font-semibold text-pink-400 tracking-wider">NEXT 下一個</span>
+                <div class="w-20 h-20 mt-4 flex items-center justify-center">
+                    <canvas id="nextCanvas" width="80" height="80"></canvas>
+                </div>
+            </div>
+
+            <!-- 最高分紀錄 -->
+            <div class="flex-1 lg:w-full bg-slate-950/80 border border-yellow-500/30 rounded-2xl p-3 flex flex-col justify-center gap-1 backdrop-blur-md">
+                <span class="text-xs text-yellow-400 font-bold block border-b border-white/5 pb-1">HIGH SCORE 最高分</span>
+                <div id="highScoreVal" class="font-orbitron font-black text-xl text-yellow-300 neon-text-pink mt-1">000000</div>
+                
+                <!-- 簡單的快速功能鍵 -->
+                <div class="grid grid-cols-2 gap-2 mt-3">
+                    <button id="pauseBtn" class="py-1 px-2 bg-slate-800 hover:bg-slate-700 text-[11px] rounded-lg font-bold border border-white/10 flex items-center justify-center gap-1 transition">
+                        <i class="fas fa-pause text-cyan-400"></i> <span id="pauseBtnText">暫停</span>
+                    </button>
+                    <button id="resetBtn" class="py-1 px-2 bg-red-950/50 hover:bg-red-900/60 text-[11px] text-red-200 rounded-lg font-bold border border-red-500/20 flex items-center justify-center gap-1 transition">
+                        <i class="fas fa-sync-alt"></i> 重開
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 行動裝置虛擬按鍵 (當檢測到移動裝置時會優化，但一直可選) -->
+    <footer id="mobileControls" class="w-full max-w-xl mx-auto px-4 py-3 bg-black/40 backdrop-blur-md rounded-3xl border border-white/10 mt-2 block">
+        <div class="flex flex-col gap-3">
+            <!-- 上排：HOLD + 逆旋轉 + 旋轉 -->
+            <div class="flex justify-between items-center gap-2">
+                <button id="ctrlHold" class="ctrl-btn flex-1 py-3 bg-slate-800/60 border border-purple-500/20 rounded-2xl text-purple-300 font-bold text-xs flex flex-col items-center justify-center gap-1">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>暫存 HOLD</span>
+                </button>
+                <button id="ctrlRotateCCW" class="ctrl-btn flex-1 py-3 bg-slate-800/60 border border-slate-700 rounded-2xl text-slate-300 font-bold text-xs flex flex-col items-center justify-center gap-1">
+                    <i class="fas fa-undo-alt"></i>
+                    <span>逆旋轉</span>
+                </button>
+                <button id="ctrlRotate" class="ctrl-btn flex-[1.5] py-3 bg-cyan-600/30 border border-cyan-500/40 rounded-2xl text-cyan-200 font-bold text-xs flex flex-col items-center justify-center gap-1">
+                    <i class="fas fa-redo"></i>
+                    <span>旋轉 ROTATE</span>
+                </button>
+            </div>
+            
+            <!-- 下排：左移、下移、右移、直接下墜 -->
+            <div class="flex justify-between items-center gap-2">
+                <button id="ctrlLeft" class="ctrl-btn flex-1 py-4 bg-slate-800/60 border border-slate-700 rounded-2xl text-white text-lg flex items-center justify-center">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="flex-1 flex flex-col gap-1">
+                    <button id="ctrlSoftDrop" class="ctrl-btn py-2 bg-slate-800/60 border border-slate-700 rounded-2xl text-white text-xs flex flex-col items-center justify-center">
+                        <i class="fas fa-chevron-down"></i>
+                        <span class="text-[9px]">軟降</span>
+                    </button>
+                    <button id="ctrlHardDrop" class="ctrl-btn py-2 bg-pink-600/30 border border-pink-500/40 rounded-2xl text-pink-300 text-xs flex flex-col items-center justify-center">
+                        <i class="fas fa-chevron-double-down fa-bounce"></i>
+                        <span class="text-[9px] font-bold">瞬降 HARD</span>
+                    </button>
+                </div>
+                <button id="ctrlRight" class="ctrl-btn flex-1 py-4 bg-slate-800/60 border border-slate-700 rounded-2xl text-white text-lg flex items-center justify-center">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 說明 Modal 彈窗 -->
+    <div id="helpModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-2 border-cyan-500/50 rounded-3xl max-w-md w-full p-6 relative">
+            <button id="closeHelpBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="font-orbitron font-extrabold text-xl text-cyan-400 mb-4 flex items-center gap-2">
+                <i class="fas fa-gamepad"></i> 遊戲操作說明
+            </h3>
+            
+            <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+                <div>
+                    <h4 class="font-bold text-white border-b border-white/10 pb-1 mb-2">鍵盤快捷鍵 (PC)</h4>
+                    <ul class="space-y-2">
+                        <li class="flex justify-between"><span>← / A</span> <span class="text-cyan-400">向左移動</span></li>
+                        <li class="flex justify-between"><span>→ / D</span> <span class="text-cyan-400">向右移動</span></li>
+                        <li class="flex justify-between"><span>↑ / W</span> <span class="text-pink-400">順時針旋轉</span></li>
+                        <li class="flex justify-between"><span>↓ / S</span> <span class="text-cyan-400">軟降 (加速下墜)</span></li>
+                        <li class="flex justify-between"><span>空白鍵 Space</span> <span class="text-pink-500 font-bold">硬降 (瞬間落地)</span></li>
+                        <li class="flex justify-between"><span>C / Shift</span> <span class="text-purple-400">暫存方塊 (Hold)</span></li>
+                        <li class="flex justify-between"><span>P / Esc</span> <span class="text-yellow-400">暫停 / 恢復</span></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold text-white border-b border-white/10 pb-1 mb-2">計分說明</h4>
+                    <ul class="space-y-1">
+                        <li>• 消除 1 行：100 分 * 等級</li>
+                        <li>• 消除 2 行：300 分 * 等級</li>
+                        <li>• 消除 3 行：500 分 * 等級</li>
+                        <li>• 消除 4 行 (TETRIS!)：800 分 * 等級</li>
+                        <li>• 每次消除 10 行即提升 1 個等級，重力加速度提升！</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <button id="helpOkBtn" class="mt-6 w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition">
+                準備好了，開始玩！
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- WEB AUDIO API 復古音效合成器 ---
+        class SoundSynth {
+            constructor() {
+                this.ctx = null;
+                this.soundEnabled = true;
+                this.musicEnabled = false;
+                this.bgmNode = null;
+                this.bgmTimer = null;
+                this.isBgmPlaying = false;
+            }
+
+            init() {
+                if (this.ctx) return;
+                // 用戶互動後才能安全初始化 AudioContext
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    this.ctx = new AudioCtx();
+                }
+            }
+
+            // 播放復古嘟嘟聲
+            playBeep(freq, type, duration, volume = 0.1) {
+                if (!this.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = type; // 'sine', 'square', 'sawtooth', 'triangle'
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    
+                    gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+                    
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch (e) {
+                    console.error("Audio error:", e);
+                }
+            }
+
+            playMove() {
+                this.playBeep(220, 'square', 0.05, 0.04);
+            }
+
+            playRotate() {
+                this.playBeep(330, 'triangle', 0.08, 0.08);
+            }
+
+            playDrop() {
+                this.playBeep(110, 'sine', 0.1, 0.1);
+            }
+
+            playHold() {
+                this.playBeep(440, 'triangle', 0.08, 0.06);
+            }
+
+            playLineClear(linesCount) {
+                if (!this.soundEnabled) return;
+                this.init();
+                const freqs = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                freqs.slice(0, linesCount).forEach((freq, idx) => {
+                    setTimeout(() => {
+                        this.playBeep(freq, 'square', 0.25, 0.08);
+                    }, idx * 80);
+                });
+            }
+
+            playGameOver() {
+                if (!this.soundEnabled) return;
+                this.init();
+                const notes = [392.00, 349.23, 311.13, 261.63]; // G4, F4, Eb4, C4
+                notes.forEach((freq, idx) => {
+                    setTimeout(() => {
+                        this.playBeep(freq, 'sawtooth', 0.4, 0.08);
+                    }, idx * 150);
+                });
+            }
+
+            playLevelUp() {
+                this.playBeep(587.33, 'triangle', 0.1, 0.05);
+                setTimeout(() => this.playBeep(880, 'square', 0.2, 0.08), 100);
+            }
+
+            // 背景音樂 loop (簡易復古 4 步進和弦琶音)
+            startBGM() {
+                if (!this.musicEnabled) return;
+                this.init();
+                if (!this.ctx || this.isBgmPlaying) return;
+                this.isBgmPlaying = true;
+                
+                let step = 0;
+                // Tetris 經典主題 A-Theme 的極度精簡琶音版
+                const themeNotes = [
+                    659.25, 493.88, 523.25, 587.33, 523.25, 493.88, 440, 440, 523.25, 659.25, 587.33, 523.25, 493.88, 523.25, 587.33, 659.25,
+                    523.25, 440, 440
+                ];
+                
+                const playStep = () => {
+                    if (!this.musicEnabled) {
+                        this.isBgmPlaying = false;
+                        return;
+                    }
+                    const freq = themeNotes[step % themeNotes.length];
+                    this.playBeep(freq, 'triangle', 0.2, 0.02);
+                    step++;
+                    this.bgmTimer = setTimeout(playStep, 220);
+                };
+                
+                playStep();
+            }
+
+            stopBGM() {
+                this.isBgmPlaying = false;
+                if (this.bgmTimer) {
+                    clearTimeout(this.bgmTimer);
+                    this.bgmTimer = null;
+                }
+            }
+        }
+
+        const synth = new SoundSynth();
+
+        // --- 俄羅斯方塊核心資料 ---
+        const SHAPES = {
+            'I': [
+                [0,0,0,0],
+                [1,1,1,1],
+                [0,0,0,0],
+                [0,0,0,0]
+            ],
+            'O': [
+                [1,1],
+                [1,1]
+            ],
+            'T': [
+                [0,1,0],
+                [1,1,1],
+                [0,0,0]
+            ],
+            'S': [
+                [0,1,1],
+                [1,1,0],
+                [0,0,0]
+            ],
+            'Z': [
+                [1,1,0],
+                [0,1,1],
+                [0,0,0]
+            ],
+            'J': [
+                [1,0,0],
+                [1,1,1],
+                [0,0,0]
+            ],
+            'L': [
+                [0,0,1],
+                [1,1,1],
+                [0,0,0]
+            ]
+        };
+
+        // 多款霓虹/復古主題顏色包
+        const THEMES = [
+            {
+                name: "Neon Cyberpunk (霓虹賽博)",
+                gridBg: "#090d1a",
+                gridLine: "rgba(168, 85, 247, 0.08)",
+                colors: {
+                    'I': '#06b6d4', // cyan
+                    'O': '#eab308', // yellow
+                    'T': '#a855f7', // purple
+                    'S': '#22c55e', // green
+                    'Z': '#ef4444', // red
+                    'J': '#3b82f6', // blue
+                    'L': '#f97316'  // orange
+                }
+            },
+            {
+                name: "Gameboy Retro (經典復古)",
+                gridBg: "#8bac0f",
+                gridLine: "#9bbc0f",
+                colors: {
+                    'I': '#0f380f', 'O': '#306230', 'T': '#0f380f', 'S': '#306230', 'Z': '#0f380f', 'J': '#306230', 'L': '#0f380f'
+                }
+            },
+            {
+                name: "Macaron Sweet (粉嫩馬卡龍)",
+                gridBg: "#faf5ff",
+                gridLine: "rgba(0,0,0,0.03)",
+                colors: {
+                    'I': '#a5f3fc', 'O': '#fef08a', 'T': '#f3e8ff', 'S': '#bbf7d0', 'Z': '#fecdd3', 'J': '#bfdbfe', 'L': '#fed7aa'
+                }
+            },
+            {
+                name: "Monochrome Dark (極簡灰黑)",
+                gridBg: "#111827",
+                gridLine: "rgba(255,255,255,0.02)",
+                colors: {
+                    'I': '#f3f4f6', 'O': '#9ca3af', 'T': '#e5e7eb', 'S': '#d1d5db', 'Z': '#6b7280', 'J': '#4b5563', 'L': '#374151'
+                }
+            }
+        ];
+
+        let currentThemeIndex = 0;
+
+        // --- 遊戲狀態變數 ---
+        const COLS = 10;
+        const ROWS = 20;
+        let BLOCK_SIZE = 30; // 會根據視窗大小動態縮放
+        
+        const canvas = document.getElementById('tetrisCanvas');
+        const ctx = canvas.getContext('2d');
+        const holdCanvas = document.getElementById('holdCanvas');
+        const holdCtx = holdCanvas.getContext('2d');
+        const nextCanvas = document.getElementById('nextCanvas');
+        const nextCtx = nextCanvas.getContext('2d');
+
+        let board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+        let score = 0;
+        let lines = 0;
+        let level = 1;
+        let highScore = parseInt(localStorage.getItem('neo_tetris_highscore')) || 0;
+        
+        let currentPiece = null;
+        let nextPiece = null;
+        let holdPiece = null;
+        let canHold = true;
+        
+        let dropCounter = 0;
+        let dropInterval = 1000; // 毫秒/格
+        let lastTime = 0;
+        let isPaused = false;
+        let isGameOver = false;
+
+        // 炫麗粒子效果陣列
+        let particles = [];
+
+        // 方塊類別
+        class Piece {
+            constructor(type) {
+                this.type = type;
+                this.matrix = SHAPES[type];
+                this.color = THEMES[currentThemeIndex].colors[type];
+                this.x = Math.floor((COLS - this.matrix[0].length) / 2);
+                this.y = this.type === 'I' ? -1 : 0; // 讓 I 稍微上升，避免一出生就卡到頂
+            }
+        }
+
+        // 粒子發射器 (消除行時的華麗效果)
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8 - 3;
+                this.color = color;
+                this.alpha = 1;
+                this.size = Math.random() * 4 + 2;
+                this.gravity = 0.15;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.alpha -= 0.02;
+            }
+
+            draw(targetCtx) {
+                targetCtx.save();
+                targetCtx.globalAlpha = this.alpha;
+                targetCtx.fillStyle = this.color;
+                targetCtx.shadowBlur = 10;
+                targetCtx.shadowColor = this.color;
+                targetCtx.beginPath();
+                targetCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                targetCtx.fill();
+                targetCtx.restore();
+            }
+        }
+
+        // 產生粒子爆裂
+        function spawnParticles(rowIdx, color) {
+            const yPos = rowIdx * BLOCK_SIZE + BLOCK_SIZE / 2;
+            for (let c = 0; c < COLS; c++) {
+                const xPos = c * BLOCK_SIZE + BLOCK_SIZE / 2;
+                for (let i = 0; i < 4; i++) {
+                    particles.push(new Particle(xPos, yPos, color));
+                }
+            }
+        }
+
+        // 隨機獲取下一個方塊種類（採 7-bag 機制，確保方塊分佈均勻）
+        let pieceBag = [];
+        function getRandomPieceType() {
+            if (pieceBag.length === 0) {
+                pieceBag = Object.keys(SHAPES);
+                // 隨機打亂
+                for (let i = pieceBag.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [pieceBag[i], pieceBag[j]] = [pieceBag[j], pieceBag[i]];
+                }
+            }
+            return pieceBag.pop();
+        }
+
+        // 碰撞檢測
+        function collide(board, piece) {
+            const m = piece.matrix;
+            const o = piece;
+            for (let r = 0; r < m.length; ++r) {
+                for (let c = 0; c < m[r].length; ++c) {
+                    if (m[r][c] !== 0) {
+                        const boardX = o.x + c;
+                        const boardY = o.y + r;
+                        
+                        // 頂部出生點碰撞允許在螢幕上方 (y < 0) 進行，但要避免越界
+                        if (boardX < 0 || boardX >= COLS || boardY >= ROWS) {
+                            return true;
+                        }
+                        if (boardY >= 0 && board[boardY][boardX] !== 0) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        // 合併方塊至地圖
+        function merge(board, piece) {
+            piece.matrix.forEach((row, r) => {
+                row.forEach((value, c) => {
+                    if (value !== 0) {
+                        const boardY = piece.y + r;
+                        const boardX = piece.x + c;
+                        if (boardY >= 0) {
+                            board[boardY][boardX] = piece.color;
+                        }
+                    }
+                });
+            });
+        }
+
+        // 旋轉矩陣
+        function rotateMatrix(matrix, dir) {
+            // 轉置
+            const transposed = matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));
+            // 反轉
+            if (dir > 0) {
+                return transposed.map(row => row.reverse());
+            } else {
+                return transposed.reverse();
+            }
+        }
+
+        // 旋轉並包含簡易牆壁碰撞踢回機制 (Wall kick)
+        function playerRotate(dir) {
+            if (isPaused || isGameOver) return;
+            const pos = currentPiece.x;
+            let offset = 1;
+            currentPiece.matrix = rotateMatrix(currentPiece.matrix, dir);
+            
+            // 如果撞牆，嘗試向左或向右偏移
+            while (collide(board, currentPiece)) {
+                currentPiece.x += offset;
+                offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > currentPiece.matrix[0].length) {
+                    // 踢牆失敗，還原旋轉
+                    currentPiece.matrix = rotateMatrix(currentPiece.matrix, -dir);
+                    currentPiece.x = pos;
+                    return;
+                }
+            }
+            synth.playRotate();
+        }
+
+        // 玩家控制左右移動
+        function playerMove(dir) {
+            if (isPaused || isGameOver) return;
+            currentPiece.x += dir;
+            if (collide(board, currentPiece)) {
+                currentPiece.x -= dir;
+            } else {
+                synth.playMove();
+            }
+        }
+
+        // 玩家往下移動一格 (軟降)
+        function playerDrop() {
+            if (isPaused || isGameOver) return;
+            currentPiece.y++;
+            if (collide(board, currentPiece)) {
+                currentPiece.y--;
+                lockPiece();
+            } else {
+                dropCounter = 0;
+            }
+        }
+
+        // 瞬間下墜落到底部 (硬降)
+        function playerHardDrop() {
+            if (isPaused || isGameOver) return;
+            let count = 0;
+            while (!collide(board, currentPiece)) {
+                currentPiece.y++;
+                count++;
+            }
+            currentPiece.y--;
+            score += count * 2; // 硬降給予額外分數
+            lockPiece();
+            synth.playDrop();
+            
+            // 輕微畫面抖動效果
+            canvas.classList.add('translate-y-1');
+            setTimeout(() => canvas.classList.remove('translate-y-1'), 50);
+        }
+
+        // 鎖定方塊、計算消行並生成新方塊
+        function lockPiece() {
+            merge(board, currentPiece);
+            arenaSweep();
+            resetCurrentPiece();
+            canHold = true;
+        }
+
+        // 暫存方塊
+        function playerHold() {
+            if (isPaused || isGameOver || !canHold) return;
+            synth.playHold();
+            
+            if (!holdPiece) {
+                holdPiece = currentPiece.type;
+                resetCurrentPiece();
+            } else {
+                const temp = currentPiece.type;
+                // 重建當前方塊與暫存
+                currentPiece = new Piece(holdPiece);
+                holdPiece = temp;
+            }
+            canHold = false;
+            drawHold();
+        }
+
+        // 重設當前方塊 (當一個方塊鎖定後呼叫)
+        function resetCurrentPiece() {
+            currentPiece = nextPiece;
+            nextPiece = new Piece(getRandomPieceType());
+            drawNext();
+            
+            // 剛生成就碰撞 => Game Over
+            if (collide(board, currentPiece)) {
+                gameOver();
+            }
+        }
+
+        // 消行與計分
+        function arenaSweep() {
+            let rowCount = 0;
+            let clearedColors = [];
+            
+            outer: for (let y = ROWS - 1; y >= 0; --y) {
+                for (let x = 0; x < COLS; ++x) {
+                    if (board[y][x] === 0) {
+                        continue outer;
+                    }
+                }
+                
+                // 該行全滿，進行消行
+                const row = board.splice(y, 1)[0];
+                board.unshift(Array(COLS).fill(0));
+                
+                // 搜集被消行的主要方塊色供粒子效果使用
+                const colSample = row.find(c => c !== 0) || '#a855f7';
+                spawnParticles(y, colSample);
+                
+                rowCount++;
+                y++; // 補回列索引以重複檢測新落下的行
+            }
+            
+            if (rowCount > 0) {
+                // 俄羅斯方塊經典分數：1行=100, 2行=300, 3行=500, 4行(Tetris!)=800
+                const scoreTable = [0, 100, 300, 500, 800];
+                const baseScore = scoreTable[rowCount] || 800;
+                score += baseScore * level;
+                lines += rowCount;
+                
+                // 每消 10 行提升一級，並加快下降速度
+                const nextLevel = Math.floor(lines / 10) + 1;
+                if (nextLevel > level) {
+                    level = nextLevel;
+                    dropInterval = Math.max(100, 1000 - (level - 1) * 90); // 隨等級加速
+                    synth.playLevelUp();
+                } else {
+                    synth.playLineClear(rowCount);
+                }
+                
+                // 更新 DOM 分數顯示
+                updateUI();
+                
+                // 檢查是否突破最高分
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('neo_tetris_highscore', highScore);
+                    document.getElementById('highScoreVal').innerText = formatScore(highScore);
+                }
+            }
+        }
+
+        // 計算投影位置並繪製
+        function drawGhostPiece() {
+            if (!currentPiece) return;
+            
+            // 複製一個當前方塊來計算最低落點
+            let ghost = {
+                x: currentPiece.x,
+                y: currentPiece.y,
+                matrix: currentPiece.matrix
+            };
+            
+            while (!collide(board, ghost)) {
+                ghost.y++;
+            }
+            ghost.y--; // 退回一步
+            
+            // 繪製虛線或半透明投影
+            if (ghost.y > currentPiece.y) {
+                ctx.save();
+                ghost.matrix.forEach((row, r) => {
+                    row.forEach((value, c) => {
+                        if (value !== 0) {
+                            const gy = ghost.y + r;
+                            const gx = ghost.x + c;
+                            if (gy >= 0) {
+                                // 霓虹投影特效
+                                ctx.strokeStyle = currentPiece.color;
+                                ctx.lineWidth = 2;
+                                ctx.globalAlpha = 0.35;
+                                ctx.shadowBlur = 4;
+                                ctx.shadowColor = currentPiece.color;
+                                
+                                // 繪製方塊空心矩形
+                                ctx.strokeRect(
+                                    gx * BLOCK_SIZE + 2, 
+                                    gy * BLOCK_SIZE + 2, 
+                                    BLOCK_SIZE - 4, 
+                                    BLOCK_SIZE - 4
+                                );
+                            }
+                        }
+                    });
+                });
+                ctx.restore();
+            }
+        }
+
+        // 核心渲染繪製函數
+        function draw() {
+            const currentTheme = THEMES[currentThemeIndex];
+            
+            // 清理背景
+            ctx.fillStyle = currentTheme.gridBg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 繪製格線
+            ctx.strokeStyle = currentTheme.gridLine;
+            ctx.lineWidth = 1;
+            for (let x = 0; x <= canvas.width; x += BLOCK_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= canvas.height; y += BLOCK_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // 繪製固定的地圖方塊
+            drawMatrix(board, {x: 0, y: 0});
+            
+            // 繪製影子投影方塊
+            drawGhostPiece();
+
+            // 繪製目前落下的方塊
+            if (currentPiece) {
+                drawMatrix(currentPiece.matrix, {x: currentPiece.x, y: currentPiece.y}, currentPiece.color);
+            }
+
+            // 更新與繪製消行粒子
+            ctx.save();
+            particles.forEach((p, idx) => {
+                p.update();
+                p.draw(ctx);
+                if (p.alpha <= 0) {
+                    particles.splice(idx, 1);
+                }
+            });
+            ctx.restore();
+        }
+
+        // 輔助繪製單個方塊矩陣
+        function drawMatrix(matrix, offset, customColor = null) {
+            matrix.forEach((row, r) => {
+                row.forEach((value, c) => {
+                    if (value !== 0) {
+                        const x = (offset.x + c) * BLOCK_SIZE;
+                        const y = (offset.y + r) * BLOCK_SIZE;
+                        
+                        // 確保不畫在畫布上方界限外
+                        if (y >= 0) {
+                            const blockColor = customColor || value;
+                            ctx.save();
+                            
+                            // 主體填滿
+                            ctx.fillStyle = blockColor;
+                            
+                            // 霓虹光暈 (只針對當前移動的方塊與霓虹主題啟用，優化效能)
+                            if (currentThemeIndex === 0) {
+                                ctx.shadowBlur = 12;
+                                ctx.shadowColor = blockColor;
+                            }
+                            
+                            // 繪製圓角方塊
+                            drawRoundRect(ctx, x + 1.5, y + 1.5, BLOCK_SIZE - 3, BLOCK_SIZE - 3, 5);
+                            ctx.fill();
+                            
+                            // 高光立體白邊
+                            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                            ctx.lineWidth = 1.5;
+                            ctx.stroke();
+                            
+                            ctx.restore();
+                        }
+                    }
+                });
+            });
+        }
+
+        // 圓角矩形路徑輔助
+        function drawRoundRect(c, x, y, width, height, radius) {
+            c.beginPath();
+            c.moveTo(x + radius, y);
+            c.lineTo(x + width - radius, y);
+            c.quadraticCurveTo(x + width, y, x + width, y + radius);
+            c.lineTo(x + width, y + height - radius);
+            c.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            c.lineTo(x + radius, y + height);
+            c.quadraticCurveTo(x, y + height, x, y + height - radius);
+            c.lineTo(x, y + radius);
+            c.quadraticCurveTo(x, y, x + radius, y);
+            c.closePath();
+        }
+
+        // 繪製下一個方塊畫布
+        function drawNext() {
+            nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+            if (!nextPiece) return;
+            
+            const matrix = nextPiece.matrix;
+            const size = 18; // 小尺寸
+            const mWidth = matrix[0].length * size;
+            const mHeight = matrix.length * size;
+            const offsetX = (nextCanvas.width - mWidth) / 2;
+            const offsetY = (nextCanvas.height - mHeight) / 2;
+            
+            nextCtx.save();
+            nextCtx.fillStyle = nextPiece.color;
+            if (currentThemeIndex === 0) {
+                nextCtx.shadowBlur = 10;
+                nextCtx.shadowColor = nextPiece.color;
+            }
+            matrix.forEach((row, r) => {
+                row.forEach((val, c) => {
+                    if (val !== 0) {
+                        drawRoundRect(nextCtx, offsetX + c * size + 1, offsetY + r * size + 1, size - 2, size - 2, 4);
+                        nextCtx.fill();
+                        nextCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+                        nextCtx.stroke();
+                    }
+                });
+            });
+            nextCtx.restore();
+        }
+
+        // 繪製被暫存的方塊
+        function drawHold() {
+            holdCtx.clearRect(0, 0, holdCanvas.width, holdCanvas.height);
+            if (!holdPiece) return;
+            
+            const matrix = SHAPES[holdPiece];
+            const size = 18;
+            const mWidth = matrix[0].length * size;
+            const mHeight = matrix.length * size;
+            const offsetX = (holdCanvas.width - mWidth) / 2;
+            const offsetY = (holdCanvas.height - mHeight) / 2;
+            const color = THEMES[currentThemeIndex].colors[holdPiece];
+            
+            holdCtx.save();
+            holdCtx.fillStyle = color;
+            if (currentThemeIndex === 0) {
+                holdCtx.shadowBlur = 10;
+                holdCtx.shadowColor = color;
+            }
+            matrix.forEach((row, r) => {
+                row.forEach((val, c) => {
+                    if (val !== 0) {
+                        drawRoundRect(holdCtx, offsetX + c * size + 1, offsetY + r * size + 1, size - 2, size - 2, 4);
+                        holdCtx.fill();
+                        holdCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+                        holdCtx.stroke();
+                    }
+                });
+            });
+            holdCtx.restore();
+        }
+
+        // 主循環
+        function update(time = 0) {
+            const deltaTime = time - lastTime;
+            lastTime = time;
+
+            if (!isPaused && !isGameOver) {
+                dropCounter += deltaTime;
+                if (dropCounter > dropInterval) {
+                    playerDrop();
+                }
+                draw();
+            } else if (particles.length > 0) {
+                // 即便暫停，若有粒子爆破，仍保持動畫更新直至消失
+                draw();
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        // 暫停與恢復
+        function togglePause() {
+            if (isGameOver) return;
+            isPaused = !isPaused;
+            
+            const overlay = document.getElementById('overlayScreen');
+            const pauseBtnText = document.getElementById('pauseBtnText');
+            
+            if (isPaused) {
+                synth.stopBGM();
+                overlay.classList.remove('hidden');
+                document.getElementById('overlayIconTag').className = "fas fa-play text-white text-xl ml-1";
+                document.getElementById('overlayTitle').innerText = "PAUSED 遊戲暫停";
+                document.getElementById('overlayTitle').className = "font-arcade text-base tracking-widest text-cyan-400 mb-2";
+                document.getElementById('overlayDesc').innerText = "深呼吸，看好下一步，隨時可以點擊下方按鈕或按鍵 P 繼續！";
+                document.getElementById('overlayBtn').innerText = "恢復遊戲 RESUME";
+                pauseBtnText.innerText = "繼續";
+            } else {
+                overlay.classList.add('hidden');
+                pauseBtnText.innerText = "暫停";
+                synth.startBGM();
+            }
+        }
+
+        // 遊戲結束
+        function gameOver() {
+            isGameOver = true;
+            synth.stopBGM();
+            synth.playGameOver();
+            
+            const overlay = document.getElementById('overlayScreen');
+            overlay.classList.remove('hidden');
+            document.getElementById('overlayIconTag').className = "fas fa-skull text-white text-xl";
+            document.getElementById('overlayTitle').innerText = "GAME OVER";
+            document.getElementById('overlayTitle').className = "font-arcade text-base tracking-widest text-pink-500 mb-2";
+            document.getElementById('overlayDesc').innerText = `很遺憾，方塊已疊滿！您的最終得分是：${score} 分。再接再厲！`;
+            document.getElementById('overlayBtn').innerText = "重新開始 RESTART";
+        }
+
+        // 重開局初始化
+        function resetGame() {
+            board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+            score = 0;
+            lines = 0;
+            level = 1;
+            dropInterval = 1000;
+            dropCounter = 0;
+            isGameOver = false;
+            isPaused = false;
+            holdPiece = null;
+            canHold = true;
+            
+            document.getElementById('overlayScreen').classList.add('hidden');
+            document.getElementById('pauseBtnText').innerText = "暫停";
+            
+            currentPiece = new Piece(getRandomPieceType());
+            nextPiece = new Piece(getRandomPieceType());
+            
+            updateUI();
+            drawHold();
+            drawNext();
+            
+            synth.stopBGM();
+            synth.startBGM();
+        }
+
+        // 分數補零
+        function formatScore(num) {
+            return String(num).padStart(6, '0');
+        }
+
+        function updateUI() {
+            document.getElementById('scoreVal').innerText = formatScore(score);
+            document.getElementById('linesVal').innerText = lines;
+            document.getElementById('levelVal').innerText = level;
+            document.getElementById('highScoreVal').innerText = formatScore(highScore);
+        }
+
+        // 調整畫布大小 (回應式適應)
+        function resizeCanvas() {
+            const containerHeight = window.innerHeight;
+            // 根據視窗尺寸動態配置 BLOCK_SIZE
+            if (containerHeight < 700) {
+                BLOCK_SIZE = 24;
+            } else if (containerHeight < 850) {
+                BLOCK_SIZE = 28;
+            } else {
+                BLOCK_SIZE = 30;
+            }
+            
+            canvas.width = COLS * BLOCK_SIZE;
+            canvas.height = ROWS * BLOCK_SIZE;
+            draw();
+        }
+
+        // --- 事件綁定 ---
+        window.addEventListener('resize', resizeCanvas);
+
+        // 鍵盤監聽
+        window.addEventListener('keydown', event => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].indexOf(event.key) > -1) {
+                event.preventDefault(); // 防止網頁滾動
+            }
+
+            switch(event.key) {
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    playerMove(-1);
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    playerMove(1);
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    playerDrop();
+                    break;
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    playerRotate(1);
+                    break;
+                case ' ':
+                    playerHardDrop();
+                    break;
+                case 'c':
+                case 'C':
+                case 'Shift':
+                    playerHold();
+                    break;
+                case 'p':
+                case 'P':
+                case 'Escape':
+                    togglePause();
+                    break;
+            }
+        });
+
+        // 按鈕點擊事件
+        document.getElementById('overlayBtn').addEventListener('click', () => {
+            if (isGameOver) {
+                resetGame();
+            } else {
+                togglePause();
+            }
+        });
+
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (confirm("確定要放棄當前進度並重新開始嗎？")) {
+                resetGame();
+            }
+        });
+
+        // 聲音開關控制
+        const soundToggle = document.getElementById('soundToggle');
+        const soundIcon = document.getElementById('soundIcon');
+        soundToggle.addEventListener('click', () => {
+            synth.soundEnabled = !synth.soundEnabled;
+            if (synth.soundEnabled) {
+                soundIcon.className = "fas fa-volume-up text-cyan-400";
+            } else {
+                soundIcon.className = "fas fa-volume-mute text-slate-500";
+            }
+        });
+
+        const musicToggle = document.getElementById('musicToggle');
+        const musicIcon = document.getElementById('musicIcon');
+        musicToggle.addEventListener('click', () => {
+            synth.musicEnabled = !synth.musicEnabled;
+            if (synth.musicEnabled) {
+                musicIcon.className = "fas fa-music text-pink-400";
+                synth.startBGM();
+            } else {
+                musicIcon.className = "fas fa-music text-slate-500";
+                synth.stopBGM();
+            }
+        });
+
+        // 視覺主題切換
+        document.getElementById('themeToggleBtn').addEventListener('click', () => {
+            currentThemeIndex = (currentThemeIndex + 1) % THEMES.length;
+            const currentTheme = THEMES[currentThemeIndex];
+            
+            // 更新方塊顏色
+            if (currentPiece) currentPiece.color = currentTheme.colors[currentPiece.type];
+            if (nextPiece) nextPiece.color = currentTheme.colors[nextPiece.type];
+            
+            // 重新繪製
+            drawHold();
+            drawNext();
+            draw();
+            
+            // 顯示當前主題名稱提示
+            const msgBox = document.createElement('div');
+            msgBox.className = "fixed top-24 left-1/2 -translate-x-1/2 py-2 px-6 bg-purple-600/90 border border-purple-400/50 rounded-full font-bold text-xs shadow-lg backdrop-blur-sm z-50 text-center animate-fade-in";
+            msgBox.innerText = `視覺主題：${currentTheme.name}`;
+            document.body.appendChild(msgBox);
+            setTimeout(() => msgBox.remove(), 2000);
+        });
+
+        // 幫助彈窗控制
+        const helpModal = document.getElementById('helpModal');
+        document.getElementById('helpToggle').addEventListener('click', () => {
+            helpModal.classList.remove('hidden');
+        });
+        document.getElementById('closeHelpBtn').addEventListener('click', () => {
+            helpModal.classList.add('hidden');
+        });
+        document.getElementById('helpOkBtn').addEventListener('click', () => {
+            helpModal.classList.add('hidden');
+            // 嘗試啟動音頻
+            synth.init();
+        });
+
+        // 行動端按鈕長按與高反應度事件綁定
+        function bindTouchButton(id, action) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            
+            let pressInterval = null;
+            let isHolding = false;
+
+            const handlePressStart = (e) => {
+                e.preventDefault();
+                action();
+                
+                // 針對方向鍵，支援短暫延遲後的快速重複觸發 (Autofire)
+                if (id === 'ctrlLeft' || id === 'ctrlRight' || id === 'ctrlSoftDrop') {
+                    isHolding = true;
+                    pressInterval = setTimeout(() => {
+                        if (isHolding) {
+                            pressInterval = setInterval(action, 80);
+                        }
+                    }, 280); // 延遲 280ms 開始連點
+                }
+            };
+
+            const handlePressEnd = () => {
+                isHolding = false;
+                if (pressInterval) {
+                    clearTimeout(pressInterval);
+                    clearInterval(pressInterval);
+                    pressInterval = null;
+                }
+            };
+
+            btn.addEventListener('mousedown', handlePressStart);
+            btn.addEventListener('mouseup', handlePressEnd);
+            btn.addEventListener('mouseleave', handlePressEnd);
+
+            btn.addEventListener('touchstart', handlePressStart, { passive: false });
+            btn.addEventListener('touchend', handlePressEnd, { passive: false });
+        }
+
+        bindTouchButton('ctrlLeft', () => playerMove(-1));
+        bindTouchButton('ctrlRight', () => playerMove(1));
+        bindTouchButton('ctrlSoftDrop', () => playerDrop());
+        bindTouchButton('ctrlHardDrop', () => playerHardDrop());
+        bindTouchButton('ctrlRotate', () => playerRotate(1));
+        bindTouchButton('ctrlRotateCCW', () => playerRotate(-1));
+        bindTouchButton('ctrlHold', () => playerHold());
+
+
+        // 頁面初次載入
+        window.onload = function() {
+            resizeCanvas();
+            
+            // 載入預設分數
+            updateUI();
+            
+            // 初始化方塊並開啟渲染 loop
+            currentPiece = new Piece(getRandomPieceType());
+            nextPiece = new Piece(getRandomPieceType());
+            drawNext();
+            drawHold();
+            
+            requestAnimationFrame(update);
+            
+            // 初次進入先跳出歡迎與操作說明
+            setTimeout(() => {
+                helpModal.classList.remove('hidden');
+            }, 300);
+        };
+    </script>
+</body>
+</html>
