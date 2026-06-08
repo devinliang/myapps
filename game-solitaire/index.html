@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>皇家新接龍 Royal FreeCell</title>
   <style>
+    /* ==========================================
+       CSS 變數與基礎設定
+       ========================================== */
     :root {
       --card-width: clamp(65px, 8.5vw, 95px);
       --card-height: calc(var(--card-width) * 1.45);
@@ -241,43 +244,83 @@
     .card.red { color: var(--red-color); }
     .card.black { color: var(--black-color); }
 
-    /* 角部花色與數值 */
+    /* ==========================================
+       👑 角部花色與數值對角排列樣式 (對角靠邊對齊)
+       ========================================== */
     .card-corner {
       display: flex;
       flex-direction: column;
       align-items: center;
       line-height: 1;
       font-weight: 800;
-      font-size: clamp(0.7rem, 1.2vw, 1.1rem);
+      font-size: clamp(0.7rem, 1.1vw, 1.05rem);
+      width: fit-content; /* 防止拉伸，確保完美對角靠邊 */
     }
     .card-corner span {
-      font-size: clamp(0.7rem, 1.1vw, 1rem);
+      font-size: clamp(0.65rem, 1vw, 0.95rem);
       margin-top: 2px;
     }
 
+    /* 左上角靠左對齊 */
+    .card-corner.top {
+      align-self: flex-start;
+    }
+
+    /* 右下角靠右對齊並翻轉 180 度 */
     .card-corner.bottom {
       transform: rotate(180deg);
       align-self: flex-end;
     }
 
-    /* 卡面中央精美裝飾 */
-    .card-center {
+    /* ==========================================
+       👑 牌面花色與幾何圖形排列 (CSS Grid 幾何)
+       ========================================== */
+    .pip-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      width: 65%;
+      height: 68%;
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      justify-items: center;
+      align-items: center;
       pointer-events: none;
+    }
+
+    /* 符號基本動態大小 */
+    .pip {
+      font-size: clamp(0.65rem, 1.05vw, 0.95rem);
+      line-height: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      width: 60%;
-      height: 50%;
     }
 
-    /* 中央單一大符號 (適合 A, 2-10) */
-    .suit-large {
+    /* 卡牌下半部的符號必須顛倒 180 度 */
+    .pip.rotated {
+      transform: rotate(180deg);
+    }
+
+    /* 當數字較大、點數較密時，稍微調小符號以防擠壓 */
+    .pip-grid.val-8 .pip,
+    .pip-grid.val-9 .pip,
+    .pip-grid.val-10 .pip {
+      font-size: clamp(0.55rem, 0.9vw, 0.85rem);
+    }
+
+    /* A牌 (Ace) 的特殊單一巨型花色 */
+    .pip-grid.val-1 {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+      width: 100%;
+      height: 100%;
+    }
+    .pip-grid.val-1 .pip {
       font-size: clamp(2rem, 3.5vw, 3.2rem);
-      filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.15));
+      filter: drop-shadow(0px 1.5px 1.5px rgba(0,0,0,0.15));
     }
 
     /* 黑桃 A 的特殊皇家印記 */
@@ -606,6 +649,80 @@
       SPADE_ACE: `<svg viewBox="0 0 80 100"><path d="M40 20 C25 45, 15 55, 15 68 C15 80, 28 85, 40 78 C52 85, 65 80, 65 68 C65 55, 55 45, 40 20 Z" fill="#1a1a1a" stroke="#d4af37" stroke-width="1.5"/><path d="M40 70 L30 90 L50 90 Z" fill="#1a1a1a"/><path d="M 28 15 Q 40 -5, 52 15 Z" fill="#ffd700" opacity="0.8"/><circle cx="40" cy="55" r="4" fill="#ffd700"/></svg>`
     };
 
+    // --- 撲克牌數字 3x5 幾何網格佈局定義 (S 代表有符號，"" 代表空位) ---
+    const PIP_CONFIGS = {
+      1: [
+        "", "", "",
+        "", "", "",
+        "", "S", "",
+        "", "", "",
+        "", "", ""
+      ],
+      2: [
+        "", "S", "",
+        "", "", "",
+        "", "", "",
+        "", "", "",
+        "", "S", ""
+      ],
+      3: [
+        "", "S", "",
+        "", "", "",
+        "", "S", "",
+        "", "", "",
+        "", "S", ""
+      ],
+      4: [
+        "S", "", "S",
+        "", "", "",
+        "", "", "",
+        "", "", "",
+        "S", "", "S"
+      ],
+      5: [
+        "S", "", "S",
+        "", "", "",
+        "", "S", "",
+        "", "", "",
+        "S", "", "S"
+      ],
+      6: [
+        "S", "", "S",
+        "", "", "",
+        "S", "", "S",
+        "", "", "",
+        "S", "", "S"
+      ],
+      7: [
+        "S", "", "S",
+        "", "S", "",
+        "S", "", "S",
+        "", "", "",
+        "S", "", "S"
+      ],
+      8: [
+        "S", "", "S",
+        "", "S", "",
+        "S", "", "S",
+        "", "S", "",
+        "S", "", "S"
+      ],
+      9: [
+        "S", "", "S",
+        "S", "", "S",
+        "", "S", "",
+        "S", "", "S",
+        "S", "", "S"
+      ],
+      10: [
+        "S", "", "S",
+        "S", "S", "S",
+        "", "", "",
+        "S", "S", "S",
+        "S", "", "S"
+      ]
+    };
+
     // --- 全域變數定義 ---
     const SUITS = [
       { name: 'club', symbol: '♣', color: 'black' },
@@ -631,7 +748,6 @@
 
     function initGameOnLoad() {
       setupUIListeners();
-      // 隨機選一個合法的微軟局號，排除不合法的死關 #11982
       let initialSeed = Math.floor(Math.random() * 100000) + 1;
       if (initialSeed === 11982) initialSeed = 1;
       document.getElementById('game-id-input').value = initialSeed;
@@ -646,7 +762,6 @@
 
     function setupUIListeners() {
       document.getElementById('btn-restart').onclick = function() {
-        // 生成全新局號，過濾無解局號
         let seed = Math.floor(Math.random() * 100000) + 1;
         while (seed === 11982) {
           seed = Math.floor(Math.random() * 100000) + 1;
@@ -655,7 +770,6 @@
         startNewGameBySeed(seed);
       };
 
-      // 手動輸入局號後按下 Enter 或變更數值即時重新發牌
       document.getElementById('game-id-input').onchange = function() {
         let seed = parseInt(this.value, 10);
         if (isNaN(seed) || seed < 1) seed = 1;
@@ -669,7 +783,6 @@
       document.getElementById('btn-rules').onclick = showRules;
       document.getElementById('btn-sound').onclick = toggleSound;
 
-      // 監聽結算區點擊（事件代理防止重繪時監聽器丟失）
       document.getElementById('foundations-group').onclick = function(e) {
         const cell = e.target.closest('.cell.foundation');
         if (!cell) return;
@@ -714,11 +827,9 @@
       currentGameNumber = seed;
       updateDashboard();
 
-      // 1. 初始化標準微軟發牌陣列 (Club ♣, Diamond ♦, Heart ♥, Spade ♠ 順序)
       const suitsOrder = ['club', 'diamond', 'heart', 'spade'];
       let canonicalDeck = [];
       
-      // A-K 按順序且依照 Club -> Diamond -> Heart -> Spade 花色順序塞入
       for (let val = 1; val <= 13; val++) {
         suitsOrder.forEach(suitName => {
           const suitObj = SUITS.find(s => s.name === suitName);
@@ -731,15 +842,12 @@
         });
       }
 
-      // 2. 微軟 LCG PRNG 微解碼機制
       let randState = seed;
       function nextMicrosoftRand() {
-        // 微軟 C 語言編譯器標準：state = (state * 214013 + 2531011) mod 2^31
         randState = (randState * 214013 + 2531011) & 0x7FFFFFFF;
         return (randState >> 16) & 0x7FFF;
       }
 
-      // 3. 經典洗牌迴圈：將選中之卡牌與當前最後一元素進行位置置換
       let remaining = 52;
       let shuffledDeck = [];
       while (remaining > 0) {
@@ -751,7 +859,6 @@
         remaining--;
       }
 
-      // 4. 重設空槽與分發牌到 8 個工作縱列
       gameState.freeCells = [null, null, null, null];
       gameState.foundations = { spade: 0, heart: 0, diamond: 0, club: 0 };
       gameState.tableau = [[], [], [], [], [], [], [], []];
@@ -760,7 +867,6 @@
         gameState.tableau[idx % 8].push(card);
       });
 
-      // 5. 渲染盤面，只在此處啟用 dealing 緩動動畫
       renderBoard(true);
       startTimer();
       SoundEffect.play('deal');
@@ -800,7 +906,6 @@
             handleCardDoubleClick('tableau', colIdx, cardIdx);
           };
 
-          // ⚡ 只在開局有 `withDealDelay` 狀態下，才加上登場動畫 class
           if (withDealDelay) {
             cardEl.classList.add('dealing');
             cardEl.style.animationDelay = `${(colIdx * 0.04) + (cardIdx * 0.02)}s`;
@@ -870,12 +975,11 @@
       });
     }
 
-    // --- 製造精緻撲克牌的 DOM 物件 ---
+    // --- 製造精緻撲克牌的 DOM 物件 (包含數字幾何花色排列) ---
     function createCardDOM(card, idx, totalLen) {
       const cardDiv = document.createElement('div');
       cardDiv.className = `card ${card.color}`;
       
-      // 使用 CSS 變數進行安全的響應式重疊定位
       cardDiv.style.top = `calc(var(--card-overlap) * ${idx})`;
       cardDiv.style.zIndex = idx + 10;
 
@@ -896,6 +1000,7 @@
 
       let centerHTML = '';
       if (card.value === 1 && card.suit === 'spade') {
+        // 黑桃 A 渲染特別版奢華 SVG
         centerHTML = `<div class="card-center spade-ace-decor">${SVG_ROYAL.SPADE_ACE}</div>`;
       } else if (card.value === 11) {
         centerHTML = `<div class="card-center royal-portrait">${SVG_ROYAL.J}</div>`;
@@ -904,7 +1009,22 @@
       } else if (card.value === 13) {
         centerHTML = `<div class="card-center royal-portrait">${SVG_ROYAL.K}</div>`;
       } else {
-        centerHTML = `<div class="card-center"><span class="suit-large">${card.symbol}</span></div>`;
+        // ⚡ 1 ~ 10 點：動態排列符合點數之幾何符號 (Pips)
+        const pipsLayout = PIP_CONFIGS[card.value];
+        if (pipsLayout) {
+          centerHTML = `<div class="pip-grid val-${card.value}">`;
+          pipsLayout.forEach((pipType, index) => {
+            if (pipType === "S") {
+              // 實體卡牌下半部（第 4、5 列，即 index >= 9）的符號自動顛倒 180 度，維持鏡像對稱
+              const isRotated = index >= 9;
+              const rotateClass = isRotated ? 'rotated' : '';
+              centerHTML += `<span class="pip ${rotateClass}">${card.symbol}</span>`;
+            } else {
+              centerHTML += `<span></span>`; // 空網格
+            }
+          });
+          centerHTML += `</div>`;
+        }
       }
 
       cardDiv.innerHTML = topLeft + centerHTML + bottomRight;
@@ -1119,6 +1239,7 @@
       SoundEffect.play('error');
     }
 
+    // --- 實作資料移動變更 ---
     function executeMove(from, to) {
       let cardsToMove = [];
 
@@ -1145,6 +1266,7 @@
     function safeAutoCollect() {
       let changed = false;
 
+      // 取得相反顏色的另外兩個花色名稱
       function getOppositeSuits(suit) {
         if (suit === 'spade' || suit === 'club') return ['heart', 'diamond'];
         return ['spade', 'club'];
