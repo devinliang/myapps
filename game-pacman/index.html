@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Retro Arcade - Pacman</title>
+    <!-- 引入 Tailwind CSS 與 Font Awesome 圖標 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google 像素字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background-color: #05050b;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        .pixel-font {
+            font-family: 'Press Start 2P', cursive;
+        }
+        /* CRT 螢幕與掃描線效果 */
+        .crt::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            aspect-ratio: revert;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+        /* 螢幕微弱閃爍與弧度 */
+        .crt {
+            animation: textShadow 1.6s infinite;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8), 0 0 20px rgba(0, 238, 255, 0.2);
+        }
+        @keyframes textShadow {
+            0% { text-shadow: 0.438914px 0 1px rgba(0,30,255,0.5), -0.438914px 0 1px rgba(255,0,80,0.3), 0 0 3px; }
+            50% { text-shadow: 0.8px 0 2px rgba(0,30,255,0.4), -0.8px 0 2px rgba(255,0,80,0.4), 0 0 3px; }
+            100% { text-shadow: 0.438914px 0 1px rgba(0,30,255,0.5), -0.438914px 0 1px rgba(255,0,80,0.3), 0 0 3px; }
+        }
+        /* 霓虹發光邊框 */
+        .neon-border {
+            box-shadow: 0 0 10px #00f3ff, inset 0 0 10px #00f3ff;
+            border: 3px solid #00f3ff;
+        }
+        .neon-text-blue {
+            text-shadow: 0 0 5px #00f3ff, 0 0 10px #00f3ff;
+        }
+        .neon-text-yellow {
+            text-shadow: 0 0 5px #ffe600, 0 0 10px #ffe600;
+        }
+        /* 虛擬搖桿按鈕發光 */
+        .control-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(0, 243, 255, 0.3);
+            transition: all 0.1s ease;
+        }
+        .control-btn:active {
+            background: rgba(0, 243, 255, 0.3);
+            box-shadow: 0 0 15px #00f3ff;
+            transform: scale(0.92);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between min-h-screen p-2 md:p-4 text-white overflow-x-hidden">
+
+    <!-- 頂部街機裝飾標題 -->
+    <header class="w-full max-w-lg text-center my-1 z-10 flex flex-col items-center">
+        <div class="flex items-center justify-between w-full px-2 mb-1">
+            <span class="pixel-font text-[10px] text-gray-500 tracking-widest"><i class="fa-solid fa-gamepad mr-1"></i>CABINET N° 804</span>
+            <div class="flex gap-3">
+                <button id="soundToggle" class="text-xs text-yellow-400 hover:text-yellow-300 focus:outline-none flex items-center gap-1 transition-all">
+                    <i class="fa-solid fa-volume-high" id="soundIcon"></i> SOUND ON
+                </button>
+                <button id="cheatBtn" class="text-[8px] pixel-font text-red-500 hover:text-red-400 opacity-40 focus:outline-none">
+                    GOD MODE
+                </button>
+            </div>
+        </div>
+        <div class="pixel-font text-xl md:text-2xl font-bold tracking-widest text-yellow-400 neon-text-yellow animate-pulse mb-1">
+            PAC-MAN <span class="text-cyan-400 neon-text-blue text-sm">RETRO</span>
+        </div>
+    </header>
+
+    <!-- 街機框體主螢幕 -->
+    <main class="w-full max-w-md flex flex-col items-center bg-black rounded-3xl p-4 md:p-5 neon-border crt relative">
+        
+        <!-- 計分板 -->
+        <div class="w-full flex justify-between items-center mb-3 px-1 border-b border-gray-800 pb-2 z-10">
+            <div>
+                <p class="pixel-font text-[9px] text-gray-400">1UP SCORE</p>
+                <p id="scoreVal" class="pixel-font text-base text-yellow-300 mt-1">00000</p>
+            </div>
+            <div class="text-center">
+                <p class="pixel-font text-[9px] text-gray-400">HIGH SCORE</p>
+                <p id="highScoreVal" class="pixel-font text-base text-cyan-400 mt-1">00000</p>
+            </div>
+            <div class="text-right">
+                <p class="pixel-font text-[9px] text-gray-400">LIVES</p>
+                <div id="livesContainer" class="flex gap-1 justify-end mt-1 text-yellow-400 text-sm">
+                    <!-- 動態生成生命值圖示 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 遊戲畫布容器 -->
+        <div class="relative w-full aspect-square flex items-center justify-center bg-black rounded-lg overflow-hidden border border-gray-900">
+            <canvas id="gameCanvas" class="block rounded-lg"></canvas>
+            
+            <!-- 遊戲就緒/暫停/結束 覆蓋層 -->
+            <div id="gameOverlay" class="absolute inset-0 bg-black/85 flex flex-col items-center justify-center text-center z-30 transition-all duration-300">
+                <div id="overlayContent" class="p-6 max-w-xs flex flex-col items-center">
+                    <h2 id="overlayTitle" class="pixel-font text-xl text-yellow-400 neon-text-yellow mb-4 animate-bounce">INSERT COIN</h2>
+                    <p id="overlayDesc" class="text-sm text-gray-300 mb-6">按下按鈕或空白鍵開始這場經典的冒險！</p>
+                    <button id="startBtn" class="pixel-font text-xs bg-yellow-400 text-black font-extrabold py-3 px-6 rounded-md hover:bg-yellow-300 shadow-[0_0_15px_rgba(254,240,138,0.6)] active:scale-95 transition-all">
+                        START GAME
+                    </button>
+                    <!-- 快捷按鍵提示 -->
+                    <span class="text-[10px] text-gray-500 mt-3 hidden md:inline">鍵盤 WASD / 方向鍵 控制</span>
+                </div>
+            </div>
+
+            <!-- 幽靈嚇倒倒數條 / 威力豆倒數 -->
+            <div id="frightenedTimerBar" class="absolute top-0 left-0 h-1 bg-cyan-400 transition-all duration-100 w-0 z-20 shadow-[0_0_8px_#00ffff]"></div>
+        </div>
+
+        <!-- 水果生成提示與關卡資訊 -->
+        <div class="w-full flex justify-between items-center mt-3 text-xs text-gray-400 px-1">
+            <div class="flex items-center gap-1">
+                <span>STAGE:</span>
+                <span id="levelVal" class="pixel-font text-yellow-300">1</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <span id="statusMessage" class="animate-pulse text-[10px] text-cyan-400 font-semibold">Ready Player One</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span>BONUS:</span>
+                <span id="bonusFruit" class="text-base">🍒</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- 虛擬控制手柄 (行動裝置專屬，桌機隱藏) -->
+    <section class="w-full max-w-sm mt-3 mb-1 flex flex-col items-center justify-center md:hidden">
+        <div class="grid grid-cols-3 gap-2 w-32 aspect-square relative">
+            <div></div>
+            <!-- 上 -->
+            <button id="btnUp" class="control-btn rounded-t-xl flex items-center justify-center text-cyan-400 active:text-yellow-300">
+                <i class="fa-solid fa-caret-up text-xl"></i>
+            </button>
+            <div></div>
+
+            <!-- 左 -->
+            <button id="btnLeft" class="control-btn rounded-l-xl flex items-center justify-center text-cyan-400 active:text-yellow-300">
+                <i class="fa-solid fa-caret-left text-xl"></i>
+            </button>
+            <!-- 中間圓心裝飾 -->
+            <div class="flex items-center justify-center">
+                <div class="w-3 h-3 rounded-full bg-cyan-500 animate-ping"></div>
+            </div>
+            <!-- 右 -->
+            <button id="btnRight" class="control-btn rounded-r-xl flex items-center justify-center text-cyan-400 active:text-yellow-300">
+                <i class="fa-solid fa-caret-right text-xl"></i>
+            </button>
+
+            <div></div>
+            <!-- 下 -->
+            <button id="btnDown" class="control-btn rounded-b-xl flex items-center justify-center text-cyan-400 active:text-yellow-300">
+                <i class="fa-solid fa-caret-down text-xl"></i>
+            </button>
+            <div></div>
+        </div>
+        <p class="text-[10px] text-gray-500 mt-2">或在畫布上直接向上下左右「滑動」控制</p>
+    </section>
+
+    <!-- 頁尾宣告與連結 -->
+    <footer class="text-center text-[10px] text-gray-600 mt-2 w-full z-10 flex justify-center items-center gap-1">
+        <span>© 1980 - 2026 RETRO CABINETS • MADE FOR PURE FUN</span>
+    </footer>
+
+    <script>
+        // --- 8-bit 音效合成器 (使用 Web Audio API) ---
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playTone(freq, type, duration, volume = 0.1, delay = 0) {
+                if (!this.enabled) return;
+                this.init();
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = type; // 'sine', 'square', 'sawtooth', 'triangle'
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+                    
+                    gain.gain.setValueAtTime(volume, this.ctx.currentTime + delay);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + delay + duration);
+                    
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    
+                    osc.start(this.ctx.currentTime + delay);
+                    osc.stop(this.ctx.currentTime + delay + duration);
+                } catch(e) {
+                    console.warn("Audio Context Failed:", e);
+                }
+            }
+
+            // 吃普通小豆豆
+            playChomp() {
+                this.playTone(450, 'triangle', 0.08, 0.08);
+                setTimeout(() => this.playTone(300, 'triangle', 0.08, 0.08), 40);
+            }
+
+            // 吃大能量豆
+            playPowerUp() {
+                this.playTone(200, 'sawtooth', 0.15, 0.05);
+                setTimeout(() => this.playTone(400, 'sawtooth', 0.15, 0.05), 50);
+                setTimeout(() => this.playTone(600, 'sawtooth', 0.25, 0.05), 100);
+            }
+
+            // 遊戲開始經典開場樂
+            playStartSiren() {
+                const notes = [
+                    261.6, 523.3, 392.0, 329.6, 523.3, 392.0, 329.6,
+                    293.7, 587.3, 440.0, 349.2, 587.3, 440.0, 349.2,
+                    261.6, 523.3, 392.0, 329.6, 523.3, 392.0, 329.6,
+                    349.2, 370.0, 392.0, 415.3, 440.0, 466.2, 523.3
+                ];
+                notes.forEach((note, index) => {
+                    this.playTone(note, 'sine', 0.1, 0.06, index * 0.08);
+                });
+            }
+
+            // 被幽靈抓到死亡音效
+            playDeath() {
+                const duration = 0.12;
+                for (let i = 0; i < 12; i++) {
+                    const freq = 800 - (i * 65);
+                    this.playTone(freq, 'sawtooth', duration, 0.08, i * 0.08);
+                }
+            }
+
+            // 吃掉嚇壞的幽靈
+            playEatGhost() {
+                this.playTone(300, 'square', 0.1, 0.15);
+                setTimeout(() => this.playTone(600, 'square', 0.1, 0.15), 80);
+                setTimeout(() => this.playTone(900, 'square', 0.1, 0.15), 160);
+                setTimeout(() => this.playTone(1200, 'square', 0.2, 0.15), 240);
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        // --- DEFINING CONSTANTS, MAPS, AND GAME STATES ---
+        const CANVAS_SIZE = 380; // 固定渲染畫布尺寸，會使用 CSS 縮放適應螢幕
+        const GRID_COUNT = 19;   // 19x19 網格
+        const TILE_SIZE = CANVAS_SIZE / GRID_COUNT;
+
+        // 遊戲地圖定義
+        // 0: 空地 (可走但無點)
+        // 1: 藍色霓虹牆壁
+        // 2: 普通小豆豆 (10分)
+        // 3: 能量豆 (50分, 可吞吃幽靈)
+        // 4: 幽靈之家 (幽靈出生點，小精靈進不去)
+        // 5: 幽靈之家出口閘門
+        const MAP = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,3,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,3,1],
+            [1,2,1,1,2,1,1,1,2,1,2,1,1,1,2,1,1,2,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,2,1,1,2,1,2,1,1,1,1,1,2,1,2,1,1,2,1],
+            [1,2,2,2,2,1,2,2,2,1,2,2,2,1,2,2,2,2,1],
+            [1,1,1,1,2,1,1,1,0,1,0,1,1,1,2,1,1,1,1],
+            [0,0,0,1,2,1,0,0,0,0,0,0,0,1,2,1,0,0,0], // 左右傳送通道
+            [1,1,1,1,2,1,0,1,1,5,1,1,0,1,2,1,1,1,1],
+            [0,0,0,0,2,0,0,1,4,4,4,1,0,0,2,0,0,0,0], // 閘門與出生地
+            [1,1,1,1,2,1,0,1,1,1,1,1,0,1,2,1,1,1,1],
+            [0,0,0,1,2,1,0,0,0,0,0,0,0,1,2,1,0,0,0], // 左右傳送通道
+            [1,1,1,1,2,1,0,1,1,1,1,1,0,1,2,1,1,1,1],
+            [1,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,1],
+            [1,2,1,1,2,1,1,1,2,1,2,1,1,1,2,1,1,2,1],
+            [1,3,2,1,2,2,2,2,2,0,2,2,2,2,2,1,2,3,1],
+            [1,1,2,1,2,1,2,1,1,1,1,1,2,1,2,1,2,1,1],
+            [1,2,2,2,2,1,2,2,2,1,2,2,2,1,2,2,2,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        // 複製一份用於重置關卡
+        let currentMap = JSON.parse(JSON.stringify(MAP));
+
+        // --- BFS 最短路徑系統 (修復被吃的幽靈魂魄回巢精準導航) ---
+        let ghostHouseDist = Array(GRID_COUNT).fill().map(() => Array(GRID_COUNT).fill(Infinity));
+
+        function computeGhostHouseDist() {
+            // 初始化距離矩陣為無限大
+            for (let r = 0; r < GRID_COUNT; r++) {
+                for (let c = 0; c < GRID_COUNT; c++) {
+                    ghostHouseDist[r][c] = Infinity;
+                }
+            }
+            
+            const queue = [{x: 9, y: 9, d: 0}];
+            ghostHouseDist[9][9] = 0;
+            
+            while(queue.length > 0) {
+                const curr = queue.shift();
+                const possibleDirs = [
+                    {x: 0, y: -1}, // 上
+                    {x: 0, y: 1},  // 下
+                    {x: -1, y: 0}, // 左
+                    {x: 1, y: 0}   // 右
+                ];
+                
+                possibleDirs.forEach(dir => {
+                    let nx = curr.x + dir.x;
+                    let ny = curr.y + dir.y;
+                    
+                    // 傳送通道折返處理
+                    if (ny === 7 || ny === 11) {
+                        if (nx < 0) nx = GRID_COUNT - 1;
+                        if (nx >= GRID_COUNT) nx = 0;
+                    }
+                    
+                    if (nx >= 0 && nx < GRID_COUNT && ny >= 0 && ny < GRID_COUNT) {
+                        const block = MAP[ny][nx];
+                        // 只要不是外側牆壁(1)，幽靈魂魄都可以穿透通路前進
+                        if (block !== 1 && ghostHouseDist[ny][nx] === Infinity) {
+                            ghostHouseDist[ny][nx] = curr.d + 1;
+                            queue.push({x: nx, y: ny, d: curr.d + 1});
+                        }
+                    }
+                });
+            }
+        }
+
+        // 遊戲核心變數
+        let score = 0;
+        let highScore = parseInt(localStorage.getItem('pacman_highscore')) || 12000;
+        let lives = 3;
+        let level = 1;
+        let state = 'READY'; // READY, PLAYING, WON, GAMEOVER, PAUSED
+        let godMode = false;  // 彩蛋：無敵模式
+
+        // 驚嚇狀態
+        let frightenedTime = 0; // 驚嚇狀態剩餘幀數計時
+        const FRIGHTENED_DURATION = 350; // 連續幀數長度
+
+        // 水果獎勵
+        let fruitActive = false;
+        let fruitX = 9, fruitY = 11;
+        let fruitTimer = 0;
+
+        // 小精靈物件
+        const pacman = {
+            gridX: 9,
+            gridY: 15,
+            x: 9 * TILE_SIZE + TILE_SIZE/2,
+            y: 15 * TILE_SIZE + TILE_SIZE/2,
+            speed: 1.8,
+            dirX: 0,
+            dirY: 0,
+            nextDirX: 0,
+            nextDirY: 0,
+            angle: 0,
+            mouthAngle: 0.2,
+            mouthSpeed: 0.012,
+            
+            reset() {
+                this.gridX = 9;
+                this.gridY = 15;
+                this.x = this.gridX * TILE_SIZE + TILE_SIZE/2;
+                this.y = this.gridY * TILE_SIZE + TILE_SIZE/2;
+                this.dirX = 0;
+                this.dirY = 0;
+                this.nextDirX = 0;
+                this.nextDirY = 0;
+                this.angle = 0;
+            },
+
+            update() {
+                // 口部咀嚼動畫
+                this.mouthAngle += this.mouthSpeed;
+                if (this.mouthAngle > 0.4 || this.mouthAngle < 0.05) {
+                    this.mouthSpeed = -this.mouthSpeed;
+                }
+
+                // 精確判斷是否對齊格子中心
+                const centerX = this.gridX * TILE_SIZE + TILE_SIZE/2;
+                const centerY = this.gridY * TILE_SIZE + TILE_SIZE/2;
+                const distToCenter = Math.hypot(this.x - centerX, this.y - centerY);
+
+                if (distToCenter < this.speed) {
+                    // 抵達中心：應用預緩存的轉向決定
+                    if (this.nextDirX !== 0 || this.nextDirY !== 0) {
+                        if (canMoveTo(this.gridX + this.nextDirX, this.gridY + this.nextDirY)) {
+                            this.dirX = this.nextDirX;
+                            this.dirY = this.nextDirY;
+                            this.x = centerX;
+                            this.y = centerY;
+                        }
+                    }
+
+                    // 檢查前方是否有障礙物，若有則停止
+                    if (!canMoveTo(this.gridX + this.dirX, this.gridY + this.dirY)) {
+                        this.dirX = 0;
+                        this.dirY = 0;
+                        this.x = centerX;
+                        this.y = centerY;
+                    } else {
+                        // 正式推進網格座標
+                        this.gridX += this.dirX;
+                        this.gridY += this.dirY;
+                    }
+                }
+
+                // 物理位置平滑推移
+                this.x += this.dirX * this.speed;
+                this.y += this.dirY * this.speed;
+
+                // 左右傳送通道邏輯 (邊界互通)
+                if (this.x < 0) {
+                    this.gridX = GRID_COUNT - 1;
+                    this.x = CANVAS_SIZE - TILE_SIZE/2;
+                } else if (this.x > CANVAS_SIZE) {
+                    this.gridX = 0;
+                    this.x = TILE_SIZE/2;
+                }
+
+                // 設定朝向角度
+                if (this.dirX === 1) this.angle = 0;
+                if (this.dirX === -1) this.angle = Math.PI;
+                if (this.dirY === 1) this.angle = Math.PI / 2;
+                if (this.dirY === -1) this.angle = Math.PI * 1.5;
+
+                // 檢查是否吞吃豆子
+                this.eatPellets();
+            },
+
+            eatPellets() {
+                const currentTile = currentMap[this.gridY][this.gridX];
+                if (currentTile === 2) {
+                    currentMap[this.gridY][this.gridX] = 0;
+                    addScore(10);
+                    sound.playChomp();
+                    checkLevelCompletion();
+                } else if (currentTile === 3) {
+                    currentMap[this.gridY][this.gridX] = 0;
+                    addScore(50);
+                    sound.playPowerUp();
+                    triggerFrightenedMode();
+                    checkLevelCompletion();
+                }
+
+                // 吞吃隨機生成的水果
+                if (fruitActive && this.gridX === fruitX && this.gridY === fruitY) {
+                    fruitActive = false;
+                    const fruitScores = [100, 300, 500, 700];
+                    const bonusIdx = Math.min(level - 1, 3);
+                    addScore(fruitScores[bonusIdx]);
+                    sound.playEatGhost();
+                    createNotification(`FRUIT +${fruitScores[bonusIdx]}!`);
+                }
+            },
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                // 小精靈本體 (經典圓餅型)
+                ctx.fillStyle = godMode ? '#ff00ff' : '#ffe600';
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = godMode ? '#ff00ff' : '#ffe600';
+
+                ctx.beginPath();
+                ctx.arc(0, 0, TILE_SIZE / 2 - 1, this.mouthAngle * Math.PI, (2 - this.mouthAngle) * Math.PI);
+                ctx.lineTo(0, 0);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            }
+        };
+
+        // 幽靈類別
+        class Ghost {
+            constructor(name, color, homeX, homeY, scatterX, scatterY) {
+                this.name = name;
+                this.color = color;
+                this.homeX = homeX;
+                this.homeY = homeY;
+                this.scatterX = scatterX;
+                this.scatterY = scatterY;
+                this.reset();
+            }
+
+            reset() {
+                this.gridX = this.homeX;
+                this.gridY = this.homeY;
+                this.x = this.gridX * TILE_SIZE + TILE_SIZE/2;
+                this.y = this.gridY * TILE_SIZE + TILE_SIZE/2;
+                this.speed = 1.3;
+                this.dirX = 0;
+                this.dirY = -1; // 預設往上走出門口
+                this.nextDirX = 0;
+                this.nextDirY = 0;
+                this.isEaten = false;
+                this.color = this.getOriginalColor(); // 還原初始配色
+            }
+
+            update() {
+                // 移動速度狀態調整
+                if (this.isEaten) {
+                    this.speed = 3.5; // 被吃了，眼珠狀態下高速回巢
+                    this.color = '#ffffff';
+                } else if (frightenedTime > 0) {
+                    this.speed = 0.9; // 驚嚇狀態下減速移動
+                } else {
+                    this.speed = 1.3 + (level * 0.05); // 隨關卡逐步提升正常追殺速度
+                    this.color = this.getOriginalColor(); // 還原顏色
+                }
+
+                const centerX = this.gridX * TILE_SIZE + TILE_SIZE/2;
+                const centerY = this.gridY * TILE_SIZE + TILE_SIZE/2;
+                const distToCenter = Math.hypot(this.x - centerX, this.y - centerY);
+
+                // 抵達網格中心點時，進行下一格的轉向 AI 規劃
+                if (distToCenter < this.speed) {
+                    // 精確鎖定在目前的目標中心
+                    this.x = centerX;
+                    this.y = centerY;
+
+                    // 順利回到巢穴 (9, 9) 時，解除被吃魂魄狀態並復活
+                    if (this.isEaten && this.gridX === 9 && this.gridY === 9) {
+                        this.isEaten = false;
+                        this.color = this.getOriginalColor();
+                    }
+
+                    this.chooseNextDirection();
+                    
+                    // 更新實際移動方向
+                    this.dirX = this.nextDirX;
+                    this.dirY = this.nextDirY;
+
+                    // 將網格座標設定為「下一步的目標」
+                    this.gridX += this.dirX;
+                    this.gridY += this.dirY;
+                }
+
+                // 物理推移位置
+                this.x += this.dirX * this.speed;
+                this.y += this.dirY * this.speed;
+
+                // 傳送通道包裝處理
+                if (this.x < 0) {
+                    this.gridX = GRID_COUNT - 1;
+                    this.x = CANVAS_SIZE - TILE_SIZE/2;
+                } else if (this.x > CANVAS_SIZE) {
+                    this.gridX = 0;
+                    this.x = TILE_SIZE/2;
+                }
+            }
+
+            chooseNextDirection() {
+                const possibleDirs = [
+                    {x: 0, y: -1}, // 上
+                    {x: 0, y: 1},  // 下
+                    {x: -1, y: 0}, // 左
+                    {x: 1, y: 0}   // 右
+                ];
+
+                const validDirs = [];
+                possibleDirs.forEach(dir => {
+                    // 禁止向後迴轉行走 (除非無路可走)
+                    if (dir.x === -this.dirX && dir.y === -this.dirY) return;
+                    
+                    const nextX = this.gridX + dir.x;
+                    const nextY = this.gridY + dir.y;
+
+                    // 精確門禁判定
+                    if (canMoveToForGhost(nextX, nextY, this)) {
+                        validDirs.push(dir);
+                    }
+                });
+
+                if (validDirs.length === 0) {
+                    // 防呆反轉機制
+                    this.nextDirX = -this.dirX;
+                    this.nextDirY = -this.dirY;
+                    return;
+                }
+
+                // 1. 如果被吃掉了，利用 BFS 尋路地圖高速回巢，不迷路不卡死！
+                if (this.isEaten) {
+                    let minDistance = Infinity;
+                    let bestDir = validDirs[0];
+                    validDirs.forEach(dir => {
+                        let nextX = this.gridX + dir.x;
+                        let nextY = this.gridY + dir.y;
+                        if (nextY === 7 || nextY === 11) {
+                            if (nextX < 0) nextX = GRID_COUNT - 1;
+                            if (nextX >= GRID_COUNT) nextX = 0;
+                        }
+                        
+                        // 確保安全防護：讀取 BFS 尋路陣列時不會發生越界（undefined）報錯
+                        if (nextY >= 0 && nextY < GRID_COUNT && nextX >= 0 && nextX < GRID_COUNT) {
+                            const dist = ghostHouseDist[nextY][nextX];
+                            if (dist < minDistance) {
+                                minDistance = dist;
+                                bestDir = dir;
+                            }
+                        }
+                    });
+                    this.nextDirX = bestDir.x;
+                    this.nextDirY = bestDir.y;
+                    return;
+                }
+
+                // 2. 如果驚嚇狀態中且沒被吃，完全隨機轉角，製造經典亂竄感
+                if (frightenedTime > 0 && !this.isEaten) {
+                    const chosen = validDirs[Math.floor(Math.random() * validDirs.length)];
+                    this.nextDirX = chosen.x;
+                    this.nextDirY = chosen.y;
+                    return;
+                }
+
+                // 3. 正常捕獵模式：計算各自角色 AI 目標
+                const target = this.getTargetTile();
+
+                // 尋找距離目標點最近的有效轉彎方向
+                let minDistance = Infinity;
+                let bestDir = validDirs[0];
+
+                validDirs.forEach(dir => {
+                    const testX = this.gridX + dir.x;
+                    const testY = this.gridY + dir.y;
+                    const dist = Math.hypot(testX - target.x, testY - target.y);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        bestDir = dir;
+                    }
+                });
+
+                this.nextDirX = bestDir.x;
+                this.nextDirY = bestDir.y;
+            }
+
+            getTargetTile() {
+                if (this.isEaten) {
+                    return { x: 9, y: 9 }; // 回巢
+                }
+
+                // 出屋引導：若幽靈身在鬼屋或起跑閘門上，引導目標直接設定在出口正上方 (9, 7)
+                const inHouse = (this.gridY === 9 && this.gridX >= 8 && this.gridX <= 10) || (this.gridY === 8 && this.gridX === 9);
+                if (inHouse) {
+                    return { x: 9, y: 7 };
+                }
+
+                // 經典 4 隻幽靈的尋路個性 (AI 引擎)
+                switch(this.name) {
+                    case 'Blinky': // 紅色：直接追玩家
+                        return { x: pacman.gridX, y: pacman.gridY };
+                    
+                    case 'Pinky': // 粉色：預判玩家前端 4 格進行包抄
+                        return { 
+                            x: pacman.gridX + pacman.dirX * 4, 
+                            y: pacman.gridY + pacman.dirY * 4 
+                        };
+                    
+                    case 'Inky': // 青色：時而追擊時而巡邏 corners
+                        if (Math.random() < 0.4) {
+                            return { x: this.scatterX, y: this.scatterY };
+                        }
+                        return { x: pacman.gridX, y: pacman.gridY };
+
+                    case 'Clyde': // 橘色：懦夫 AI。靠近玩家 6 格內會因為膽怯返航回歸左下角
+                        const dist = Math.hypot(this.gridX - pacman.gridX, this.gridY - pacman.gridY);
+                        if (dist < 6) {
+                            return { x: this.scatterX, y: this.scatterY };
+                        }
+                        return { x: pacman.gridX, y: pacman.gridY };
+                      }
+                return { x: 9, y: 9 };
+            }
+
+            getOriginalColor() {
+                switch(this.name) {
+                    case 'Blinky': return '#ff0000';
+                    case 'Pinky': return '#ffb8ff';
+                    case 'Inky': return '#00ffff';
+                    case 'Clyde': return '#ffb852';
+                }
+                return '#ffffff';
+            }
+
+            draw(ctx) {
+                ctx.save();
+                
+                let drawColor = this.color;
+                let isScaredState = frightenedTime > 0 && !this.isEaten;
+                
+                if (isScaredState) {
+                    // 若驚嚇倒數快結束，會快頻率紅白閃爍
+                    drawColor = frightenedTime < 100 && Math.floor(frightenedTime / 10) % 2 === 0 ? '#ffffff' : '#2b44ff';
+                }
+
+                ctx.shadowBlur = isScaredState ? 10 : 8;
+                ctx.shadowColor = drawColor;
+                ctx.fillStyle = drawColor;
+
+                // 畫幽靈外殼形狀 (含底下裙擺正弦波浪效果)
+                ctx.beginPath();
+                const r = TILE_SIZE / 2 - 1.5;
+                ctx.arc(this.x, this.y - 1, r, Math.PI, 0, false);
+                ctx.lineTo(this.x + r, this.y + r);
+                
+                const waveFreq = Date.now() / 80;
+                const waveShift = Math.sin(waveFreq) * 2;
+                ctx.lineTo(this.x + r/3 * 2, this.y + r - 1 + waveShift);
+                ctx.lineTo(this.x + r/3, this.y + r);
+                ctx.lineTo(this.x - r/3, this.y + r - 1 - waveShift);
+                ctx.lineTo(this.x - r/3 * 2, this.y + r);
+                ctx.lineTo(this.x - r, this.y + r);
+                ctx.closePath();
+                ctx.fill();
+
+                // 畫眼白與眼珠
+                if (!this.isEaten) {
+                    ctx.fillStyle = isScaredState ? '#ffb852' : '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(this.x - r/2.5, this.y - r/4, r/3, 0, Math.PI * 2);
+                    ctx.arc(this.x + r/2.5, this.y - r/4, r/3, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = isScaredState ? '#ff0000' : '#0000cc';
+                    ctx.beginPath();
+                    ctx.arc(this.x - r/2.5 + this.dirX * 1.5, this.y - r/4 + this.dirY * 1.5, r/6, 0, Math.PI * 2);
+                    ctx.arc(this.x + r/2.5 + this.dirX * 1.5, this.y - r/4 + this.dirY * 1.5, r/6, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // 被吃掉僅存靈魂眼珠
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(this.x - r/2.5, this.y - r/4, r/3, 0, Math.PI * 2);
+                    ctx.arc(this.x + r/2.5, this.y - r/4, r/3, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#00f3ff';
+                    ctx.beginPath();
+                    ctx.arc(this.x - r/2.5, this.y - r/4, r/6, 0, Math.PI * 2);
+                    ctx.arc(this.x + r/2.5, this.y - r/4, r/6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // 初始化幽靈陣容
+        const ghosts = [
+            new Ghost('Blinky', '#ff0000', 9, 8, 18, 0),  // 紅
+            new Ghost('Pinky', '#ffb8ff', 8, 9, 0, 0),   // 粉
+            new Ghost('Inky', '#00ffff', 9, 9, 18, 18),  // 藍
+            new Ghost('Clyde', '#ffb852', 10, 9, 0, 18)  // 橘
+        ];
+
+        // 地圖判定輔助
+        function canMoveTo(gridX, gridY) {
+            if (gridX < 0 || gridX >= GRID_COUNT || gridY < 0 || gridY >= GRID_COUNT) {
+                if (gridY === 7 || gridY === 11) return true;
+                return false;
+            }
+            const block = currentMap[gridY][gridX];
+            return block !== 1 && block !== 4 && block !== 5; // 玩家不可越過牆壁(1)與閘門(5)與鬼屋內陸(4)
+        }
+
+        function canMoveToForGhost(gridX, gridY, ghost) {
+            if (gridX < 0 || gridX >= GRID_COUNT || gridY < 0 || gridY >= GRID_COUNT) {
+                if (gridY === 7 || gridY === 11) return true;
+                return false;
+            }
+            
+            const block = currentMap[gridY][gridX];
+            if (block === 1) return false; // 牆壁絕對禁止
+            
+            if (block === 4 || block === 5) {
+                // 門禁與出入關卡判定：
+                // 1. 被吞食回歸的魂魄眼珠(isEaten)允許進入鬼屋
+                if (ghost.isEaten) return true;
+                
+                // 2. 本身就在出生屋子內/閘門上的，也必須放行以利出屋
+                const currentInHouse = (ghost.gridY === 9 && ghost.gridX >= 8 && ghost.gridX <= 10) || (ghost.gridY === 8 && ghost.gridX === 9);
+                if (currentInHouse) return true;
+                
+                // 3. 正常行走/追獵下的其餘幽靈不准回頭走入鬼屋(4, 5)，防止原地鬼打牆穿牆
+                return false;
+            }
+            return true;
+        }
+
+        function triggerFrightenedMode() {
+            frightenedTime = FRIGHTENED_DURATION;
+            ghosts.forEach(ghost => {
+                if (!ghost.isEaten) {
+                    ghost.color = '#2b44ff';
+                    
+                    // --- 完美修正：同步反轉幽靈移動方向與目標網格座標 ---
+                    const oldDirX = ghost.dirX;
+                    const oldDirY = ghost.dirY;
+                    
+                    // 只有當幽靈目前確實在移動時才進行方向反轉
+                    if (oldDirX !== 0 || oldDirY !== 0) {
+                        ghost.dirX = -oldDirX;
+                        ghost.dirY = -oldDirY;
+                        ghost.nextDirX = -oldDirX;
+                        ghost.nextDirY = -oldDirY;
+                        
+                        // 【關鍵修復】將幽靈目標格子同步設為上一格，使距離判定 distToCenter 正常遞減
+                        ghost.gridX = ghost.gridX - oldDirX;
+                        ghost.gridY = ghost.gridY - oldDirY;
+                        
+                        // 傳送邊界保護與處理
+                        if (ghost.gridX < 0) ghost.gridX = GRID_COUNT - 1;
+                        if (ghost.gridX >= GRID_COUNT) ghost.gridX = 0;
+                        if (ghost.gridY < 0) ghost.gridY = GRID_COUNT - 1;
+                        if (ghost.gridY >= GRID_COUNT) ghost.gridY = 0;
+                    }
+                }
+            });
+            createNotification("GHOSTS SCARED!");
+        }
+
+        function checkLevelCompletion() {
+            let pelletsLeft = 0;
+            for (let r = 0; r < GRID_COUNT; r++) {
+                for (let c = 0; c < GRID_COUNT; c++) {
+                    if (currentMap[r][c] === 2 || currentMap[r][c] === 3) {
+                        pelletsLeft++;
+                    }
+                }
+            }
+
+            if (pelletsLeft === 0) {
+                nextLevel();
+            }
+
+            if (pelletsLeft === 120 || pelletsLeft === 50) {
+                spawnFruit();
+            }
+        }
+
+        function spawnFruit() {
+            fruitActive = true;
+            fruitTimer = 300;
+        }
+
+        function addScore(points) {
+            score += points;
+            document.getElementById('scoreVal').innerText = String(score).padStart(5, '0');
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('pacman_highscore', highScore);
+                document.getElementById('highScoreVal').innerText = String(highScore).padStart(5, '0');
+            }
+        }
+
+        function createNotification(text) {
+            const msgEl = document.getElementById('statusMessage');
+            msgEl.innerText = text;
+            msgEl.classList.remove('animate-pulse');
+            setTimeout(() => {
+                msgEl.innerText = "ARCADE STAGE " + level;
+                msgEl.classList.add('animate-pulse');
+            }, 3000);
+        }
+
+        function nextLevel() {
+            level++;
+            document.getElementById('levelVal').innerText = level;
+            sound.playPowerUp();
+            createNotification(`LEVEL ${level} START!`);
+            
+            currentMap = JSON.parse(JSON.stringify(MAP));
+            pacman.reset();
+            ghosts.forEach(ghost => ghost.reset());
+            state = 'PLAYING';
+        }
+
+        function pacmanDie() {
+            if (godMode) return;
+
+            lives--;
+            updateLivesUI();
+            sound.playDeath();
+            state = 'PAUSED';
+
+            if (lives <= 0) {
+                gameOver();
+            } else {
+                createNotification("YOU DIED!");
+                setTimeout(() => {
+                    pacman.reset();
+                    ghosts.forEach(ghost => ghost.reset());
+                    state = 'PLAYING';
+                }, 1500);
+            }
+        }
+
+        function gameOver() {
+            state = 'GAMEOVER';
+            document.getElementById('overlayTitle').innerText = "GAME OVER";
+            document.getElementById('overlayDesc').innerHTML = `戰績斐然！你拿到了 <span class="text-yellow-300 font-bold">${score}</span> 分！<br>想打破紀錄，重新投幣吧！`;
+            document.getElementById('startBtn').innerText = "INSERT COIN";
+            document.getElementById('gameOverlay').classList.remove('pointer-events-none', 'opacity-0');
+        }
+
+        function updateLivesUI() {
+            const container = document.getElementById('livesContainer');
+            container.innerHTML = '';
+            for (let i = 0; i < lives; i++) {
+                container.innerHTML += `<i class="fa-solid fa-circle text-yellow-400 text-[10px] animate-pulse"></i>`;
+            }
+        }
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = CANVAS_SIZE;
+        canvas.height = CANVAS_SIZE;
+
+        function drawMap() {
+            for (let r = 0; r < GRID_COUNT; r++) {
+                for (let c = 0; c < GRID_COUNT; c++) {
+                    const block = currentMap[r][c];
+                    
+                    if (block === 1) {
+                        ctx.fillStyle = '#0a0a23';
+                        ctx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        
+                        ctx.strokeStyle = '#00f3ff';
+                        ctx.lineWidth = 1.5;
+                        ctx.shadowBlur = 6;
+                        ctx.shadowColor = '#00f3ff';
+                        ctx.strokeRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                        ctx.shadowBlur = 0;
+                    } else if (block === 2) {
+                        ctx.fillStyle = '#ffb8ae';
+                        ctx.shadowBlur = 3;
+                        ctx.shadowColor = '#ffb8ae';
+                        ctx.beginPath();
+                        ctx.arc(c * TILE_SIZE + TILE_SIZE/2, r * TILE_SIZE + TILE_SIZE/2, 2.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    } else if (block === 3) {
+                        if (Math.floor(Date.now() / 200) % 2 === 0) {
+                            ctx.fillStyle = '#ffb8ff';
+                            ctx.shadowBlur = 10;
+                            ctx.shadowColor = '#ffb8ff';
+                            ctx.beginPath();
+                            ctx.arc(c * TILE_SIZE + TILE_SIZE/2, r * TILE_SIZE + TILE_SIZE/2, 6, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.shadowBlur = 0;
+                        }
+                    } else if (block === 5) {
+                        ctx.fillStyle = '#ffb8ff';
+                        ctx.fillRect(c * TILE_SIZE, r * TILE_SIZE + TILE_SIZE/2.5, TILE_SIZE, TILE_SIZE/5);
+                    }
+                }
+            }
+
+            if (fruitActive) {
+                ctx.save();
+                ctx.font = '14px serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const fruitIcons = ['🍒', '🍓', '🍊', '🍎'];
+                const curIcon = fruitIcons[Math.min(level - 1, 3)];
+                ctx.fillText(curIcon, fruitX * TILE_SIZE + TILE_SIZE/2, fruitY * TILE_SIZE + TILE_SIZE/2);
+                ctx.restore();
+            }
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+            if (state === 'PLAYING') {
+                pacman.update();
+                
+                ghosts.forEach(ghost => {
+                    ghost.update();
+
+                    const dist = Math.hypot(pacman.x - ghost.x, pacman.y - ghost.y);
+                    if (dist < TILE_SIZE * 0.8) {
+                        if (frightenedTime > 0 && !ghost.isEaten) {
+                            ghost.isEaten = true;
+                            sound.playEatGhost();
+                            addScore(200);
+                            createNotification("GHOST EATEN +200!");
+                        } else if (!ghost.isEaten) {
+                            pacmanDie();
+                        }
+                    }
+                });
+
+                if (fruitActive) {
+                    fruitTimer--;
+                    if (fruitTimer <= 0) fruitActive = false;
+                }
+
+                if (frightenedTime > 0) {
+                    frightenedTime--;
+                    document.getElementById('frightenedTimerBar').style.width = `${(frightenedTime / FRIGHTENED_DURATION) * 100}%`;
+                } else {
+                    document.getElementById('frightenedTimerBar').style.width = '0%';
+                }
+            }
+
+            drawMap();
+            pacman.draw(ctx);
+            ghosts.forEach(ghost => ghost.draw(ctx));
+
+            requestAnimationFrame(loop);
+        }
+
+        window.addEventListener('keydown', e => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+                e.preventDefault();
+            }
+
+            if (state !== 'PLAYING') {
+                if (e.code === 'Space' || e.code === 'Enter') {
+                    handleStartGame();
+                }
+                return;
+            }
+
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    pacman.nextDirX = 0; pacman.nextDirY = -1;
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    pacman.nextDirX = 0; pacman.nextDirY = 1;
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    pacman.nextDirX = -1; pacman.nextDirY = 0;
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    pacman.nextDirX = 1; pacman.nextDirY = 0;
+                    break;
+            }
+        });
+
+        // 觸控與控制設定
+        document.getElementById('btnUp').addEventListener('touchstart', (e) => { e.preventDefault(); pacman.nextDirX = 0; pacman.nextDirY = -1; });
+        document.getElementById('btnDown').addEventListener('touchstart', (e) => { e.preventDefault(); pacman.nextDirX = 0; pacman.nextDirY = 1; });
+        document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); pacman.nextDirX = -1; pacman.nextDirY = 0; });
+        document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); pacman.nextDirX = 1; pacman.nextDirY = 0; });
+
+        document.getElementById('btnUp').addEventListener('mousedown', () => { pacman.nextDirX = 0; pacman.nextDirY = -1; });
+        document.getElementById('btnDown').addEventListener('mousedown', () => { pacman.nextDirX = 0; pacman.nextDirY = 1; });
+        document.getElementById('btnLeft').addEventListener('mousedown', () => { pacman.nextDirX = -1; pacman.nextDirY = 0; });
+        document.getElementById('btnRight').addEventListener('mousedown', () => { pacman.nextDirX = 1; pacman.nextDirY = 0; });
+
+        // 行動端 Swipe 手勢
+        let touchStartX = 0;
+        let touchStartY = 0;
+        canvas.addEventListener('touchstart', e => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, {passive: true});
+
+        canvas.addEventListener('touchend', e => {
+            if (state !== 'PLAYING') return;
+            const diffX = e.changedTouches[0].clientX - touchStartX;
+            const diffY = e.changedTouches[0].clientY - touchStartY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 30) { pacman.nextDirX = 1; pacman.nextDirY = 0; }
+                else if (diffX < -30) { pacman.nextDirX = -1; pacman.nextDirY = 0; }
+            } else {
+                if (diffY > 30) { pacman.nextDirX = 0; pacman.nextDirY = 1; }
+                else if (diffY < -30) { pacman.nextDirX = 0; pacman.nextDirY = -1; }
+            }
+        }, {passive: true});
+
+        function handleStartGame() {
+            sound.init();
+            
+            if (state === 'GAMEOVER' || state === 'READY') {
+                score = 0;
+                lives = 3;
+                level = 1;
+                currentMap = JSON.parse(JSON.stringify(MAP));
+                pacman.reset();
+                ghosts.forEach(ghost => ghost.reset());
+                document.getElementById('scoreVal').innerText = '00000';
+                document.getElementById('levelVal').innerText = '1';
+                updateLivesUI();
+            }
+
+            state = 'PLAYING';
+            sound.playStartSiren();
+            createNotification("LEVEL 1 START!");
+            document.getElementById('gameOverlay').classList.add('pointer-events-none', 'opacity-0');
+        }
+
+        document.getElementById('startBtn').addEventListener('click', handleStartGame);
+
+        // 靜音開關
+        const soundToggle = document.getElementById('soundToggle');
+        soundToggle.addEventListener('click', () => {
+            sound.enabled = !sound.enabled;
+            const icon = document.getElementById('soundIcon');
+            if (sound.enabled) {
+                icon.className = 'fa-solid fa-volume-high';
+                soundToggle.innerHTML = '<i class="fa-solid fa-volume-high" id="soundIcon"></i> SOUND ON';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+                soundToggle.innerHTML = '<i class="fa-solid fa-volume-xmark" id="soundIcon"></i> SOUND MUTED';
+            }
+        });
+
+        // 無敵彩蛋模式
+        document.getElementById('cheatBtn').addEventListener('click', () => {
+            godMode = !godMode;
+            const cheatBtn = document.getElementById('cheatBtn');
+            if (godMode) {
+                cheatBtn.innerText = "GOD MODE: ACTIVE";
+                cheatBtn.classList.remove('opacity-40');
+                cheatBtn.classList.add('text-green-400', 'font-bold');
+                createNotification("GOD MODE ACTIVATED 🚀");
+            } else {
+                cheatBtn.innerText = "GOD MODE";
+                cheatBtn.classList.add('opacity-40');
+                cheatBtn.classList.remove('text-green-400', 'font-bold');
+                createNotification("GOD MODE DEACTIVATED");
+            }
+        });
+
+        window.onload = function() {
+            document.getElementById('highScoreVal').innerText = String(highScore).padStart(5, '0');
+            updateLivesUI();
+            computeGhostHouseDist(); // 計算 BFS 尋路矩陣
+            loop(); // 啟動主繪圖循環
+        }
+    </script>
+</body>
+</html>
