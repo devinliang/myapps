@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 智慧圖片去背 - 極速本地版</title>
+    <!-- 引入 Google 字體與 Icon -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        header p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 950px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* 引擎載入與初始化畫面 */
+        .init-box {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .init-spinner {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .init-spinner i {
+            animation: spin 1s linear infinite;
+        }
+
+        .init-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .init-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            max-width: 450px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* 檔案拖曳與上傳區 (預設隱藏，初始化完成後顯示) */
+        .upload-area {
+            display: none;
+            border: 3px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 4rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease-in-out;
+            background: #f8fafc;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: #eef2ff;
+        }
+
+        .upload-icon {
+            font-size: 3.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1.2rem;
+            transition: transform 0.2s ease;
+        }
+
+        .upload-area:hover .upload-icon {
+            transform: translateY(-5px);
+        }
+
+        .upload-area p {
+            font-size: 1.15rem;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .upload-area span {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 0.6rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* 工作預覽區 */
+        .workspace {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .preview-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .img-box {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .img-box h3 {
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .img-wrapper {
+            height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        /* 去背後透明格子背景 */
+        .img-box.result-box .img-wrapper {
+            background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
+                              linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #e2e8f0 75%), 
+                              linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+        }
+
+        .img-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: opacity 0.3s ease;
+        }
+
+        /* 整合式進度顯示區 */
+        .progress-container {
+            display: none;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .progress-status {
+            font-weight: 500;
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .progress-bar-bg {
+            background: #e2e8f0;
+            border-radius: 100px;
+            height: 10px;
+            width: 100%;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar-fill {
+            background: var(--primary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.15s ease-out;
+            border-radius: 100px;
+        }
+
+        .progress-percentage {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        /* 按鈕面板 */
+        .actions-panel {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border-radius: 10px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: var(--text-main);
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none !important;
+        }
+
+        /* 自訂彈窗與警告 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            animation: modalPop 0.3s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            color: var(--error-color);
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            color: var(--text-main);
+        }
+
+        .modal-body {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            text-align: left;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .modal-body code {
+            font-family: monospace;
+            background: #e2e8f0;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .modal-btn {
+            background: var(--text-main);
+            color: white;
+            padding: 0.7rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .modal-btn:hover {
+            background: #1e293b;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>AI 智慧圖片去背</h1>
+        <p>100% 在瀏覽器本地運行，不回傳隱私，無限制張數！<br><strong>第一次執行因需下載 AI 核心模型，等待時間會稍長（約1~2分鐘），此後便能體驗秒級去背。</strong></p>
+    </header>
+
+    <div class="container">
+        <!-- 引擎初始化加載區 -->
+        <div class="init-box" id="init-container">
+            <div class="init-spinner">
+                <i class="fa-solid fa-circle-notch"></i>
+            </div>
+            <div class="init-title" id="init-title">正在加載 AI 智慧去背模組...</div>
+            <div class="init-desc" id="init-desc">正在與雲端安全節點建立連線並下載去背引擎元件，請稍候。</div>
+        </div>
+
+        <!-- 拖曳上傳區 (預設隱藏，初始化完畢才顯示) -->
+        <div class="upload-area" id="drop-zone">
+            <div class="upload-icon">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <p>將圖片拖曳至此，或<span>點擊瀏覽檔案</span></p>
+            <input type="file" id="file-input" accept="image/*">
+        </div>
+
+        <!-- 整合式進度顯示區 -->
+        <div class="progress-container" id="progress-container">
+            <div class="progress-status" id="progress-status">準備就緒...</div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+            <div class="progress-percentage" id="progress-percentage">0%</div>
+        </div>
+
+        <!-- 工作預覽區 -->
+        <div class="workspace" id="workspace">
+            <div class="preview-grid">
+                <div class="img-box">
+                    <h3><i class="fa-regular fa-image"></i> 原始圖片</h3>
+                    <div class="img-wrapper">
+                        <img id="orig-preview" src="" alt="原始圖片">
+                    </div>
+                </div>
+                <div class="img-box result-box">
+                    <h3><i class="fa-solid fa-circle-check" style="color:var(--success-color)"></i> 去背結果</h3>
+                    <div class="img-wrapper">
+                        <img id="result-preview" src="" alt="等待去背處理...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作區 -->
+            <div class="actions-panel">
+                <button class="btn btn-secondary" id="btn-reupload">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> 重新上傳
+                </button>
+                <button class="btn btn-primary" id="btn-download" disabled>
+                    <i class="fa-solid fa-download"></i> 下載 PNG 檔案
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自訂錯誤提示彈窗 -->
+    <div class="modal" id="error-modal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
+            <div class="modal-title" id="modal-title-text">去背處理失敗</div>
+            <div class="modal-body" id="modal-body-text">
+                發生了未知的錯誤，請確認網路連線是否正常。
+            </div>
+            <button class="modal-btn" onclick="closeModal()">我知道了</button>
+        </div>
+    </div>
+
+    <script>
+        const initContainer = document.getElementById('init-container');
+        const initTitle = document.getElementById('init-title');
+        const initDesc = document.getElementById('init-desc');
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const workspace = document.getElementById('workspace');
+        const origPreview = document.getElementById('orig-preview');
+        const resultPreview = document.getElementById('result-preview');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const progressStatus = document.getElementById('progress-status');
+        const progressPercentage = document.getElementById('progress-percentage');
+        const btnDownload = document.getElementById('btn-download');
+        const btnReupload = document.getElementById('btn-reupload');
+        const errorModal = document.getElementById('error-modal');
+        const modalTitleText = document.getElementById('modal-title-text');
+        const modalBodyText = document.getElementById('modal-body-text');
+
+        let resultImageUrl = null;
+        let removeBgFunction = null;
+        let activePublicPath = '';
+
+        // CDN 候選清單及對應的 publicPath
+        const CDN_LIST = [
+            {
+                js: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/dist/index.umd.js',
+                publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/dist/'
+            },
+            {
+                js: 'https://unpkg.com/@imgly/background-removal@1.5.5/dist/index.umd.js',
+                publicPath: 'https://unpkg.com/@imgly/background-removal@1.5.5/dist/'
+            }
+        ];
+
+        // 彈出式訊息控制
+        function showError(title, message) {
+            modalTitleText.innerText = title;
+            modalBodyText.innerHTML = message;
+            errorModal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            errorModal.style.display = 'none';
+        }
+
+        // 動態腳本加載器
+        function loadScript(url) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = url;
+                script.async = true;
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error(`無法載入腳本：${url}`));
+                document.head.appendChild(script);
+            });
+        }
+
+        // 智慧辨識 UMD 輸出全域變數
+        function detectRemoveBgFunction() {
+            if (typeof window.imglyBackgroundRemoval === 'function') {
+                return window.imglyBackgroundRemoval;
+            }
+            if (window.imglyBackgroundRemoval && typeof window.imglyBackgroundRemoval.default === 'function') {
+                return window.imglyBackgroundRemoval.default;
+            }
+            if (typeof window.imageBackgroundRemoval === 'function') {
+                return window.imageBackgroundRemoval;
+            }
+            if (window.imageBackgroundRemoval && typeof window.imageBackgroundRemoval.default === 'function') {
+                return window.imageBackgroundRemoval.default;
+            }
+            return null;
+        }
+
+        // 初始化去背引擎與 CDN 輪詢載入
+        async function initEngine() {
+            let loaded = false;
+
+            for (let i = 0; i < CDN_LIST.length; i++) {
+                const cdn = CDN_LIST[i];
+                initTitle.innerText = `正在載入核心引擎 (嘗試連線節點 ${i + 1}/${CDN_LIST.length})...`;
+                try {
+                    await loadScript(cdn.js);
+                    const detectedFn = detectRemoveBgFunction();
+                    if (detectedFn) {
+                        removeBgFunction = detectedFn;
+                        activePublicPath = cdn.publicPath;
+                        loaded = true;
+                        break;
+                    }
+                } catch (e) {
+                    console.warn(`節點 ${cdn.js} 載入失敗，嘗試備用節點。`, e);
+                }
+            }
+
+            if (loaded) {
+                // 順利載入核心後，隱藏載入框，顯露上傳拖曳區並初始化事件
+                initContainer.style.display = 'none';
+                dropZone.style.display = 'block';
+                setupUploadEvents();
+            } else {
+                initContainer.querySelector('.init-spinner').style.display = 'none';
+                initTitle.innerHTML = '<span style="color:var(--error-color)"><i class="fa-solid fa-triangle-exclamation"></i> 載入核心失敗</span>';
+                initDesc.innerHTML = '所有 AI 去背核心節點均無法成功建立連線。<br><br>' +
+                                     '<b>常見排除方法：</b><br>' +
+                                     '1. 請檢查您的網路連線是否正常。<br>' +
+                                     '2. 若有安裝 <b>AdBlock / uBlock Origin</b> 等廣告阻擋擴充套件，請暫時針對本頁面關閉，並重新整理頁面。';
+                
+                showError(
+                    '載入核心模組異常',
+                    '無法下載本地去背引擎。這通常是由於您的網路環境限制、防火牆阻擋或廣告過濾外掛誤擋所致。'
+                );
+            }
+        }
+
+        // 設置上傳事件
+        function setupUploadEvents() {
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('image/')) {
+                    processImage(files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    processImage(e.target.files[0]);
+                }
+            });
+        }
+
+        // 核心去背邏輯
+        async function processImage(file) {
+            // 檢查是否使用本地 file 協定開啟
+            if (window.location.protocol === 'file:') {
+                showError(
+                    '瀏覽器安全限制警告', 
+                    '您目前是直接點開 HTML 檔案 (<code>file://</code>)。<br><br>' +
+                    '<b>解決方法：</b><br>' +
+                    '1. 請使用 VS Code 並安裝 <b>Live Server</b> 擴充功能開啟此網頁。<br>' +
+                    '2. 或是在檔案所在資料夾開啟終端機，執行 <code>python -m http.server</code>，並使用 <code>http://localhost:8000</code> 進行瀏覽。'
+                );
+                fileInput.value = '';
+                return;
+            }
+
+            if (!removeBgFunction) {
+                showError('錯誤', '去背引擎尚未載入完成，請重新整理網頁。');
+                return;
+            }
+
+            // 1. 切換顯示：隱藏拖曳上傳區，開啟進度區與預覽工作區
+            dropZone.style.display = 'none';
+            workspace.style.display = 'block';
+            progressContainer.style.display = 'block';
+            
+            // 2. 顯示原始圖片預覽
+            const origUrl = URL.createObjectURL(file);
+            origPreview.src = origUrl;
+            
+            // 3. 重設狀態與下載按鈕
+            resultPreview.src = '';
+            resultPreview.style.opacity = '0.3';
+            btnDownload.disabled = true;
+            updateProgress('正在啟動 AI 引擎...', 5);
+
+            try {
+                // 4. 呼叫去背主程式 (自動使用載入成功的 publicPath 位址)
+                const blob = await removeBgFunction(file, {
+                    publicPath: activePublicPath,
+                    progress: (stage, current, total) => {
+                        let percent = Math.round((current / total) * 100);
+                        if (isNaN(percent)) percent = 0;
+
+                        let stageText = "正在處理中...";
+                        if (stage.includes('fetch')) {
+                            stageText = "正在下載 AI 神經網路模型檔案 (首次執行需約 1~2 分鐘)...";
+                        } else if (stage.includes('compute')) {
+                            stageText = "模型加載完畢！正在解析與清除背景中...";
+                        }
+                        updateProgress(stageText, percent);
+                    }
+                });
+
+                // 5. 輸出去背結果
+                resultImageUrl = URL.createObjectURL(blob);
+                resultPreview.src = resultImageUrl;
+                resultPreview.style.opacity = '1';
+                
+                // 6. 標記處理完成
+                progressStatus.innerHTML = '<span style="color:var(--success-color)"><i class="fa-solid fa-circle-check"></i> 去背完成！</span>';
+                progressBarFill.style.backgroundColor = 'var(--success-color)';
+                progressBarFill.style.width = '100%';
+                progressPercentage.innerText = '100%';
+                btnDownload.disabled = false;
+
+            } catch (error) {
+                console.error("去背失敗詳細資訊:", error);
+                progressContainer.style.display = 'none';
+                showError(
+                    '去背過程中發生錯誤', 
+                    '<b>原因可能為：</b><br>' +
+                    '1. 您的網路連線不穩，中途斷開了與 CDN 模型伺服器的連線。<br>' +
+                    '2. 圖片檔案損毀或瀏覽器記憶體不足。建議您重新上傳或重新整理網頁後再試。'
+                );
+                // 還原工作區狀態
+                resetWorkspace();
+            }
+        }
+
+        // 更新進度條 UI
+        function updateProgress(status, percent) {
+            progressStatus.innerText = status;
+            progressBarFill.style.width = `${percent}%`;
+            progressPercentage.innerText = `${percent}%`;
+        }
+
+        // 下載圖片
+        btnDownload.addEventListener('click', () => {
+            if (!resultImageUrl) return;
+            const a = document.createElement('a');
+            a.href = resultImageUrl;
+            a.download = `no_bg_${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+        // 重新上傳回歸初始狀態
+        function resetWorkspace() {
+            if (resultImageUrl) URL.revokeObjectURL(resultImageUrl);
+            resultImageUrl = null;
+            fileInput.value = '';
+            dropZone.style.display = 'block';
+            workspace.style.display = 'none';
+            progressContainer.style.display = 'none';
+            progressBarFill.style.backgroundColor = 'var(--primary-color)';
+            progressBarFill.style.width = '0%';
+        }
+
+        btnReupload.addEventListener('click', resetWorkspace);
+
+        // 網頁準備完畢，立即初始化 AI 核心
+        window.addEventListener('DOMContentLoaded', initEngine);
+    </script>
+</body>
+</html>
