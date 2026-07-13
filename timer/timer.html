@@ -8,16 +8,16 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap');
         
-        /* CSS 顏色變數設定區 - 已更新為翠綠色主題 */
+        /* CSS 顏色變數設定區 - 改為土耳其藍與清淡柔和主題 */
         :root {
-            --bg-from: #064e3b;           /* 背景漸層起始 (深綠) */
-            --bg-to: #022c22;             /* 背景漸層結束 (極深綠) */
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --card-border: rgba(255, 255, 255, 0.1);
+            --bg-from: #7dd3c7;           /* 背景漸層起始 (柔和土耳其藍) */
+            --bg-to: #d7f3ef;             /* 背景漸層結束 (偏淡天藍) */
+            --card-bg: rgba(255, 255, 255, 0.75);
+            --card-border: rgba(15, 118, 110, 0.16);
             
-            --primary-color: #10b981;     /* 主色調 (翠綠色 - Emerald 500) */
-            --primary-hover: #059669;     /* 懸停色 (深翠綠) */
-            --accent-color: #34d399;      /* 強調色 (淺翠綠) */
+            --primary-color: #2a9d8f;     /* 主色調 (土耳其藍) */
+            --primary-hover: #21867a;     /* 懸停色 */
+            --accent-color: #4db6ac;      /* 強調色 (較淡土耳其藍) */
             
             --warning-color: #f59e0b;     /* 警告色 (保持橘黃以供辨識) */
             --warning-hover: #d97706;
@@ -25,13 +25,13 @@
             --danger-color: #ef4444;      /* 危險色 (保持紅色以供辨識) */
             --danger-hover: #dc2626;
             
-            --gray-color: #374151;        /* 灰色 (重設按鈕) */
-            --gray-hover: #4b5563;
+            --gray-color: #94a3b8;        /* 灰色 (重設按鈕) */
+            --gray-hover: #64748b;
             
-            --text-main: #ffffff;         /* 主要文字 */
-            --text-dim: #a7f3d0;          /* 次要文字 (淡綠色調) */
+            --text-main: #134e4a;         /* 主要文字 */
+            --text-dim: #3f6d6a;          /* 次要文字 */
             
-            --ring-bg: rgba(255, 255, 255, 0.1); /* 進度條底色 */
+            --ring-bg: rgba(42, 157, 143, 0.16); /* 進度條底色 */
         }
 
         body {
@@ -43,6 +43,7 @@
             justify-content: center;
             color: var(--text-main);
             overflow: hidden;
+            padding: 1rem 0;
         }
 
         .timer-display {
@@ -51,17 +52,43 @@
             min-width: 8ch; 
         }
 
+        #current-time {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+            margin-bottom: 1rem;
+        }
+
+        #current-date {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            letter-spacing: 0.04em;
+            color: var(--text-dim);
+            opacity: 0.85;
+        }
+
+        #current-time-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: var(--text-main);
+        }
+
         .glass-card {
             background: var(--card-bg);
             backdrop-filter: blur(12px);
             border: 1px solid var(--card-border);
             border-radius: 2rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: min(100%, 34rem);
+            max-height: calc(100vh - 1.5rem);
         }
 
         .input-group input {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(42, 157, 143, 0.18);
             color: var(--text-main);
             transition: all 0.3s ease;
         }
@@ -69,8 +96,8 @@
         .input-group input:focus {
             outline: none;
             border-color: var(--primary-color);
-            background: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 4px rgba(42, 157, 143, 0.16);
         }
 
         .progress-ring {
@@ -115,12 +142,57 @@
             animation: pulse-red 1s infinite;
             color: var(--danger-color);
         }
+
+        @media (max-width: 640px) {
+            .glass-card {
+                padding: 1.3rem 0.95rem;
+            }
+            #current-time-text {
+                font-size: 1.2rem;
+            }
+            h1 {
+                font-size: 1.85rem;
+                margin-bottom: 1.25rem;
+            }
+            .relative.inline-flex svg {
+                width: 12rem;
+                height: 12rem;
+            }
+            .timer-display {
+                font-size: 2rem;
+            }
+            .input-group input {
+                padding: 0.7rem 0.9rem;
+            }
+            .grid.grid-cols-3 {
+                gap: 0.65rem;
+            }
+            .preset-btn {
+                font-size: 0.72rem;
+                padding: 0.7rem 0.6rem;
+            }
+            .flex.gap-4 {
+                flex-direction: column;
+            }
+            .flex.gap-4 > button {
+                width: 100%;
+            }
+            #elapsedTime,
+            #targetTime,
+            #message {
+                font-size: 0.9rem;
+            }
+        }
     </style>
 </head>
 <body>
 
     <!-- 主體內容 -->
     <div class="glass-card p-8 md:p-12 w-full max-w-md mx-4 text-center">
+        <div id="current-time">
+            <div id="current-date"></div>
+            <div id="current-time-text"></div>
+        </div>
         <h1 class="text-3xl font-bold mb-8 tracking-tight" style="color: var(--accent-color);">倒數計時器</h1>
 
         <!-- 圓形進度條與顯示 -->
@@ -134,12 +206,6 @@
 
         <!-- 設定區域 -->
         <div id="setup-controls">
-            <!-- 任務名稱輸入 -->
-            <div class="input-group mb-4 text-left">
-                <label class="block text-xs uppercase tracking-widest mb-1 ml-1" style="color: var(--text-dim);">提醒事項</label>
-                <input type="text" id="taskName" class="w-full px-4 py-3 rounded-xl text-lg transition-all" placeholder="例如：洗衣服、煮開水...">
-            </div>
-
             <!-- 時間輸入 -->
             <div class="grid grid-cols-3 gap-4 mb-8">
                 <div class="input-group">
@@ -155,20 +221,34 @@
                     <input type="number" id="secs" min="0" max="59" value="0" class="w-full text-center py-3 rounded-xl text-xl font-bold" placeholder="00">
                 </div>
             </div>
+            <div class="mb-6 text-left">
+                <p class="text-xs uppercase tracking-widest mb-3" style="color: var(--text-dim);">快速設定</p>
+                <div class="grid grid-cols-5 gap-2">
+                    <button type="button" class="preset-btn btn-gray text-white text-sm font-semibold py-3 rounded-2xl transition-all active:scale-95" data-h="0" data-m="0" data-s="30">30秒</button>
+                    <button type="button" class="preset-btn btn-gray text-white text-sm font-semibold py-3 rounded-2xl transition-all active:scale-95" data-h="0" data-m="1" data-s="0">1分鐘</button>
+                    <button type="button" class="preset-btn btn-gray text-white text-sm font-semibold py-3 rounded-2xl transition-all active:scale-95" data-h="0" data-m="3" data-s="0">3分鐘</button>
+                    <button type="button" class="preset-btn btn-gray text-white text-sm font-semibold py-3 rounded-2xl transition-all active:scale-95" data-h="0" data-m="5" data-s="0">5分鐘</button>
+                    <button type="button" class="preset-btn btn-gray text-white text-sm font-semibold py-3 rounded-2xl transition-all active:scale-95" data-h="0" data-m="10" data-s="0">10分鐘</button>
+                </div>
+            </div>
         </div>
 
         <!-- 按鈕控制 -->
         <div class="flex gap-4">
-            <button id="startPauseBtn" class="flex-1 btn-primary text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg">
-                開始計時
-            </button>
             <button id="resetBtn" class="btn-gray text-white font-bold py-4 px-8 rounded-2xl transition-all active:scale-95">
                 重設
             </button>
+            <button id="startPauseBtn" class="flex-1 btn-primary text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg">
+                開始計時
+            </button>
         </div>
 
+        <!-- 已計時顯示 -->
+        <div id="elapsedTime" class="mt-4 text-base font-medium text-slate-700" style="color: var(--text-dim);">已計時：00:00:00</div>
+        <div id="targetTime" class="mt-2 text-sm font-medium" style="color: var(--text-dim);">結束時間：--:--:--</div>
+
         <!-- 訊息提示 -->
-        <div id="message" class="mt-6 text-sm font-medium min-h-[1.25rem]" style="color: var(--text-dim);"></div>
+        <div id="message" class="mt-4 text-sm font-medium min-h-[1.25rem]" style="color: var(--text-dim);"></div>
     </div>
 
     <!-- 提醒彈窗 (Modal) -->
@@ -180,7 +260,6 @@
                 </svg>
             </div>
             <h2 class="text-2xl font-bold mb-2">時間到了！</h2>
-            <div id="modalTaskName" class="text-xl font-semibold mb-2 break-words" style="color: var(--accent-color);"></div>
             <p class="mb-8" style="color: var(--text-dim);">計時器已歸零，請確認您的任務。</p>
             <button id="stopAlarmBtn" class="w-full btn-danger text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg">
                 停止提醒
@@ -198,23 +277,45 @@
 
         const display = document.getElementById('display');
         const progressBar = document.getElementById('progress-bar');
+        const currentDateDisplay = document.getElementById('current-date');
+        const currentTimeTextDisplay = document.getElementById('current-time-text');
         const startPauseBtn = document.getElementById('startPauseBtn');
         const resetBtn = document.getElementById('resetBtn');
         const message = document.getElementById('message');
         const alarmModal = document.getElementById('alarm-modal');
         const stopAlarmBtn = document.getElementById('stopAlarmBtn');
-        const taskNameInput = document.getElementById('taskName');
-        const modalTaskDisplay = document.getElementById('modalTaskName');
+        const elapsedTimeDisplay = document.getElementById('elapsedTime');
+        const targetTimeDisplay = document.getElementById('targetTime');
         
         const inputFields = {
             hrs: document.getElementById('hrs'),
             mins: document.getElementById('mins'),
             secs: document.getElementById('secs')
         };
+        const presetButtons = document.querySelectorAll('.preset-btn');
 
         const CIRCUMFERENCE = 2 * Math.PI * 120;
         progressBar.style.strokeDasharray = CIRCUMFERENCE;
         progressBar.style.strokeDashoffset = 0;
+
+        function updateCurrentTime() {
+            const now = new Date();
+            currentDateDisplay.textContent = now.toLocaleDateString('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                weekday: 'short'
+            });
+            currentTimeTextDisplay.textContent = now.toLocaleTimeString('zh-TW', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+        }
+
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
 
         function playAlarmPulse() {
             if (!audioCtx) {
@@ -253,18 +354,58 @@
             resetTimer();
         }
 
-        function updateDisplay(seconds) {
+        function formatTime(seconds) {
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
             const s = seconds % 60;
-            
-            display.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function formatClockTime(date) {
+            return date.toLocaleTimeString('zh-TW', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+        }
+
+        function updateElapsedTimeDisplay(elapsedSeconds) {
+            elapsedTimeDisplay.textContent = `已計時：${formatTime(elapsedSeconds)}`;
+        }
+
+        function updateTargetTimeDisplay(endDate) {
+            if (endDate) {
+                targetTimeDisplay.textContent = `結束時間：${formatClockTime(endDate)}`;
+            } else {
+                targetTimeDisplay.textContent = '結束時間：--:--:--';
+            }
+        }
+
+        function setPresetTime(hours, minutes, seconds) {
+            inputFields.hrs.value = hours;
+            inputFields.mins.value = minutes;
+            inputFields.secs.value = seconds;
+
+            if (!isRunning) {
+                totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                remainingSeconds = totalSeconds;
+                updateDisplay(remainingSeconds);
+                updateElapsedTimeDisplay(0);
+                updateTargetTimeDisplay(null);
+            }
+        }
+
+        function updateDisplay(seconds) {
+            display.textContent = formatTime(seconds);
             
             if (totalSeconds > 0) {
                 const offset = CIRCUMFERENCE - (seconds / totalSeconds) * CIRCUMFERENCE;
                 progressBar.style.strokeDashoffset = offset;
+                updateElapsedTimeDisplay(totalSeconds - seconds);
             } else {
                 progressBar.style.strokeDashoffset = 0;
+                updateElapsedTimeDisplay(0);
             }
         }
 
@@ -288,12 +429,16 @@
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 }
 
+                const endDate = new Date(Date.now() + remainingSeconds * 1000);
+                updateTargetTimeDisplay(endDate);
+
                 isRunning = true;
                 startPauseBtn.textContent = "暫停";
                 startPauseBtn.classList.replace('btn-primary', 'btn-warning');
-                showMessage(taskNameInput.value ? `正在計時：${taskNameInput.value}` : "計時中...", "");
+                showMessage("計時中...", "");
                 
                 document.getElementById('setup-controls').classList.add('opacity-50', 'pointer-events-none');
+                updateElapsedTimeDisplay(totalSeconds - remainingSeconds);
 
                 countdown = setInterval(() => {
                     remainingSeconds--;
@@ -322,8 +467,6 @@
             display.classList.add('time-up');
             showMessage("時間到！", "font-bold");
             
-            modalTaskDisplay.textContent = taskNameInput.value || "未命名任務";
-            
             alarmModal.classList.add('active');
             playAlarmPulse();
         }
@@ -337,6 +480,8 @@
             totalSeconds = 0;
             
             updateDisplay(0);
+            updateElapsedTimeDisplay(0);
+            updateTargetTimeDisplay(null);
             display.classList.remove('time-up');
             startPauseBtn.textContent = "開始計時";
             startPauseBtn.className = "flex-1 btn-primary text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg";
@@ -357,6 +502,15 @@
         startPauseBtn.addEventListener('click', startTimer);
         resetBtn.addEventListener('click', resetTimer);
         stopAlarmBtn.addEventListener('click', stopAlarm);
+        presetButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                setPresetTime(
+                    parseInt(button.dataset.h, 10),
+                    parseInt(button.dataset.m, 10),
+                    parseInt(button.dataset.s, 10)
+                );
+            });
+        });
 
         [inputFields.hrs, inputFields.mins, inputFields.secs].forEach(input => {
             input.addEventListener('change', function() {
