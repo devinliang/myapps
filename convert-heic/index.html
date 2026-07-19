@@ -98,11 +98,11 @@
                         <label>轉換目標格式</label>
                         <select id="formatSelect">
                             <option value="image/png">PNG (保留透明)</option>
-                            <option value="image/jpeg">JPG (壓縮空間)</option>
+                            <option value="image/jpeg" selected>JPG (壓縮空間)</option>
                         </select>
                     </div>
 
-                    <div id="qualityControl" class="form-group hidden">
+                    <div id="qualityControl" class="form-group">
                         <label>品質設定: <span id="qualityVal">90</span>%</label>
                         <input type="range" id="qualityInput" min="1" max="100" value="90">
                     </div>
@@ -124,7 +124,7 @@
     </footer>
 
     <!-- heic2any 用於瀏覽器無法原生解析 HEIC 的情況 -->
-    <script src="https://unpkg.com/heic2any/dist/heic2any.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const dropZone = document.getElementById('dropZone');
@@ -175,39 +175,138 @@
                 infoSize.innerText = formatBytes(file.size);
 
                 // Try to load file directly first (some browsers can decode HEIC natively)
-                const tryDirect = () => new Promise((resolve, reject) => {
-                    const fr = new FileReader();
-                    fr.onload = (e) => {
-                        const url = e.target.result;
-                        const img = new Image();
-                        img.onload = () => resolve({blob: file, url});
-                        img.onerror = () => reject();
-                        img.src = url;
-                    };
-                    fr.onerror = () => reject();
-                    fr.readAsDataURL(file);
+                const tryDirectImage = (fileToLoad = file) => new Promise((resolve, reject) => {
+                    const url = URL.createObjectURL(fileToLoad);
+                    const img = new Image();
+                    img.onload = () => resolve({ blob: fileToLoad, url });
+                    img.onerror = (e) => reject(e);
+                    img.src = url;
                 });
 
+                const tryDirectDataUrl = (fileToLoad = file) => new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const url = e.target.result;
+                        const img = new Image();
+                        img.onload = () => resolve({ blob: fileToLoad, url });
+                        img.onerror = (e) => reject(e);
+                        img.src = url;
+                    };
+                    reader.onerror = (e) => reject(e);
+                    reader.readAsDataURL(fileToLoad);
+                });
+
+                const tryCreateImageBitmap = async () => {
+                    if (typeof createImageBitmap !== 'function') throw new Error('createImageBitmap not available');
+                    const bitmap = await createImageBitmap(file);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = bitmap.width;
+                    canvas.height = bitmap.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(bitmap, 0, 0);
+                    bitmap.close?.();
+                    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+                    if (!blob) throw new Error('createImageBitmap decode produced no blob');
+                    const url = URL.createObjectURL(blob);
+                    return { blob, url };
+                };
+
+                const tryImageDecoder = async () => {
+                    if (typeof ImageDecoder !== 'function') throw new Error('ImageDecoder not available');
+                    const decoder = new ImageDecoder({ data: file });
+                    const result = await decoder.decode();
+                    const bitmap = result.image;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = bitmap.width;
+                    canvas.height = bitmap.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(bitmap, 0, 0);
+                    bitmap.close?.();
+                    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+                    if (!blob) throw new Error('ImageDecoder decode produced no blob');
+                    const url = URL.createObjectURL(blob);
+                    return { blob, url };
+                };
+
+                const isJpegByHeader = async (sourceFile) => {
+                    const slice = sourceFile.slice(0, 4);
+                    const buffer = await slice.arrayBuffer();
+                    const view = new Uint8Array(buffer);
+                    return (
+                        view[0] === 0xFF && view[1] === 0xD8 &&
+                        view[2] === 0xFF
+                    );
+                };
+
+                const buildRenamedJpegBlob = (sourceFile) => {
+                    return sourceFile.slice(0, sourceFile.size, 'image/jpeg');
+                };
+
+                const tryJpegFromHeader = async (sourceFile) => {
+                    if (!(await isJpegByHeader(sourceFile))) return null;
+                    const renamed = buildRenamedJpegBlob(sourceFile);
+                    const url = URL.createObjectURL(renamed);
+                    return { blob: renamed, url };
+                };
+
                 // If direct decode fails, use heic2any to convert to jpeg blob for preview and processing
-                try {
+                const normalizeBlob = (blobOrArray) => {
+                    if (!blobOrArray) return null;
+                    return Array.isArray(blobOrArray) ? blobOrArray[0] : blobOrArray;
+                };
+
+                const loadHeic2Any = async () => {
+                    if (typeof window.heic2any === 'function') return;
+                    const cdnList = [
+                        'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js',
+                        'https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js'
+                    ];
+                    for (const src of cdnList) {
+                        await new Promise((resolve, reject) => {
+                            const script = document.createElement('script');
+                            script.src = src;
+                            script.crossOrigin = 'anonymous';
+                            script.referrerPolicy = 'no-referrer';
+                            script.onload = resolve;
+                            script.onerror = reject;
+                            document.head.appendChild(script);
+                        }).catch(() => {
+                            console.warn('未能載入 heic2any:', src);
+                        });
+                        if (typeof window.heic2any === 'function') return;
+                    }
+                    throw new Error('無法載入 heic2any');
+                };
+
+                const getNormalizedHeicBlob = (sourceFile) => {
+                    return sourceFile.slice(0, sourceFile.size, sourceFile.type || 'image/heic');
+                };
+
+                const convertHeicWithFallback = async () => {
+                    const heicBlob = getNormalizedHeicBlob(file);
+                    const tryConvert = async (options) => normalizeBlob(await window.heic2any({ blob: heicBlob, toType: options.toType, quality: options.quality, multiple: options.multiple }));
+
+                    let result = null;
                     try {
-                        const direct = await tryDirect();
-                        currentBlob = direct.blob;
-                        previewImg.src = direct.url;
-                    } catch (e) {
-                        if (window.heic2any) {
-                            showMessage('正在轉換 HEIC（需要一些時間）...', '');
-                            const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
-                            currentBlob = converted;
-                            const objUrl = URL.createObjectURL(converted);
-                            previewImg.src = objUrl;
-                            infoSize.innerText = formatBytes(converted.size);
-                        } else {
-                            showMessage('此瀏覽器無法解析 HEIC，且未載入 heic2any，請使用支援 HEIC 的瀏覽器', 'error');
-                            return;
+                        result = await tryConvert({ toType: 'image/jpeg', quality: 0.92, multiple: false });
+                    } catch (err) {
+                        console.warn('heic2any JPEG 轉換失敗，嘗試 multiple:true', err);
+                        try {
+                            result = await tryConvert({ toType: 'image/jpeg', quality: 0.92, multiple: true });
+                        } catch (err2) {
+                            console.warn('heic2any JPEG multiple 轉換失敗，改用 PNG', err2);
+                            try {
+                                result = await tryConvert({ toType: 'image/png', quality: undefined, multiple: false });
+                            } catch (err3) {
+                                console.warn('heic2any PNG 轉換失敗，嘗試 PNG multiple', err3);
+                                result = await tryConvert({ toType: 'image/png', quality: undefined, multiple: true });
+                            }
                         }
                     }
+                    return result;
+                };
 
+                const setPreviewSrc = (url) => {
                     previewImg.onload = () => {
                         infoDim.innerText = `${previewImg.naturalWidth} x ${previewImg.naturalHeight} Px`;
                         dropZone.classList.add('hidden');
@@ -215,8 +314,108 @@
                         statusMsg.className = 'message';
                         statusMsg.innerText = '';
                     };
+                    previewImg.onerror = (loadErr) => {
+                        console.error('圖片預覽載入失敗', loadErr);
+                        showMessage('圖片預覽失敗，請改用其他瀏覽器或重新上傳', 'error');
+                    };
+                    previewImg.src = url;
+                };
+
+                const tryJpegByHeaderFirst = async () => {
+                    try {
+                        const jpegAttempt = await tryJpegFromHeader(file);
+                        if (jpegAttempt) {
+                            currentBlob = jpegAttempt.blob;
+                            setPreviewSrc(jpegAttempt.url);
+                            infoSize.innerText = formatBytes(jpegAttempt.blob.size);
+                            return true;
+                        }
+                    } catch (err) {
+                        console.warn('JPEG 偽裝檔案檢查失敗', err);
+                    }
+                    return false;
+                };
+
+                try {
+                    if (await tryJpegByHeaderFirst()) {
+                        return;
+                    }
+
+                    try {
+                        const direct = await tryDirectImage();
+                        currentBlob = direct.blob;
+                        setPreviewSrc(direct.url);
+                    } catch (e) {
+                        console.warn('Direct HEIC decode failed, trying data URL / createImageBitmap / ImageDecoder / heic2any', e);
+                        let decoded = null;
+                        try {
+                            decoded = await tryDirectDataUrl();
+                            console.info('Data URL direct decode 成功');
+                        } catch (dataUrlErr) {
+                            console.warn('Data URL direct decode 失敗', dataUrlErr);
+                        }
+
+                        if (!decoded) {
+                            try {
+                                decoded = await tryCreateImageBitmap();
+                                console.info('createImageBitmap 解碼成功');
+                            } catch (bitmapErr) {
+                                console.warn('createImageBitmap 失敗', bitmapErr);
+                            }
+                        }
+                        try {
+                            decoded = await tryCreateImageBitmap();
+                            console.info('createImageBitmap 解碼成功');
+                        } catch (bitmapErr) {
+                            console.warn('createImageBitmap 失敗', bitmapErr);
+                        }
+
+                        if (!decoded) {
+                            try {
+                                decoded = await tryImageDecoder();
+                                console.info('ImageDecoder 解碼成功');
+                            } catch (decoderErr) {
+                                console.warn('ImageDecoder 失敗', decoderErr);
+                            }
+                        }
+
+                        if (!decoded) {
+                            try {
+                                const jpegAttempt = await tryJpegFromHeader(file);
+                                if (jpegAttempt) {
+                                    currentBlob = jpegAttempt.blob;
+                                    setPreviewSrc(jpegAttempt.url);
+                                    infoSize.innerText = formatBytes(jpegAttempt.blob.size);
+                                    return;
+                                }
+                            } catch (headerErr) {
+                                console.warn('JPEG 標頭偵測失敗', headerErr);
+                            }
+                        }
+
+                        if (decoded) {
+                            currentBlob = decoded.blob;
+                            setPreviewSrc(decoded.url);
+                            infoSize.innerText = formatBytes(decoded.blob.size);
+                            return;
+                        }
+
+                        await loadHeic2Any();
+                        showMessage('正在轉換 HEIC（需要一些時間）...', '');
+                        const converted = await convertHeicWithFallback();
+                        if (!converted) throw new Error('heic2any 無法產生可用 Blob');
+                        currentBlob = converted;
+                        const objUrl = URL.createObjectURL(converted);
+                        setPreviewSrc(objUrl);
+                        infoSize.innerText = formatBytes(converted.size);
+                    }
                 } catch (err) {
-                    showMessage('處理圖片時發生錯誤，請重試', 'error');
+                    console.error('HEIC 處理失敗', err);
+                    if (err && err.message && err.message.includes('format not supported')) {
+                        showMessage('此 HEIC 檔案目前無法由瀏覽器或本機解碼。請使用桌面工具或線上轉檔服務先將它轉成 JPG，再重新上傳。', 'error');
+                    } else {
+                        showMessage('處理圖片時發生錯誤，請重試或改用外部轉檔工具將 HEIC 轉成 JPG。', 'error');
+                    }
                 }
             }
 
